@@ -1,7 +1,8 @@
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
 
 import "./ERC721A.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -28,7 +29,7 @@ contract LoanReceipt is ERC721A, ReentrancyGuard, Ownable {
     constructor(
         string memory _name,
         string memory _symbol
-    ) ERC721A(_name, _symbol) {}
+    ) ERC721A(_name, _symbol) Ownable(msg.sender) {}
 
     function mintReceipt(address to) internal {
         _safeMint(to, 1);
