@@ -1,4 +1,5 @@
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -8,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./interfaces/ICryptoVault.sol";
 import "./interfaces/ILoanManager.sol";
 import "./interfaces/IReceipts.sol";
@@ -81,22 +82,27 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
 
         // Validate the provided signature (server-side validation)
         require(
-            validateSignature(signature,_contract, tokenId,msg.sender),
+            validateSignature(signature, _contract, tokenId, msg.sender),
             "Invalid signature"
         );
 
         // Transfer the specified ERC721 token to the vault
         IERC721 erc721Token = IERC721(_contract);
         erc721Token.safeTransferFrom(msg.sender, vault, tokenId);
-        uint256 receiptIdLender = _ireceipts.generateBorrowerReceipt(msg.sender);
-        _icryptoVault.attachReceiptToNFT(_contract,tokenId,receiptIdLender);
+        uint256 receiptIdLender = _ireceipts.generateBorrowerReceipt(
+            msg.sender
+        );
+        _icryptoVault.attachReceiptToNFT(_contract, tokenId, receiptIdLender);
     }
 
     function claimFromEscrow(
         uint256 tokenId,
-        address _contract,
-        uint256 _receiptId
-    ) external nonReentrant {
+        address _contract
+    )
+        external
+        // uint256 _receiptId
+        nonReentrant
+    {
         require(vault != address(0), "Vault address not set");
         require(loanManager != address(0), "Loan manager address not set");
         require(
@@ -174,7 +180,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             receiptContract != address(0),
             "Receipt contract address not set"
         );
-        require(_lastNonce < _nonce,"New signature is required");
+        require(_lastNonce < _nonce, "New signature is required");
         require(
             validateApprovalOffer(
                 signature,
@@ -191,19 +197,19 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             "Invalid signature"
         );
 
-         ILoanManager.Loan memory loan = _iloanManager.getLoan(
+        ILoanManager.Loan memory loan = _iloanManager.getLoan(
             _contract,
             _tokenId,
             msg.sender
         );
-         require(!loan.isClosed, "Loan offer is closed");
-         require(!loan.isApproved, "Loan offer is already approved");
+        require(!loan.isClosed, "Loan offer is closed");
+        require(!loan.isApproved, "Loan offer is already approved");
 
-         _iloanManager.createLoan(
+        _iloanManager.createLoan(
             _contract,
             _tokenId,
-             msg.sender,
-             _lender,
+            msg.sender,
+            _lender,
             _loanAmount,
             _interestRate,
             _loanDuration,
@@ -222,9 +228,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         //  uint256 receiptLender = generateLenderReceipt(loan.lender);
     }
 
-    function generateLenderReceipt(
-        address lender
-    ) public returns (uint256) {
+    function generateLenderReceipt(address lender) public returns (uint256) {
         require(_ireceipts.open(), "Contract closed");
         uint256 receiptIdLender = _ireceipts.generateReceipts(lender);
         return receiptIdLender;
@@ -233,12 +237,15 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     function payLoan(
         uint256 receiptId,
         address _contract,
-        uint256 _tokenId,
-        address _lender
-    ) external nonReentrant {
+        uint256 _tokenId
+    )
+        external
+        // address _lender
+        nonReentrant
+    {
         require(_ireceipts.tokenExist(receiptId), "Receipt does not exist");
         address lender = _ireceipts.ownerOf(receiptId);
-        address borrower = _ireceipts.ownerOf(receiptId + 1);
+        // address borrower = _ireceipts.ownerOf(receiptId + 1);
         ILoanManager.Loan memory loan = _iloanManager.getLoan(
             _contract,
             _tokenId,
@@ -251,7 +258,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         IERC20 erc20Token = IERC20(loan.currencyERC20);
         erc20Token.safeTransferFrom(msg.sender, vault, loan.loanAmount);
 
-       //_iloanManager.updateLoan(_contract, _tokenId, lender, loan);
+        //_iloanManager.updateLoan(_contract, _tokenId, lender, loan);
     }
 
     function claimToken(
@@ -270,10 +277,10 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         require(loan.isClosed, "Loan is not closed");
 
         // Transfer the ERC721 token back to the borrower from the vault
-        IERC721 erc721Token = IERC721(_contract);
+        // IERC721 erc721Token = IERC721(_contract);
 
         //erc721Token.burn(_tokenId);
-       // _ireceipts.closeReceipt(receiptId);
+        // _ireceipts.closeReceipt(receiptId);
     }
 
     function claimERC20(
@@ -292,13 +299,12 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         require(loan.isClosed, "Loan is not closed");
 
         // Transfer the ERC721 token back to the borrower from the vault
-        IERC721 erc721Token = IERC721(_contract);
-       // erc721Token.burn(_tokenId);
+        // IERC721 erc721Token = IERC721(_contract);
+        // erc721Token.burn(_tokenId);
 
         // Close the receipt
-       // _ireceipts.closeReceipt(receiptId);
+        // _ireceipts.closeReceipt(receiptId);
     }
-
 
     function validateSignature(
         bytes calldata signature,
@@ -376,11 +382,10 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         bytes32 candidateHash = keccak256(
             abi.encodePacked("\x19Ethereum Signed Message:\n32", freshHash)
         );
-        
+
         // Verify if the fresh hash is signed with the provided signature
         return _verifyHashSignature(candidateHash, signature);
     }
-
 
     function _verifyHashSignature(
         bytes32 hash,
