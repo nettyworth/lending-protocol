@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.24;
 
 // Import necessary libraries and interfaces from OpenZeppelin
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -10,10 +10,9 @@ import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./interfaces/ICryptoVault.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-
 
 // CryptoVault contract that serves as a vault for ERC721 tokens
 contract CryptoVault is
@@ -43,8 +42,7 @@ contract CryptoVault is
         uint256 indexed tokenId
     );
 
-    constructor() {}
-
+    constructor() Ownable(msg.sender) {}
 
     // Function to deposit an ERC721 token into the vault
     function deposit(
@@ -68,7 +66,6 @@ contract CryptoVault is
         address tokenAddress,
         uint256 tokenId
     ) external onlyProxyManager {
-
         require(
             assets[tokenAddress][tokenId],
             "This token is not stored in the vault"
@@ -104,7 +101,6 @@ contract CryptoVault is
         //That way the meetadata for the token can be set
         receipts[tokenAddress][tokenId] = receiptId;
     }
-
 
     // Modifier to restrict certain functions to the proxy manager (orchestrator)
     modifier onlyProxyManager() {
