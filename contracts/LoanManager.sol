@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
@@ -14,7 +14,7 @@ contract LoanManager is Ownable, ReentrancyGuard {
         uint256 loanAmount;
         uint256 interestRate;
         uint256 loanDuration;
-				address currencyERC20;
+        address currencyERC20;
         uint256 totalPaid;
         uint256 loanInitialTime;
         bool isClosed;
@@ -23,35 +23,35 @@ contract LoanManager is Ownable, ReentrancyGuard {
 
     event LoanCreated(
         uint256 loanId,
-       address nftContract,
+        address nftContract,
         uint256 tokenId,
         address borrower,
         address lender,
         uint256 loanAmount,
         uint256 interestRate,
         uint256 loanDuration,
-				address erc20Address,
+        address erc20Address,
         uint256 totalPaid,
         uint256 loanInitialTime,
         bool isClosed,
         bool isApproved
     );
- 
+
     // Loan ID -> Loan
     mapping(uint256 => Loan) public loans;
     mapping(address => mapping(uint256 => Loan)) public loansIndexed;
     address public _proxy;
 
- constructor() {}
+    constructor() Ownable(msg.sender) {}
 
-function createLoan(
+    function createLoan(
         address _nftContract,
         uint256 _tokenId,
         address _borrower,
-				address _lender,
-  		  uint256 _loanAmount,
-				uint256 _interestRate,
-				uint256 _loanDuration,
+        address _lender,
+        uint256 _loanAmount,
+        uint256 _interestRate,
+        uint256 _loanDuration,
         address _currencyERC20,
         uint256 _nonce
     ) external onlyProxyManager {
@@ -61,21 +61,27 @@ function createLoan(
         require(_loanAmount > 0, "Loan amount must be greater than 0");
         require(_interestRate >= 0, "Interest rate cannot be negative");
         require(_loanDuration > 0, "Loan duration must be greater than 0");
-        require(_currencyERC20 != address(0), "Currency ERC-20 contract address is required");
+        require(
+            _currencyERC20 != address(0),
+            "Currency ERC-20 contract address is required"
+        );
         require(_lender != address(0), "Lender address is required");
-    
+
         // Create a new loan
-        require(loans[_nonce].nftContract == address(0), "Loan already created");
+        require(
+            loans[_nonce].nftContract == address(0),
+            "Loan already created"
+        );
 
         loans[_nonce] = Loan({
             nftContract: _nftContract,
             tokenId: _tokenId,
             borrower: _borrower,
-            lender: _lender, 
+            lender: _lender,
             loanAmount: _loanAmount,
             interestRate: _interestRate,
             loanDuration: _loanDuration,
-						currencyERC20: _currencyERC20,
+            currencyERC20: _currencyERC20,
             totalPaid: 0,
             loanInitialTime: block.timestamp,
             isClosed: false,
@@ -84,8 +90,14 @@ function createLoan(
         loansIndexed[_borrower][_nonce] = loans[_nonce];
     }
 
-    function getLoan(address _contract, uint256 _tokenId, address _borrower) external view returns (Loan memory) {
-        uint256 _loanId = uint256(keccak256(abi.encodePacked(_borrower, _contract, _tokenId)));
+    function getLoan(
+        address _contract,
+        uint256 _tokenId,
+        address _borrower
+    ) external view returns (Loan memory) {
+        uint256 _loanId = uint256(
+            keccak256(abi.encodePacked(_borrower, _contract, _tokenId))
+        );
         return loans[_loanId];
     }
 
@@ -94,9 +106,11 @@ function createLoan(
         require(!loan.isClosed, "Loan is closed");
         require(loan.lender != address(0), "Loan is not assigned to a lender");
 
-				uint256 remainingAmount = loan.loanAmount +
-						((loan.loanAmount * loan.interestRate * (block.timestamp - loan.loanInitialTime)) /
-						(100 * loan.loanDuration));
+        uint256 remainingAmount = loan.loanAmount +
+            ((loan.loanAmount *
+                loan.interestRate *
+                (block.timestamp - loan.loanInitialTime)) /
+                (100 * loan.loanDuration));
 
         require(
             msg.value <= remainingAmount,
