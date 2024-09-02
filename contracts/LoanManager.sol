@@ -88,6 +88,20 @@ contract LoanManager is Ownable, ReentrancyGuard {
             isApproved: false
         });
         loansIndexed[_borrower][_nonce] = loans[_nonce];
+        emit LoanCreated(_nonce,
+            _nftContract,
+            _tokenId,
+            _borrower,
+            _lender,
+            _loanAmount,
+            _interestRate,
+            _loanDuration,
+            _currencyERC20,
+            0,
+            block.timestamp,
+            false,
+            false
+        );
     }
 
     function getLoan(
@@ -101,6 +115,8 @@ contract LoanManager is Ownable, ReentrancyGuard {
         return loans[_loanId];
     }
 
+    
+ // From lender
     function makePayment(uint256 _loanIndex) external payable {
         Loan storage loan = loans[_loanIndex];
         require(!loan.isClosed, "Loan is closed");

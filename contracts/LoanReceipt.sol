@@ -35,7 +35,7 @@ contract LoanReceipt is ERC721A, ReentrancyGuard, Ownable {
         _safeMint(to, 1);
     }
 
-    function generateReceipts(
+    function generateLenderReceipt(
         address lender
     ) external onlyProxyManager returns (uint256) {
         require(open, "Contract closed");

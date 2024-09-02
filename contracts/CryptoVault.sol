@@ -29,14 +29,14 @@ contract CryptoVault is
     address public _proxy; // Address of the proxy contract used for access control
 
     // Event emitted when a user deposits an ERC721 token into the vault
-    event Deposit(
+    event nftDepositToEscrow(
         address indexed sender,
         address indexed tokenAddress,
         uint256 indexed tokenId
     );
 
     // Event emitted when a user withdraws an ERC721 token from the vault
-    event Withdrawal(
+    event nftWithdrawalFromEscrow(
         address indexed sender,
         address indexed tokenAddress,
         uint256 indexed tokenId
@@ -46,19 +46,20 @@ contract CryptoVault is
 
     // Function to deposit an ERC721 token into the vault
     function deposit(
+        address borrower,
         address tokenAddress,
         uint256 tokenId
     ) external onlyProxyManager {
         IERC721 token = IERC721(tokenAddress);
         require(
-            token.ownerOf(tokenId) == msg.sender,
+            token.ownerOf(tokenId) == borrower,
             "You are not the owner of this token"
         );
 
-        token.safeTransferFrom(msg.sender, address(this), tokenId);
+        token.safeTransferFrom(borrower, address(this), tokenId);
         assets[tokenAddress][tokenId] = true;
 
-        emit Deposit(msg.sender, tokenAddress, tokenId);
+        emit nftDepositToEscrow(borrower, tokenAddress, tokenId);
     }
 
     // Function to withdraw an ERC721 token from the vault
@@ -80,7 +81,7 @@ contract CryptoVault is
         token.safeTransferFrom(address(this), msg.sender, tokenId);
         assets[tokenAddress][tokenId] = false;
 
-        emit Withdrawal(msg.sender, tokenAddress, tokenId);
+        emit nftWithdrawalFromEscrow(msg.sender, tokenAddress, tokenId);
     }
 
     // Function to check if an ERC721 token is stored in the vault
@@ -91,7 +92,7 @@ contract CryptoVault is
         return assets[tokenAddress][tokenId];
     }
 
-    // Function to check if an ERC721 token is stored in the vault
+    // Function to attach nft receipts
     function attachReceiptToNFT(
         address tokenAddress,
         uint256 tokenId,

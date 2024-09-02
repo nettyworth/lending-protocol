@@ -1,0 +1,23 @@
+       ---approve
+        ----signature,
+                secret,
+                _tokenId,
+                _contract,
+                _erc20Token,
+                _loanAmount,
+                _interestRate,
+                _loanDuration,
+                _lender,
+                _nonce,
+                msg.sender
+
+    -----makeOffer
+      signature,
+                secret,
+                tokenId,
+                _contract,
+                _erc20Token,
+                _loanAmount,
+                _interestRate,
+                _loanDuration,
+                msg.sender

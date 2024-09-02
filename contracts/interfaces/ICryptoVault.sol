@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 interface CryptoVaultInterface {
-    function deposit(address, uint256) external;
+    function deposit(address, address, uint256) external;
 
     function withdraw(address, uint256, address) external;
 

@@ -13,6 +13,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./interfaces/ICryptoVault.sol";
 import "./interfaces/ILoanManager.sol";
 import "./interfaces/IReceipts.sol";
+import "./library/SignatureUtils.sol";
 
 contract NettyWorthProxy is ReentrancyGuard, Initializable {
     using SafeERC20 for IERC20;
@@ -21,12 +22,12 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     address public vault;
     address public loanManager;
     address public receiptContract;
-    address public secret;
     address public owner;
-    uint256 _lastNonce;
     CryptoVaultInterface _icryptoVault;
     ILoanManager _iloanManager;
     ReceiptInterface _ireceipts;
+
+    mapping (address => mapping (uint256 => bool)) private _nonceUsedForUser;
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not the owner");
@@ -42,12 +43,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         setVault(_vault);
         setLoanManager(_loanManager);
         setReceiptContract(_receiptContract);
-        _lastNonce = 0;
-    }
-
-    function setSigner(address _secret) external onlyOwner {
-        require(_secret != address(0), "200:ZERO_ADDRESS");
-        secret = _secret;
+        // _lastNonce = 0;
     }
 
     function setVault(address _vault) public onlyOwner {
@@ -75,24 +71,21 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     ) external nonReentrant {
         require(vault != address(0), "Vault address not set");
         require(loanManager != address(0), "Loan manager address not set");
-        require(
-            receiptContract != address(0),
-            "Receipt contract address not set"
-        );
+        require(receiptContract != address(0), "Receipt contract address not set");
 
         // Validate the provided signature (server-side validation)
-        require(
-            validateSignature(signature, _contract, tokenId, msg.sender),
-            "Invalid signature"
-        );
-
+        require(SignatureUtils.validateSignature(signature, _contract, tokenId, msg.sender), "Invalid signature");
+        // // Get the loans associated with the ERC721 token and borrower
+        // ILoanManager.Loan memory loan = _iloanManager.getLoan(_contract, tokenId, msg.sender);
         // Transfer the specified ERC721 token to the vault
-        IERC721 erc721Token = IERC721(_contract);
-        erc721Token.safeTransferFrom(msg.sender, vault, tokenId);
-        uint256 receiptIdLender = _ireceipts.generateBorrowerReceipt(
-            msg.sender
-        );
-        _icryptoVault.attachReceiptToNFT(_contract, tokenId, receiptIdLender);
+        _icryptoVault.deposit(msg.sender,_contract, tokenId);
+        // // Transfer the ERC20 amount from the borrower to the vault
+        // IERC20 erc20Token = IERC20(loan.currencyERC20);
+        // erc20Token.safeTransferFrom(loan.lender, loan.borrower, loan.loanAmount);
+        // Generate promissory note nft to lender
+        uint256 receiptIdBorrower = _ireceipts.generateBorrowerReceipt(msg.sender);
+        _icryptoVault.attachReceiptToNFT(_contract, tokenId, receiptIdBorrower);
+
     }
 
     function claimFromEscrow(
@@ -131,91 +124,79 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         erc721Token.safeTransferFrom(vault, msg.sender, tokenId);
     }
 
-    function makeOffer(
-        bytes calldata signature,
-        uint256 tokenId,
-        address _contract,
-        address _erc20Token,
-        uint256 _loanAmount,
-        uint256 _interestRate,
-        uint256 _loanDuration
-    ) external nonReentrant {
-        require(vault != address(0), "Vault address not set");
-        require(loanManager != address(0), "Loan manager address not set");
-        require(
-            receiptContract != address(0),
-            "Receipt contract address not set"
-        );
-        require(
-            validateSignatureOffer(
-                signature,
-                tokenId,
-                _contract,
-                _erc20Token,
-                _loanAmount,
-                _interestRate,
-                _loanDuration,
-                msg.sender
-            ),
-            "Invalid signature"
-        );
-        IERC20 erc20Token = IERC20(_erc20Token);
-        erc20Token.approve(address(this), _loanAmount);
-    }
+    // function makeOffer(
+    //     bytes calldata offerSignature,
+    //     SignatureUtils.LoanOffer memory _offer
+    // ) external nonReentrant {
+    //     require(vault != address(0), "Vault address not set");
+    //     require(loanManager != address(0), "Loan manager address not set");
+    //     require(receiptContract != address(0), "Receipt contract address not set");
+    //     require(
+    //         SignatureUtils.validateSignatureOffer(
+    //             offerSignature,
+    //             _offer.tokenId,
+    //             _offer.nftContractAddress,
+    //             _offer.erc20TokenAddrss,
+    //             _offer.loanAmount,
+    //             _offer.interestRate,
+    //             _offer.loanDuration,
+    //             _offer.lender
+    //         ),
+    //         "Invalid signature"
+    //     );
+
+    // }
 
     function approveLoan(
-        bytes calldata signature,
-        uint256 _tokenId,
-        address _contract,
-        address _erc20Token,
-        uint256 _loanAmount,
-        uint256 _interestRate,
-        uint256 _loanDuration,
-        address _lender,
-        uint256 _nonce
+        bytes calldata acceptOfferSignature,
+        uint256[2] memory _borrowerAndLenderNonces,
+        SignatureUtils.LoanOffer memory _loanOffer
     ) external nonReentrant {
         require(vault != address(0), "Vault address not set");
         require(loanManager != address(0), "Loan manager address not set");
+        require(receiptContract != address(0), "Receipt contract address not set");
+        require(!_nonceUsedForUser[msg.sender][_borrowerAndLenderNonces[0]], "Borrower nonce invalid");
+        _nonceUsedForUser[msg.sender][_borrowerAndLenderNonces[0]] = true;
+        require(!_nonceUsedForUser[_loanOffer.lender][_borrowerAndLenderNonces[1]], "Lender nonce invalid");
+        _nonceUsedForUser[_loanOffer.lender][_borrowerAndLenderNonces[1]] = true;
+
+        // require(_lastNonce < _loanOffer.nonce, "New signature is required");
         require(
-            receiptContract != address(0),
-            "Receipt contract address not set"
-        );
-        require(_lastNonce < _nonce, "New signature is required");
-        require(
-            validateApprovalOffer(
-                signature,
-                _tokenId,
-                _contract,
-                _erc20Token,
-                _loanAmount,
-                _interestRate,
-                _loanDuration,
-                _lender,
-                _nonce,
-                msg.sender
+            SignatureUtils.validateSignatureApprovalOffer(
+                acceptOfferSignature,
+                _loanOffer.tokenId,
+                _loanOffer.nftContractAddress,
+                _loanOffer.erc20TokenAddrss,
+                _loanOffer.loanAmount,
+                _loanOffer.interestRate,
+                _loanOffer.loanDuration,
+                _loanOffer.lender,
+                _loanOffer.lenderNonce,
+                _loanOffer.borrower
             ),
             "Invalid signature"
         );
 
         ILoanManager.Loan memory loan = _iloanManager.getLoan(
-            _contract,
-            _tokenId,
-            msg.sender
+            _loanOffer.nftContractAddress,
+            _loanOffer.tokenId,
+            _loanOffer.borrower
         );
         require(!loan.isClosed, "Loan offer is closed");
         require(!loan.isApproved, "Loan offer is already approved");
 
         _iloanManager.createLoan(
-            _contract,
-            _tokenId,
-            msg.sender,
-            _lender,
-            _loanAmount,
-            _interestRate,
-            _loanDuration,
-            _erc20Token,
-            _nonce
+            _loanOffer.nftContractAddress,
+            _loanOffer.tokenId,
+            _loanOffer.borrower,
+            _loanOffer.lender,
+            _loanOffer.loanAmount,
+            _loanOffer.interestRate,
+            _loanOffer.loanDuration,
+            _loanOffer.erc20TokenAddrss,
+            _loanOffer.lenderNonce
         );
+        // _lastNonce = _loanOffer.nonce;
 
         // // Transfer the ERC20 amount from the borrower to the vault
         // IERC20 erc20Token = IERC20(loan.currencyERC20);
@@ -225,14 +206,16 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         //     loan.borrower,
         //     loan.loanAmount
         // );
-        //  uint256 receiptLender = generateLenderReceipt(loan.lender);
+        //  uint256 receiptLender =_ireceipts.generateLenderReceipt(loan.lender);
     }
 
-    function generateLenderReceipt(address lender) public returns (uint256) {
-        require(_ireceipts.open(), "Contract closed");
-        uint256 receiptIdLender = _ireceipts.generateReceipts(lender);
-        return receiptIdLender;
-    }
+    // function generateLenderReceipt(address lender) public returns (uint256) {
+    //     require(_ireceipts.open(), "Contract closed");
+    //     uint256 receiptIdLender = _ireceipts.generateReceipts(lender);
+    //     return receiptIdLender;
+    // }
+
+    // Function called by lender
 
     function payLoan(
         uint256 receiptId,
@@ -257,6 +240,8 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         // Transfer the ERC20 amount from the borrower to the vault
         IERC20 erc20Token = IERC20(loan.currencyERC20);
         erc20Token.safeTransferFrom(msg.sender, vault, loan.loanAmount);
+        //  uint256 receiptIdLender = _ireceipts.generateLenderReceipt(msg.sender);
+        // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdLender);
 
         //_iloanManager.updateLoan(_contract, _tokenId, lender, loan);
     }
@@ -306,113 +291,5 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         // _ireceipts.closeReceipt(receiptId);
     }
 
-    function validateSignature(
-        bytes calldata signature,
-        address _contract,
-        uint256 tokenId,
-        address _sender
-    ) public view returns (bool) {
-        // Pack the payload
-        bytes32 freshHash = keccak256(abi.encode(_contract, tokenId, _sender));
-        // Get the packed payload hash
-        bytes32 candidateHash = keccak256(
-            abi.encodePacked("\x19Ethereum Signed Message:\n32", freshHash)
-        );
-        // Verify if the fresh hash is signed with the provided signature
-        return _verifyHashSignature(candidateHash, signature);
-    }
 
-    function validateSignatureOffer(
-        bytes calldata signature,
-        uint256 tokenId,
-        address _contract,
-        address _erc20Token,
-        uint256 _loanAmount,
-        uint256 _interestRate,
-        uint256 _loanDuration,
-        address _signer
-    ) internal view returns (bool) {
-        // Pack the payload
-        bytes32 freshHash = keccak256(
-            abi.encode(
-                tokenId,
-                _contract,
-                _erc20Token,
-                _loanAmount,
-                _interestRate,
-                _loanDuration,
-                _signer
-            )
-        );
-        // Get the packed payload hash
-        bytes32 candidateHash = keccak256(
-            abi.encodePacked("\x19Ethereum Signed Message:\n32", freshHash)
-        );
-        // Verify if the fresh hash is signed with the provided signature
-        return _verifyHashSignature(candidateHash, signature);
-    }
-
-    function validateApprovalOffer(
-        bytes calldata signature,
-        uint256 tokenId,
-        address _contract,
-        address _erc20Token,
-        uint256 _loanAmount,
-        uint256 _interestRate,
-        uint256 _loanDuration,
-        address _lender,
-        uint256 _nonce,
-        address _borrower
-    ) internal view returns (bool) {
-        // Pack the payload
-        bytes32 freshHash = keccak256(
-            abi.encode(
-                tokenId,
-                _contract,
-                _erc20Token,
-                _loanAmount,
-                _interestRate,
-                _loanDuration,
-                _lender,
-                _nonce,
-                _borrower
-            )
-        );
-        // Get the packed payload hash
-        bytes32 candidateHash = keccak256(
-            abi.encodePacked("\x19Ethereum Signed Message:\n32", freshHash)
-        );
-
-        // Verify if the fresh hash is signed with the provided signature
-        return _verifyHashSignature(candidateHash, signature);
-    }
-
-    function _verifyHashSignature(
-        bytes32 hash,
-        bytes memory signature
-    ) internal view returns (bool) {
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-
-        if (signature.length != 65) {
-            return false;
-        }
-        assembly {
-            r := mload(add(signature, 32))
-            s := mload(add(signature, 64))
-            v := byte(0, mload(add(signature, 96)))
-        }
-
-        if (v < 27) {
-            v += 27;
-        }
-
-        address _signer = address(0);
-        if (v == 27 || v == 28) {
-            // solium-disable-next-line arg-overflow
-            _signer = ecrecover(hash, v, r, s);
-        }
-        return secret == _signer;
-    }
 }
