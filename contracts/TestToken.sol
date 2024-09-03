@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract TestToken is ERC721A, ReentrancyGuard, Ownable {
+contract NFTExample is ERC721A, ReentrancyGuard, Ownable {
     using Strings for uint256;
     // Public attributes for Manageable interface
     string public project;

@@ -22,7 +22,7 @@ contract LoanManager is Ownable, ReentrancyGuard {
     }
 
     event LoanCreated(
-        uint256 loanId,
+        uint256 indexed loanId,
         address nftContract,
         uint256 tokenId,
         address borrower,
@@ -52,8 +52,7 @@ contract LoanManager is Ownable, ReentrancyGuard {
         uint256 _loanAmount,
         uint256 _interestRate,
         uint256 _loanDuration,
-        address _currencyERC20,
-        uint256 _nonce
+        address _currencyERC20
     ) external onlyProxyManager {
         require(_nftContract != address(0), "NFT contract address is required");
         require(_tokenId > 0, "Token ID must be greater than 0");
@@ -66,14 +65,17 @@ contract LoanManager is Ownable, ReentrancyGuard {
             "Currency ERC-20 contract address is required"
         );
         require(_lender != address(0), "Lender address is required");
+        uint256 _loanId = uint256(keccak256(abi.encodePacked(_borrower, _nftContract, _tokenId)));
+        
+
 
         // Create a new loan
         require(
-            loans[_nonce].nftContract == address(0),
+            loans[_loanId].nftContract == address(0),
             "Loan already created"
         );
-
-        loans[_nonce] = Loan({
+    
+        loans[_loanId] = Loan({
             nftContract: _nftContract,
             tokenId: _tokenId,
             borrower: _borrower,
@@ -87,8 +89,8 @@ contract LoanManager is Ownable, ReentrancyGuard {
             isClosed: false,
             isApproved: false
         });
-        loansIndexed[_borrower][_nonce] = loans[_nonce];
-        emit LoanCreated(_nonce,
+        loansIndexed[_borrower][_loanId] = loans[_loanId];
+        emit LoanCreated(_loanId,
             _nftContract,
             _tokenId,
             _borrower,
