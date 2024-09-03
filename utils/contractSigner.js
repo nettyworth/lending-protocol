@@ -28,10 +28,12 @@ signOffer = function (
 	loanAmount,
 	interestRate,
 	loanDuration,
-	sender
+	lender,
+	lenderNonce,
+	borrower
 ) {
 	const encoded = web3.eth.abi.encodeParameters(
-		["uint", "address", "address", "uint", "uint", "uint", "address"],
+		["uint", "address", "address", "uint", "uint", "uint", "address", "uint", "address"],
 		[
 			tokenId,
 			contract,
@@ -39,7 +41,9 @@ signOffer = function (
 			loanAmount,
 			interestRate,
 			loanDuration,
-			sender,
+			lender,
+			lenderNonce,
+			borrower
 		]
 	);
 	return sign(encoded);

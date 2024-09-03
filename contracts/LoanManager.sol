@@ -116,7 +116,7 @@ contract LoanManager is Ownable, ReentrancyGuard {
     }
 
     
- // From lender
+ // From borrower
     function makePayment(uint256 _loanIndex) external payable {
         Loan storage loan = loans[_loanIndex];
         require(!loan.isClosed, "Loan is closed");
@@ -148,7 +148,7 @@ contract LoanManager is Ownable, ReentrancyGuard {
     }
 
     function redeemLoan(uint256 _loanIndex) external nonReentrant {
-        Loan storage loan = loans[_loanIndex];
+        Loan memory loan = loans[_loanIndex];
         require(loan.borrower == msg.sender, "You are not the borrower");
         require(loan.isClosed, "Loan is not closed");
 

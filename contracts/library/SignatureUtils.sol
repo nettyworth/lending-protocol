@@ -45,24 +45,23 @@ library SignatureUtils {
         return _verifyHashSignature(signer, message, signature);
     }
  
- 
-    function validateSignature(
+    function validateNftDepositSignature(
         bytes calldata signature,
         address _contract,
-        uint256 tokenId,
-        address _sender
+        uint256 _tokenId,
+        address _borrower
     ) public pure returns (bool) {
         // Pack the payload
-        bytes32 freshHash = keccak256(abi.encode(_contract, tokenId, _sender));
+        bytes32 freshHash = keccak256(abi.encode(_contract, _tokenId, _borrower));
         // Get the packed payload hash
         bytes32 candidateHash = keccak256(
             abi.encodePacked("\x19Ethereum Signed Message:\n32", freshHash)
         );
         // Verify if the fresh hash is signed with the provided signature
-        return _verifyHashSignature(_sender, candidateHash, signature);
+        return _verifyHashSignature(_borrower, candidateHash, signature);
     }
  
-    function validateSignatureOffer(
+    function validateRequestLoanSignature(
         bytes calldata signature,
         uint256 tokenId,
         address _contract,
@@ -71,7 +70,7 @@ library SignatureUtils {
         uint256 _interestRate,
         uint256 _loanDuration,
         uint256 _borrowerNonce,
-        address _signer
+        address _borrower
     ) internal pure returns (bool) {
         // Pack the payload
         bytes32 freshHash = keccak256(
@@ -83,7 +82,7 @@ library SignatureUtils {
                 _interestRate,
                 _loanDuration,
                 _borrowerNonce,
-                _signer
+                _borrower
             )
         );
         // Get the packed payload hash
@@ -91,9 +90,8 @@ library SignatureUtils {
             abi.encodePacked("\x19Ethereum Signed Message:\n32", freshHash)
         );
         // Verify if the fresh hash is signed with the provided signature
-        return _verifyHashSignature(_signer, candidateHash, signature);
+        return _verifyHashSignature(_borrower, candidateHash, signature);
     }
- 
  
     function validateSignatureApprovalOffer(   
         bytes calldata signature,
