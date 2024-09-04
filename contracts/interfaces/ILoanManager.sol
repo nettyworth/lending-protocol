@@ -40,6 +40,12 @@ interface ILoanManager {
         address _borrower
     ) external view returns (Loan memory);
 
+    function getLoanId(
+        address _contract,
+        uint256 _tokenId,
+        address _borrower
+    ) external pure returns (uint256);
+
     // function createLoan(
     //    LoanData memory 
     // ) external;
@@ -55,9 +61,13 @@ interface ILoanManager {
         address _erc20Token
     ) external;
 
-    function makePayment(address _lender, uint256 _loanIndex) external payable;
+    function getPayoffAmount(uint256 _loanId) external view returns(uint256);
 
-    function redeemLoan(address _borrower, uint256 _loanIndex) external;
+    function deleteLoan(address nftColletralAddress, uint256 _tokenId ,address _borrower) external;
 
-    function getLoans(address _contract) external view returns (Loan[] memory);
+    function makePayment(uint256 _loanId) external payable;
+
+    function redeemLoan(uint256 _loanId) external;
+
+    // function getLoans(address _contract) external view returns (Loan[] memory);
 }

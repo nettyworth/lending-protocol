@@ -65,17 +65,19 @@ contract LoanManager is Ownable, ReentrancyGuard {
             "Currency ERC-20 contract address is required"
         );
         require(_lender != address(0), "Lender address is required");
-        uint256 _loanId = uint256(keccak256(abi.encodePacked(_borrower, _nftContract, _tokenId)));
+        uint256 _loanId = getLoanId(_nftContract,_tokenId,_borrower);
+        Loan memory _loans = getLoan(_nftContract,_tokenId,_borrower);
+
         
 
 
         // Create a new loan
         require(
-            loans[_loanId].nftContract == address(0),
+            _loans.nftContract == address(0),
             "Loan already created"
         );
     
-        loans[_loanId] = Loan({
+        _loans = Loan({
             nftContract: _nftContract,
             tokenId: _tokenId,
             borrower: _borrower,
@@ -89,7 +91,7 @@ contract LoanManager is Ownable, ReentrancyGuard {
             isClosed: false,
             isApproved: false
         });
-        loansIndexed[_borrower][_loanId] = loans[_loanId];
+        loansIndexed[_borrower][_loanId] = _loans;
         emit LoanCreated(_loanId,
             _nftContract,
             _tokenId,
@@ -106,21 +108,67 @@ contract LoanManager is Ownable, ReentrancyGuard {
         );
     }
 
+
+    function deleteLoan(address nftColletralAddress, uint256 _tokenId ,address _borrower) external onlyProxyManager {
+        Loan memory loan;
+        uint256 _loanId = getLoanId(nftColletralAddress,_tokenId,_borrower);
+
+        delete loans[_loanId];
+        delete loansIndexed[_borrower][_loanId];
+        delete loan;
+    }
+
     function getLoan(
         address _contract,
         uint256 _tokenId,
         address _borrower
-    ) external view returns (Loan memory) {
+    ) public view returns (Loan memory) {
         uint256 _loanId = uint256(
             keccak256(abi.encodePacked(_borrower, _contract, _tokenId))
         );
         return loans[_loanId];
     }
 
+
+    function getLoanId(
+        address _contract,
+        uint256 _tokenId,
+        address _borrower
+    ) public pure returns (uint256) {
+        uint256 _loanId = uint256(
+            keccak256(abi.encodePacked(_borrower, _contract, _tokenId))
+        );
+        return _loanId;
+    }
+
+
+//*************************************************************************************************************************************************************************************************************/e
+//*************************************************************************************************************************************************************************************************************/
+
+
+
+    function _repaymentAmount(uint256 loanAmount, uint256 interestRate,uint256 loanInitialTime,uint256 loanDuration) internal view returns(uint256){
+
+        uint256 computeInterest = loanAmount + 
+        (loanAmount * interestRate * (block.timestamp - loanInitialTime)) /
+        (100 * loanDuration);
+
+        return computeInterest;
+     }
+
+    function getPayoffAmount(uint256 _loanId) public view returns(uint256){
+        Loan memory loan = loans[_loanId];
+        require(!loan.isClosed, "Loan is closed");
+        require(loan.lender != address(0), "Loan is not assigned to a lender");
+
+        uint256 remainingAmount = _repaymentAmount(loan.loanAmount,loan.interestRate,loan.loanInitialTime,loan.loanDuration);
+
+        return remainingAmount;
+    }
     
  // From borrower
-    function makePayment(uint256 _loanIndex) external payable {
-        Loan storage loan = loans[_loanIndex];
+    function makePayment(uint256 _loanId) external payable {
+        Loan storage loan = loans[_loanId];
         require(!loan.isClosed, "Loan is closed");
         require(loan.lender != address(0), "Loan is not assigned to a lender");
 
@@ -149,8 +197,8 @@ contract LoanManager is Ownable, ReentrancyGuard {
         }
     }
 
-    function redeemLoan(uint256 _loanIndex) external nonReentrant {
-        Loan memory loan = loans[_loanIndex];
+    function redeemLoan(uint256 _loanId) external nonReentrant {
+        Loan memory loan = loans[_loanId];
         require(loan.borrower == msg.sender, "You are not the borrower");
         require(loan.isClosed, "Loan is not closed");
 

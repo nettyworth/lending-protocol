@@ -24,7 +24,7 @@ contract LoanReceipt is ERC721A, ReentrancyGuard, Ownable {
     string public baseURI;
     mapping(uint256 => string) private _tokenURIs;
     address public _proxy;
-    uint256 public maxSupply;
+    // uint256 public maxSupply;
 
     constructor(
         string memory _name,
@@ -40,6 +40,8 @@ contract LoanReceipt is ERC721A, ReentrancyGuard, Ownable {
     ) external onlyProxyManager returns (uint256) {
         require(open, "Contract closed");
         mintReceipt(lender);
+        LenderReceipt(totalSupply(),1,block.timestamp);
+
         return totalSupply();
     }
 
@@ -48,6 +50,8 @@ contract LoanReceipt is ERC721A, ReentrancyGuard, Ownable {
     ) external onlyProxyManager returns (uint256) {
         require(open, "Contract closed");
         mintReceipt(borrower);
+        BorrowerReceipt(totalSupply(),1,block.timestamp);
+
         return totalSupply();
     }
 
