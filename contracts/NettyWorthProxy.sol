@@ -68,16 +68,17 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         uint256 _tokenId,
         address _currencyERC20,
         address _lender,
+        address _borrower,
         uint256 _loanAmount
         ) internal {
         // Validate the provided signature (server-side validation)
         // Transfer the specified ERC721 token to the vault
-        _icryptoVault.deposit(msg.sender,_contract, _tokenId);
+        _icryptoVault.deposit(_borrower,_contract, _tokenId);
         // // Transfer the ERC20 amount from the borrower to the vault
         IERC20 erc20Token = IERC20(_currencyERC20);
-        erc20Token.safeTransferFrom(_lender, msg.sender, _loanAmount);
+        erc20Token.safeTransferFrom(_lender, _borrower, _loanAmount);
         // Generate promissory note nft to lender
-        uint256 receiptIdBorrower = _ireceipts.generateBorrowerReceipt(msg.sender);
+        uint256 receiptIdBorrower = _ireceipts.generateBorrowerReceipt(_borrower);
         _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdBorrower);
          uint256 receiptIdLender = _ireceipts.generateLenderReceipt(_lender);
         _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdLender);
@@ -280,6 +281,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             tokenId,
             erc20TokenAddress,
             lender,
+            borrower,
             loanAmount
             );
 
