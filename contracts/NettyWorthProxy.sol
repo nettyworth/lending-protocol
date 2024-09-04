@@ -189,7 +189,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         bytes calldata acceptOfferSignature,
         uint256 tokenId,
         address nftContractAddress,
-        address erc20TokenAddrss,
+        address erc20TokenAddress,
         uint256 loanAmount,
         uint256 interestRate,
         uint256 loanDuration,
@@ -201,9 +201,11 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         require(vault != address(0), "Vault address not set");
         require(loanManager != address(0), "Loan manager address not set");
         require(receiptContract != address(0), "Receipt contract address not set");
-        require(!_nonceUsedForUser[lender][nonce] && !_nonceUsedForUser[borrower][nonce], "Offer nonce invalid");
-        _nonceUsedForUser[lender][nonce] = true;
-        _nonceUsedForUser[borrower][nonce] = true;
+        require(!_nonceUsedForUser[msg.sender][nonce], "Nonce already used");
+        _nonceUsedForUser[msg.sender][nonce] = true;
+        // require(!_nonceUsedForUser[lender][nonce] && !_nonceUsedForUser[borrower][nonce], "Offer nonce invalid");
+        // _nonceUsedForUser[lender][nonce] = true;
+        // _nonceUsedForUser[borrower][nonce] = true;
 
         ILoanManager.LoanData memory data = ILoanManager.LoanData(
             nftContractAddress,
@@ -213,58 +215,45 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             loanAmount,
             interestRate,
             loanDuration,
-            erc20TokenAddrss,
+            erc20TokenAddress,
             nonce
-        );
-
-
-
-    //  struct LoanData {
-    //     address _contract;
-    //     uint256 _tokenId;
-    //     address _borrower;
-    //     address _lender;
-    //     uint256 _loanAmount;
-    //     uint256 _interestRate;
-    //     uint256 _loanDuration;
-    //     address _erc20Token;
-    //     uint256 nonce;
-    // }
-      
-      if(msg.sender == borrower){
-        require(
-            SignatureUtils.validateSignatureApprovalOffer(
-                acceptOfferSignature,
-                data._tokenId,
-                data._contract,
-                data._erc20Token,
-                data._loanAmount,
-                data._interestRate,
-                data._loanDuration,
-                data._lender,
-                data._nonce,
-                data._borrower
-            ),
-            "Invalid lender signature"
-        );
-      }
-      else if(msg.sender == lender){
-         require(
-            SignatureUtils.validateRequestLoanSignature(
-                acceptOfferSignature,
-                data._tokenId,
-                data._contract,
-                data._erc20Token,
-                data._loanAmount,
-                data._interestRate,
-                data._loanDuration,
-                data._nonce,
-                data._borrower
-            ),
-            "Invalid borrower signature"
-        );
-      }
-
+        );      
+        if(msg.sender == borrower){
+            require(
+                SignatureUtils.validateSignatureApprovalOffer(
+                    acceptOfferSignature,
+                    data._tokenId,
+                    data._contract,
+                    data._erc20Token,
+                    data._loanAmount,
+                    data._interestRate,
+                    data._loanDuration,
+                    data._lender,
+                    data._nonce,
+                    data._borrower
+                ),
+                "Invalid lender signature"
+            );
+        }
+        else if(msg.sender == lender){
+            require(
+                SignatureUtils.validateRequestLoanSignature(
+                    acceptOfferSignature,
+                    data._tokenId,
+                    data._contract,
+                    data._erc20Token,
+                    data._loanAmount,
+                    data._interestRate,
+                    data._loanDuration,
+                    data._nonce,
+                    data._borrower
+                ),
+                "Invalid borrower signature"
+            );
+        }
+        else {
+            revert("Unauthorized sender");
+        }
         ILoanManager.Loan memory loan = _iloanManager.getLoan(
             nftContractAddress,
             tokenId,
@@ -289,12 +278,12 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         _depositNftToEscrowAndERC20ToBorrower( 
             nftContractAddress,
             tokenId,
-            erc20TokenAddrss,
+            erc20TokenAddress,
             lender,
             loanAmount
             );
 
-        loan.isApproved =  true ;
+        loan.isApproved =  true;
 
 
         // Transfer the ERC20 amount from the borrower to the vault
@@ -350,7 +339,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         // erc20Token.safeTransferFrom(msg.sender, vault, loan.loanAmount);
 
         require(erc20Token.balanceOf(msg.sender) >=  remainingAmount ,"Insufficent balance to payloan");
-        erc20Token.safeTransferFrom(msg.sender, loan.lender,remainingAmount);
+        erc20Token.safeTransferFrom(msg.sender, loan.lender, remainingAmount);
 
         _icryptoVault.withdraw(_nftCollateralContract,_tokenId ,loan.borrower);
 

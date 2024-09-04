@@ -66,19 +66,16 @@ contract LoanManager is Ownable, ReentrancyGuard {
             "Currency ERC-20 contract address is required"
         );
         require(_lender != address(0), "Lender address is required");
-        uint256 _loanId = getLoanId(_nftContract,_tokenId,_borrower);
-        Loan memory _loans = getLoan(_nftContract,_tokenId,_borrower,_nonce);
-
-        
-
+        // uint256 _loanId = getLoanId(_nftContract,_tokenId,_borrower);
+        (, uint256 _loanId) = getLoan(_nftContract, _tokenId, _borrower, _nonce);
 
         // Create a new loan
         require(
-            _loans.nftContract == address(0),
+            loans[_loanId].nftContract == address(0),
             "Loan already created"
         );
     
-        _loans = Loan({
+        loans[_loanId] = Loan({
             nftContract: _nftContract,
             tokenId: _tokenId,
             borrower: _borrower,
@@ -92,7 +89,9 @@ contract LoanManager is Ownable, ReentrancyGuard {
             isClosed: false,
             isApproved: false
         });
-        loansIndexed[_borrower][_loanId] = _loans;
+
+        loansIndexed[_borrower][_loanId] = loans[_loanId];
+
         emit LoanCreated(_loanId,
             _nftContract,
             _tokenId,
@@ -110,38 +109,32 @@ contract LoanManager is Ownable, ReentrancyGuard {
     }
 
 
-    function deleteLoan(address nftColletralAddress, uint256 _tokenId ,address _borrower) external onlyProxyManager {
-        Loan memory loan;
-        uint256 _loanId = getLoanId(nftColletralAddress,_tokenId,_borrower);
+    // function deleteLoan(address nftColletralAddress, uint256 _tokenId ,address _borrower) external onlyProxyManager {
+    //     Loan memory loan;
+    //     uint256 _loanId = getLoanId(nftColletralAddress,_tokenId,_borrower);
 
-        delete loans[_loanId];
-        delete loansIndexed[_borrower][_loanId];
-        delete loan;
-    }
+    //     delete loans[_loanId];
+    //     delete loansIndexed[_borrower][_loanId];
+    //     delete loan;
+    // }
 
     function getLoan(
         address _contract,
         uint256 _tokenId,
         address _borrower,
         uint256 _nonce
-    ) public view returns (Loan memory) {
+    ) public view returns (Loan memory loan, uint256 loanId) {
         uint256 _loanId = uint256(
-            keccak256(abi.encodePacked(_borrower, _contract, _tokenId,_nonce))
+            keccak256(abi.encodePacked(_borrower, _contract, _tokenId, _nonce))
         );
-        return loans[_loanId];
+        loan = loans[_loanId];
+        loanId = _loanId;
+
+        return (loan , loanId);
     }
 
 
-    function getLoanId(
-        address _contract,
-        uint256 _tokenId,
-        address _borrower
-    ) public pure returns (uint256) {
-        uint256 _loanId = uint256(
-            keccak256(abi.encodePacked(_borrower, _contract, _tokenId))
-        );
-        return _loanId;
-    }
+
 
 
 //*************************************************************************************************************************************************************************************************************/e
@@ -151,11 +144,11 @@ contract LoanManager is Ownable, ReentrancyGuard {
 
     function _repaymentAmount(uint256 loanAmount, uint256 interestRate,uint256 loanInitialTime,uint256 loanDuration) internal view returns(uint256){
 
-        uint256 computeInterest = loanAmount + 
+        uint256 computeAmountWithInterest = loanAmount + 
         (loanAmount * interestRate * (block.timestamp - loanInitialTime)) /
-        (100 * loanDuration);
+        (10000 * loanDuration);
 
-        return computeInterest;
+        return computeAmountWithInterest;
      }
 
     function getPayoffAmount(uint256 _loanId) public view returns(uint256){
@@ -163,7 +156,12 @@ contract LoanManager is Ownable, ReentrancyGuard {
         require(!loan.isClosed, "Loan is closed");
         require(loan.lender != address(0), "Loan is not assigned to a lender");
 
-        uint256 remainingAmount = _repaymentAmount(loan.loanAmount,loan.interestRate,loan.loanInitialTime,loan.loanDuration);
+        uint256 remainingAmount = _repaymentAmount(
+            loan.loanAmount,
+            loan.interestRate,
+            loan.loanInitialTime,
+            loan.loanDuration
+        );
 
         return remainingAmount;
     }
@@ -178,7 +176,7 @@ contract LoanManager is Ownable, ReentrancyGuard {
             ((loan.loanAmount *
                 loan.interestRate *
                 (block.timestamp - loan.loanInitialTime)) /
-                (100 * loan.loanDuration));
+                (10000 * loan.loanDuration));
 
         require(
             msg.value <= remainingAmount,
@@ -208,7 +206,7 @@ contract LoanManager is Ownable, ReentrancyGuard {
             (loan.loanAmount *
                 loan.interestRate *
                 (block.timestamp - loan.loanInitialTime)) /
-            (100 * loan.loanDuration);
+            (10000 * loan.loanDuration);
         require(loan.totalPaid >= remainingAmount, "Loan not fully paid");
 
         IERC721(loan.nftContract).safeTransferFrom(

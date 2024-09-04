@@ -62,34 +62,34 @@ contract CryptoVault is
         emit nftDepositToEscrow(borrower, nftCollateralAddress, tokenId);
     }
 
-//*************************************************************************************************************************************************************************************************************/
-    // function of NFTfi contracts
+// //*************************************************************************************************************************************************************************************************************/
+//     // function of NFTfi contracts
 
-    function _transferNftToAddress(address _nftContract, uint256 _nftId, address _borrower) internal returns (bool) {
-    // Try to call transferFrom()
-    bool transferFromSucceeded = _attemptTransferFrom(_nftContract, _nftId, _borrower);
-    if (transferFromSucceeded) {
-        return true;
-    } else {
-        // If transferFrom fails, try calling transfer()
-        bool transferSucceeded = _attemptTransfer(_nftContract, _nftId, _borrower);
-        return transferSucceeded;
-     }
-    }
+//     function _transferNftToAddress(address _nftContract, uint256 _nftId, address _borrower) internal returns (bool) {
+//     // Try to call transferFrom()
+//     bool transferFromSucceeded = _attemptTransferFrom(_nftContract, _nftId, _borrower);
+//     if (transferFromSucceeded) {
+//         return true;
+//     } else {
+//         // If transferFrom fails, try calling transfer()
+//         bool transferSucceeded = _attemptTransfer(_nftContract, _nftId, _borrower);
+//         return transferSucceeded;
+//      }
+//     }
 
-     function _attemptTransferFrom(address _nftContract, uint256 _nftId, address _recipient) internal returns (bool) {
+//      function _attemptTransferFrom(address _nftContract, uint256 _nftId, address _recipient) internal returns (bool) {
   
-        _nftContract.call(abi.encodeWithSelector(IERC721(_nftContract).approve.selector, address(this), _nftId));
+//        _nftContract.call(abi.encodeWithSelector(IERC721(_nftContract).approve.selector, address(this), _nftId));
 
-        (bool success, ) = _nftContract.call(abi.encodeWithSelector(IERC721(_nftContract).transferFrom.selector, address(this), _recipient, _nftId));
-        return success;
-    }
+//         (bool success, ) = _nftContract.call(abi.encodeWithSelector(IERC721(_nftContract).transferFrom.selector, address(this), _recipient, _nftId));
+//         return success;
+//     }
 
-    function _attemptTransfer(address _nftContract, uint256 _nftId, address _recipient) internal returns (bool) {
+//     function _attemptTransfer(address _nftContract, uint256 _nftId, address _recipient) internal returns (bool) {
       
-        (bool success, ) = _nftContract.call(abi.encodeWithSelector(ICryptoKittiesCore(_nftContract).transfer.selector, _recipient, _nftId));
-        return success;
-    }
+//         (bool success, ) = _nftContract.call(abi.encodeWithSelector(ICryptoKittiesCore(_nftContract).transfer.selector, _recipient, _nftId));
+//         return success;
+//     }
 
 
 //*************************************************************************************************************************************************************************************************************/
@@ -115,12 +115,10 @@ contract CryptoVault is
             token.ownerOf(tokenId) == address(this),
             "The vault does not own this token"
         );
-        _transferNftToAddress(nftColletralAddress,tokenId,borrower);
+        // _transferNftToAddress(nftColletralAddress,tokenId,borrower);
 
-        // token.safeTransferFrom(address(this), msg.sender, tokenId);
+        token.safeTransferFrom(address(this), msg.sender, tokenId);
         assets[nftColletralAddress][tokenId] = address(0);
-
-
 
         emit nftWithdrawalFromEscrow(msg.sender, nftColletralAddress, tokenId);
     }
@@ -149,6 +147,7 @@ contract CryptoVault is
         uint256 tokenId,
         uint256 receiptId
     ) external onlyProxyManager {
+        require(receipts[nftColletralAddress][tokenId] == receiptId, "Receipt id does not match");
         delete receipts[nftColletralAddress][tokenId];
     }
 
