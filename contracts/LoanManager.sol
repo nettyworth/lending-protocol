@@ -52,7 +52,8 @@ contract LoanManager is Ownable, ReentrancyGuard {
         uint256 _loanAmount,
         uint256 _interestRate,
         uint256 _loanDuration,
-        address _currencyERC20
+        address _currencyERC20,
+        uint256 _nonce
     ) external onlyProxyManager {
         require(_nftContract != address(0), "NFT contract address is required");
         require(_tokenId > 0, "Token ID must be greater than 0");
@@ -66,7 +67,7 @@ contract LoanManager is Ownable, ReentrancyGuard {
         );
         require(_lender != address(0), "Lender address is required");
         uint256 _loanId = getLoanId(_nftContract,_tokenId,_borrower);
-        Loan memory _loans = getLoan(_nftContract,_tokenId,_borrower);
+        Loan memory _loans = getLoan(_nftContract,_tokenId,_borrower,_nonce);
 
         
 
@@ -121,10 +122,11 @@ contract LoanManager is Ownable, ReentrancyGuard {
     function getLoan(
         address _contract,
         uint256 _tokenId,
-        address _borrower
+        address _borrower,
+        uint256 _nonce
     ) public view returns (Loan memory) {
         uint256 _loanId = uint256(
-            keccak256(abi.encodePacked(_borrower, _contract, _tokenId))
+            keccak256(abi.encodePacked(_borrower, _contract, _tokenId,_nonce))
         );
         return loans[_loanId];
     }

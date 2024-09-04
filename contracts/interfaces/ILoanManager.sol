@@ -12,6 +12,7 @@ interface ILoanManager {
         uint256 _interestRate;
         uint256 _loanDuration;
         address _erc20Token;
+        uint256 _nonce;
     }
     struct Loan {
         address nftContract;
@@ -37,7 +38,8 @@ interface ILoanManager {
     function getLoan(
         address _contract,
         uint256 _tokenId,
-        address _borrower
+        address _borrower,
+        uint256 _nonce
     ) external view returns (Loan memory);
 
     function getLoanId(
@@ -58,7 +60,8 @@ interface ILoanManager {
         uint256 _loanAmount,
         uint256 _interestRate,
         uint256 _loanDuration,
-        address _erc20Token
+        address _erc20Token,
+        uint256 _nonce
     ) external;
 
     function getPayoffAmount(uint256 _loanId) external view returns(uint256);
