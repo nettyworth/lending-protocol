@@ -27,12 +27,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     ICryptoVault _icryptoVault;
     ILoanManager _iloanManager;
     ReceiptInterface _ireceipts;
-
-     event Loans(
-        address indexed lender,
-        address nftContract,
-        uint256 tokenId);
-
     mapping (address => mapping (uint256 => bool)) private _nonceUsedForUser;
 
     modifier onlyOwner() {
@@ -202,7 +196,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             );
 
         loan.isApproved =  true ;
-        emit Loans( lender, nftContractAddress, tokenId);
     // function makeOffer(
     //     bytes calldata offerSignature,
     //     SignatureUtils.LoanOffer memory _offer
