@@ -325,13 +325,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         );
         require(loan.isApproved, "Loan offer not approved");
         require(!loan.isClosed, "Loan is closed");
-        _iloanManager.getPayoffAmount(_loanId);
+       uint256 remainingAmount = _iloanManager.getPayoffAmount(_loanId);
         // Transfer the ERC20 amount from the borrower to the vault
         IERC20 erc20Token = IERC20(loan.currencyERC20);
         // erc20Token.safeTransferFrom(msg.sender, vault, loan.loanAmount);
 
-        require(erc20Token.balanceOf(msg.sender) >=  loan.loanAmount,"Insufficent balance to payloan");
-        erc20Token.safeTransferFrom(msg.sender, loan.lender, loan.loanAmount);
+        require(erc20Token.balanceOf(msg.sender) >=  remainingAmount ,"Insufficent balance to payloan");
+        erc20Token.safeTransferFrom(msg.sender, loan.lender,remainingAmount);
 
         _icryptoVault.withdraw(_nftCollateralContract,_tokenId ,loan.borrower);
 
