@@ -1,31 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-// Import necessary libraries and interfaces from OpenZeppelin
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./interfaces/ICryptoVault.sol";
+import "./interfaces/IReceipts.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 // CryptoVault contract that serves as a vault for ERC721 tokens
-contract CryptoVault is
-    Initializable,
-    ERC1155Holder,
-    ERC721Holder,
-    Ownable,
-    ReentrancyGuard
-{
+contract CryptoVault is Ownable {
+
     mapping(address => mapping(uint256 => address)) private assets; // Mapping to keep track of deposited ERC721 tokens
 
-    mapping(address => mapping(uint256 => uint256)) public receipts;
-
+    // mapping(address => mapping(uint256 => uint256)) public receipts;
+    using SafeERC20 for IERC20;
+    ReceiptInterface _ireceipts;
     address public _proxy; // Address of the proxy contract used for access control
 
     // Event emitted when a user deposits an ERC721 token into the vault
@@ -45,27 +33,57 @@ contract CryptoVault is
     constructor() Ownable(msg.sender) {}
 
     // Function to deposit an ERC721 token into the vault
-    function deposit(
+    // function deposit(
+    //     address borrower,
+    //     address nftCollateralAddress,
+    //     uint256 tokenId
+    // ) internal {
+    //     IERC721 nft = IERC721(nftCollateralAddress);
+    //     require(
+    //         nft.ownerOf(tokenId) == borrower,
+    //         "You are not the owner of this token"
+    //     );
+
+    //     nft.safeTransferFrom(borrower, address(this), tokenId);
+    //     assets[nftCollateralAddress][tokenId] = borrower;
+
+    //     // emit nftDepositToEscrow(borrower, nftCollateralAddress, tokenId);
+    // }
+
+    function depositNftToEscrowAndERC20ToBorrower(
+        address nftContract,
+        uint256 tokenId,
+        address currencyERC20,
+        address lender,
         address borrower,
-        address nftCollateralAddress,
-        uint256 tokenId
-    ) external onlyProxyManager {
-        IERC721 nft = IERC721(nftCollateralAddress);
+        uint256 loanAmount
+        ) external onlyProxyManager returns(uint256 receiptIdBorrower, uint256 receiptIdLender){
+
+        IERC721 nft = IERC721(nftContract);
         require(
             nft.ownerOf(tokenId) == borrower,
             "You are not the owner of this token"
         );
 
+        // Validate the provided signature (server-side validation)
+        // Transfer the specified ERC721 token to the vault
+        // deposit(_borrower,_contract, _tokenId);
+
+
         nft.safeTransferFrom(borrower, address(this), tokenId);
-        assets[nftCollateralAddress][tokenId] = borrower;
+        assets[nftContract][tokenId] = borrower;
+        // // Transfer the ERC20 amount from the borrower to the vault
+        IERC20 erc20Token = IERC20(currencyERC20);
+        erc20Token.safeTransferFrom(lender, borrower, loanAmount);
+        // Generate promissory note nft to lender
+        receiptIdBorrower = _ireceipts.generateBorrowerReceipt(nftContract,tokenId,borrower);
+        // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdBorrower);
+        receiptIdLender = _ireceipts.generateLenderReceipt(nftContract,tokenId,lender);
+        // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdLender);
+        emit nftDepositToEscrow(borrower, nftContract, tokenId);
 
-        emit nftDepositToEscrow(borrower, nftCollateralAddress, tokenId);
+        return (receiptIdBorrower,receiptIdLender);
     }
-
-// //*************************************************************************************************************************************************************************************************************/
-//*************************************************************************************************************************************************************************************************************/
-
-
 
     // Function to withdraw an ERC721 token from the vault
     function withdraw(
@@ -103,24 +121,24 @@ contract CryptoVault is
     }
 
     // Function to attach nft receipts
-    function attachReceiptToNFT(
-        address nftColletralAddress,
-        uint256 tokenId,
-        uint256 receiptId
-    ) external onlyProxyManager {
-        // In the server side database, we need to save the reference receipt, tokenAddress and tokenID
-        //That way the meetadata for the token can be set
-        receipts[nftColletralAddress][tokenId] = receiptId;
-    }
+    // function attachReceiptToNFT(
+    //     address nftColletralAddress,
+    //     uint256 tokenId,
+    //     uint256 receiptId
+    // ) external onlyProxyManager {
+    //     // In the server side database, we need to save the reference receipt, tokenAddress and tokenID
+    //     //That way the meetadata for the token can be set
+    //     receipts[nftColletralAddress][tokenId] = receiptId;
+    // }
 
-       function unattachReceiptToNFT(
-        address nftColletralAddress,
-        uint256 tokenId,
-        uint256 receiptId
-    ) external onlyProxyManager {
-        require(receipts[nftColletralAddress][tokenId] == receiptId, "Receipt id does not match");
-        delete receipts[nftColletralAddress][tokenId];
-    }
+    //    function unattachReceiptToNFT(
+    //     address nftColletralAddress,
+    //     uint256 tokenId,
+    //     uint256 receiptId
+    // ) external onlyProxyManager {
+    //     require(receipts[nftColletralAddress][tokenId] == receiptId, "Receipt id does not match");
+    //     delete receipts[nftColletralAddress][tokenId];
+    // }
 
     // Modifier to restrict certain functions to the proxy manager (orchestrator)
     modifier onlyProxyManager() {
@@ -136,7 +154,4 @@ contract CryptoVault is
         require(newProxy != address(0), "ZERO_ADDRESS");
         _proxy = newProxy;
     }
-}
-abstract contract ICryptoKittiesCore {
-    function transfer(address _to, uint256 _tokenId) external virtual;
 }

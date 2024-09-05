@@ -63,27 +63,27 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         _ireceipts = ReceiptInterface(receiptContract);
     }
     
-    function _depositNftToEscrowAndERC20ToBorrower(
-        address _contract,
-        uint256 _tokenId,
-        address _currencyERC20,
-        address _lender,
-        address _borrower,
-        uint256 _loanAmount
-        ) internal returns(uint256 receiptIdBorrower, uint256 receiptIdLender){
-        // Validate the provided signature (server-side validation)
-        // Transfer the specified ERC721 token to the vault
-        _icryptoVault.deposit(_borrower,_contract, _tokenId);
-        // // Transfer the ERC20 amount from the borrower to the vault
-        IERC20 erc20Token = IERC20(_currencyERC20);
-        erc20Token.safeTransferFrom(_lender, _borrower, _loanAmount);
-        // Generate promissory note nft to lender
-        receiptIdBorrower = _ireceipts.generateBorrowerReceipt(_contract,_tokenId,_borrower);
-        // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdBorrower);
-        receiptIdLender = _ireceipts.generateLenderReceipt(_contract,_tokenId,_lender);
-        // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdLender);
-        return (receiptIdBorrower,receiptIdLender);
-    }
+    // function _depositNftToEscrowAndERC20ToBorrower(
+    //     address _contract,
+    //     uint256 _tokenId,
+    //     address _currencyERC20,
+    //     address _lender,
+    //     address _borrower,
+    //     uint256 _loanAmount
+    //     ) internal returns(uint256 receiptIdBorrower, uint256 receiptIdLender){
+    //     // Validate the provided signature (server-side validation)
+    //     // Transfer the specified ERC721 token to the vault
+    //     _icryptoVault.deposit(_borrower,_contract, _tokenId);
+    //     // // Transfer the ERC20 amount from the borrower to the vault
+    //     IERC20 erc20Token = IERC20(_currencyERC20);
+    //     erc20Token.safeTransferFrom(_lender, _borrower, _loanAmount);
+    //     // Generate promissory note nft to lender
+    //     receiptIdBorrower = _ireceipts.generateBorrowerReceipt(_contract,_tokenId,_borrower);
+    //     // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdBorrower);
+    //     receiptIdLender = _ireceipts.generateLenderReceipt(_contract,_tokenId,_lender);
+    //     // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdLender);
+    //     return (receiptIdBorrower,receiptIdLender);
+    // }
   
 
     function claimFromEscrow(
@@ -107,7 +107,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             erc721Token.ownerOf(tokenId) == vault,
             "Token does not exist in the vault"
         );
-
+        
         // Get the loans associated with the ERC721 token and borrower
         // ILoanManager.Loan memory loan = _iloanManager.getLoan(
         //     _contract,
@@ -188,7 +188,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     //         return _data;
     //     }
 
-    function approveLoan(
+    function acceptLoanOffer(
         // bytes calldata acceptOfferSignature,
         uint256 tokenId,
         address nftContractAddress,
@@ -200,11 +200,11 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         uint256 nonce,
         address borrower
         // SignatureUtils.LoanOffer memory _loanOffer
-    ) external nonReentrant {
+    ) external nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender ){
         require(vault != address(0), "Vault address not set");
         require(loanManager != address(0), "Loan manager address not set");
         require(receiptContract != address(0), "Receipt contract address not set");
-        require(msg.sender != borrower || msg.sender != lender ,"Unauthorized sender");
+        require(msg.sender == borrower || msg.sender == lender ,"Unauthorized sender");
         // require(!_nonceUsedForUser[msg.sender][nonce], "Nonce already used");
         // _nonceUsedForUser[msg.sender][nonce] = true;
         require(!_nonceUsedForUser[lender][nonce] && !_nonceUsedForUser[borrower][nonce], "Offer nonce invalid");
@@ -257,13 +257,16 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         //     );
         // }
         (ILoanManager.Loan memory loan,) = _iloanManager.getLoan(
-            nftContractAddress,
-            tokenId,
-            borrower,
-            nonce
+            data._contract,
+            data._tokenId,
+            data._borrower,
+            data._nonce
         );
-        require(!loan.isClosed, "Loan offer is closed");
+        require(!loan.isPaid, "Loan offer is closed");
+
         require(!loan.isApproved, "Loan offer is already approved");
+
+        loan.isApproved =  true;
 
         _iloanManager.createLoan(
             data._contract,
@@ -277,18 +280,17 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             data._nonce
         );
 
-        _depositNftToEscrowAndERC20ToBorrower( 
-            nftContractAddress,
-            tokenId,
-            erc20TokenAddress,
-            lender,
-            borrower,
-            loanAmount
-            );
-
-        loan.isApproved =  true;
+        ( receiptIdBorrower, receiptIdLender ) = _icryptoVault.depositNftToEscrowAndERC20ToBorrower( 
+            data._contract,
+            data._tokenId,
+            data._erc20Token,
+            data._lender,
+            data._borrower,
+            data._loanAmount
+        );
 
 
+        return(receiptIdBorrower, receiptIdLender);
         // Transfer the ERC20 amount from the borrower to the vault
         // IERC20 erc20Token = IERC20(loan.currencyERC20);
 
@@ -374,7 +376,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         uint256 _loanId,
         uint256 _lenderReceiptId,
         uint256 _borrowerReceiptId
-    ) external {
+    ) external nonReentrant {
 
         // ILoanManager.Loan memory _loans = ILoanManager.get[_loanId];
         // uint256 _borrowerReceiptId = _ireceipts.getBorrowerReceiptId(_loans.nftContract,_loans.tokenId);
@@ -392,7 +394,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         uint256 _loanId,
         uint256 _lenderReceiptId,
         uint256 _borrowerReceiptId
-    ) external {
+    ) external nonReentrant {
         
         require(_iloanManager.payLoan(
         _loanId,
@@ -402,7 +404,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
 
     function forCloseLoan(
         uint256 _loanId
-    ) external {
+    ) external nonReentrant{
         
      require(_iloanManager.forClose(_loanId),"Close loan called failed");
     }

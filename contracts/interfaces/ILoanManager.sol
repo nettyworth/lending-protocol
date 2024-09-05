@@ -26,9 +26,9 @@ interface ILoanManager {
         uint256 interestRate;
         uint256 loanDuration;
         address currencyERC20;
-        uint256 totalPaid;
         uint256 loanInitialTime;
-        bool isClosed;
+        bool isPaid;
+        bool isDefault;
         bool isApproved;
     }
 

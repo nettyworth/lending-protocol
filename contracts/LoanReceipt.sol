@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "./ERC721A.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "./ERC721A.sol";
 
-contract LoanReceipt is ERC721A, ReentrancyGuard, Ownable {
+
+contract LoanReceipt is ERC721A, Ownable {
     struct BorrowerReceipt {
         address borrower;
         uint256 receiptId;
@@ -25,7 +25,6 @@ contract LoanReceipt is ERC721A, ReentrancyGuard, Ownable {
     mapping (address => mapping(uint256 => LenderReceipt )) private _lenderReceipt;
 
     address public _proxy;
-    // uint256 public maxSupply;
 
     constructor(
         string memory _name,
