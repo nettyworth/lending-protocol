@@ -15,9 +15,13 @@ interface ReceiptInterface {
         uint256 timestamp;
     }
 
-    function generateLenderReceipt(address lender) external returns (uint256);
+    function getBorrowerReceiptId(address nftContractAddress, uint256 tokenId)external view returns(BorrowerReceipt memory);
 
-    function generateBorrowerReceipt(address borrower) external returns (uint256);
+    function getLenderReceiptId(address nftContractAddress, uint256 tokenId)external view returns(LenderReceipt memory);
+
+    function generateLenderReceipt(address nftContractAddress, uint256 tokenId,address lender) external returns (uint256);
+
+    function generateBorrowerReceipt(address nftContractAddress, uint256 tokenId, address borrower) external returns (uint256);
 
     function burnReceipt(uint256 tokenId) external;
 

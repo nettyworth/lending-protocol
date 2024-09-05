@@ -8,21 +8,22 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract LoanReceipt is ERC721A, ReentrancyGuard, Ownable {
     struct BorrowerReceipt {
-        uint256 loanIndex;
-        uint256 amount;
-        uint256 timestamp;
+        address borrower;
+        uint256 receiptId;
     }
 
     struct LenderReceipt {
-        uint256 loanIndex;
-        uint256 amount;
-        uint256 timestamp;
+        address lender;
+        uint256 receiptId;
     }
 
     using Strings for uint256;
     bool public open;
     string public baseURI;
     mapping(uint256 => string) private _tokenURIs;
+    mapping (address => mapping(uint256 => BorrowerReceipt )) private _borrowerReceipt;
+    mapping (address => mapping(uint256 => LenderReceipt )) private _lenderReceipt;
+
     address public _proxy;
     // uint256 public maxSupply;
 
@@ -31,31 +32,45 @@ contract LoanReceipt is ERC721A, ReentrancyGuard, Ownable {
         string memory _symbol
     ) ERC721A(_name, _symbol) Ownable(msg.sender) {}
 
-    function mintReceipt(address to) internal {
+    function getBorrowerReceiptId(address nftContractAddress, uint256 tokenId)external view returns(BorrowerReceipt memory){
+        return  _borrowerReceipt[nftContractAddress][tokenId];
+    }
+
+    function getLenderReceiptId(address nftContractAddress, uint256 tokenId)external view returns(LenderReceipt memory){
+        return  _lenderReceipt[nftContractAddress][tokenId];
+    }
+
+    function mintReceipt(address to) internal  {
         _safeMint(to, 1);
     }
 
     function generateLenderReceipt(
+        address nftContractAddress,
+        uint256 tokenId,
         address lender
     ) external onlyProxyManager returns (uint256) {
         require(open, "Contract closed");
         mintReceipt(lender);
-        LenderReceipt(totalSupply(),1,block.timestamp);
+        uint256 nftId = _nextTokenId() - 1;
+        _lenderReceipt[nftContractAddress][tokenId] = LenderReceipt(lender, nftId);
 
-        return totalSupply();
+        return nftId;
     }
 
     function generateBorrowerReceipt(
+        address nftContractAddress,
+        uint256 tokenId,
         address borrower
     ) external onlyProxyManager returns (uint256) {
         require(open, "Contract closed");
         mintReceipt(borrower);
-        BorrowerReceipt(totalSupply(),1,block.timestamp);
+         uint256 nftId = _nextTokenId() - 1;
+        _borrowerReceipt[nftContractAddress][tokenId] = BorrowerReceipt(borrower,nftId);
 
-        return totalSupply();
+        return nftId;
     }
 
-    function burnReceipt(uint256 _tokenId) external {
+    function burnReceipt(uint256 _tokenId) external onlyProxyManager {
         _burn(_tokenId);
     }
 

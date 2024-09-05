@@ -70,7 +70,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         address _lender,
         address _borrower,
         uint256 _loanAmount
-        ) internal {
+        ) internal returns(uint256 receiptIdBorrower, uint256 receiptIdLender){
         // Validate the provided signature (server-side validation)
         // Transfer the specified ERC721 token to the vault
         _icryptoVault.deposit(_borrower,_contract, _tokenId);
@@ -78,11 +78,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         IERC20 erc20Token = IERC20(_currencyERC20);
         erc20Token.safeTransferFrom(_lender, _borrower, _loanAmount);
         // Generate promissory note nft to lender
-        uint256 receiptIdBorrower = _ireceipts.generateBorrowerReceipt(_borrower);
-        _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdBorrower);
-         uint256 receiptIdLender = _ireceipts.generateLenderReceipt(_lender);
-        _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdLender);
+        receiptIdBorrower = _ireceipts.generateBorrowerReceipt(_contract,_tokenId,_borrower);
+        // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdBorrower);
+        receiptIdLender = _ireceipts.generateLenderReceipt(_contract,_tokenId,_lender);
+        // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdLender);
+        return (receiptIdBorrower,receiptIdLender);
     }
+  
 
     function claimFromEscrow(
         uint256 tokenId,
@@ -187,7 +189,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     //     }
 
     function approveLoan(
-        bytes calldata acceptOfferSignature,
+        // bytes calldata acceptOfferSignature,
         uint256 tokenId,
         address nftContractAddress,
         address erc20TokenAddress,
@@ -221,40 +223,40 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             nonce
         );      
 
-        if(msg.sender == borrower){
-            require(
-                SignatureUtils.validateSignatureApprovalOffer(
-                    acceptOfferSignature,
-                    data._tokenId,
-                    data._contract,
-                    data._erc20Token,
-                    data._loanAmount,
-                    data._interestRate,
-                    data._loanDuration,
-                    data._lender,
-                    data._nonce,
-                    data._borrower
-                ),
-                "Invalid lender signature"
-            );
-        }
-        else if(msg.sender == lender){
-            require(
-                SignatureUtils.validateRequestLoanSignature(
-                    acceptOfferSignature,
-                    data._tokenId,
-                    data._contract,
-                    data._erc20Token,
-                    data._loanAmount,
-                    data._interestRate,
-                    data._loanDuration,
-                    data._nonce,
-                    data._borrower
-                ),
-                "Invalid borrower signature"
-            );
-        }
-        ILoanManager.Loan memory loan = _iloanManager.getLoan(
+        // if(msg.sender == borrower){
+        //     require(
+        //         SignatureUtils.validateSignatureApprovalOffer(
+        //             acceptOfferSignature,
+        //             data._tokenId,
+        //             data._contract,
+        //             data._erc20Token,
+        //             data._loanAmount,
+        //             data._interestRate,
+        //             data._loanDuration,
+        //             data._lender,
+        //             data._nonce,
+        //             data._borrower
+        //         ),
+        //         "Invalid lender signature"
+        //     );
+        // }
+        // else if(msg.sender == lender){
+        //     require(
+        //         SignatureUtils.validateRequestLoanSignature(
+        //             acceptOfferSignature,
+        //             data._tokenId,
+        //             data._contract,
+        //             data._erc20Token,
+        //             data._loanAmount,
+        //             data._interestRate,
+        //             data._loanDuration,
+        //             data._nonce,
+        //             data._borrower
+        //         ),
+        //         "Invalid borrower signature"
+        //     );
+        // }
+        (ILoanManager.Loan memory loan,) = _iloanManager.getLoan(
             nftContractAddress,
             tokenId,
             borrower,
@@ -306,56 +308,103 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
 
     // Function called by lender
 
-    function payLoan(
-        uint256 _receiptId,
-        address _nftCollateralContract,
-        uint256 _tokenId,
-        uint256 _nonce
-    )
-        external
-        // address _lender
-        nonReentrant
-    {
-        require(_ireceipts.tokenExist(_receiptId), "Receipt does not exist");
+    // function payLoan(
+    //     uint256 _receiptId,
+    //     address _nftCollateralContract,
+    //     uint256 _tokenId,
+    //     uint256 _nonce
+    // )
+    //     external
+    //     // address _lender
+    //     nonReentrant
+    // {
+    //     require(_ireceipts.tokenExist(_receiptId), "Receipt does not exist");
 
-        address lender = _ireceipts.ownerOf(_receiptId);  // borrower address 
-        // address borrower = _ireceipts.ownerOf(receiptId + 1);
-        ILoanManager.Loan memory loan = _iloanManager.getLoan(
-            _nftCollateralContract,
-            _tokenId,
-            lender,
-            _nonce
-        );
+    //     address lender = _ireceipts.ownerOf(_receiptId);  // borrower address 
+    //     // address borrower = _ireceipts.ownerOf(receiptId + 1);
+    //     ILoanManager.Loan memory loan = _iloanManager.getLoan(
+    //         _nftCollateralContract,
+    //         _tokenId,
+    //         lender,
+    //         _nonce
+    //     );
 
-          uint256 _loanId = _iloanManager.getLoanId(
-            _nftCollateralContract,
-            _tokenId,
-            lender
-        );
-        require(loan.isApproved, "Loan offer not approved");
-        require(!loan.isClosed, "Loan is closed");
-       uint256 remainingAmount = _iloanManager.getPayoffAmount(_loanId);
-        // Transfer the ERC20 amount from the borrower to the vault
-        IERC20 erc20Token = IERC20(loan.currencyERC20);
-        // erc20Token.safeTransferFrom(msg.sender, vault, loan.loanAmount);
+    //       uint256 _loanId = _iloanManager.getLoanId(
+    //         _nftCollateralContract,
+    //         _tokenId,
+    //         lender
+    //     );
+    //     require(loan.isApproved, "Loan offer not approved");
+    //     require(!loan.isClosed, "Loan is closed");
+    //    uint256 remainingAmount = _iloanManager.getPayoffAmount(_loanId);
+    //     // Transfer the ERC20 amount from the borrower to the vault
+    //     IERC20 erc20Token = IERC20(loan.currencyERC20);
+    //     // erc20Token.safeTransferFrom(msg.sender, vault, loan.loanAmount);
 
-        require(erc20Token.balanceOf(msg.sender) >=  remainingAmount ,"Insufficent balance to payloan");
-        erc20Token.safeTransferFrom(msg.sender, loan.lender, remainingAmount);
+    //     require(erc20Token.balanceOf(msg.sender) >=  remainingAmount ,"Insufficent balance to payloan");
+    //     erc20Token.safeTransferFrom(msg.sender, loan.lender, remainingAmount);
 
-        _icryptoVault.withdraw(_nftCollateralContract,_tokenId ,loan.borrower);
+    //     _icryptoVault.withdraw(_nftCollateralContract,_tokenId ,loan.borrower);
 
-        loan.isClosed = true;
+    //     loan.isClosed = true;
 
-        _icryptoVault.unattachReceiptToNFT(_nftCollateralContract, _tokenId, _receiptId);
+    //     _icryptoVault.unattachReceiptToNFT(_nftCollateralContract, _tokenId, _receiptId);
 
-        _ireceipts.burnReceipt(_receiptId);
+    //     _ireceipts.burnReceipt(_receiptId);
         
-        _iloanManager.deleteLoan(_nftCollateralContract, _tokenId, loan.borrower);
+    //     _iloanManager.deleteLoan(_nftCollateralContract, _tokenId, loan.borrower);
 
-        //  uint256 receiptIdLender = _ireceipts.generateLenderReceipt(msg.sender);
-        // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdLender);
+    //     //  uint256 receiptIdLender = _ireceipts.generateLenderReceipt(msg.sender);
+    //     // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdLender);
 
-        //_iloanManager.updateLoan(_contract, _tokenId, lender, loan);
+    //     //_iloanManager.updateLoan(_contract, _tokenId, lender, loan);
+    // }
+
+
+    //  function payLoan(
+    //     IERC20 erc20Token,
+    //     uint256 _loanId,
+    //     uint256 _lenderReceiptId,
+    //     uint256 _borrowerReceiptId
+    // )
+
+
+    function payBackLoan(
+        IERC20 erc20Token,
+        uint256 _loanId,
+        uint256 _lenderReceiptId,
+        uint256 _borrowerReceiptId
+    ) external {
+
+        // ILoanManager.Loan memory _loans = ILoanManager.get[_loanId];
+        // uint256 _borrowerReceiptId = _ireceipts.getBorrowerReceiptId(_loans.nftContract,_loans.tokenId);
+        // uint256 _lenderReceiptId = _ireceipts.getLenderReceiptId(_loans.nftContract,_loans.tokenId);
+
+        require(_iloanManager.payLoan(  erc20Token,
+        _loanId,
+        _lenderReceiptId,
+        _borrowerReceiptId),"PayBack loan failed");
+
+    }
+
+
+    function payBackLoan(
+        uint256 _loanId,
+        uint256 _lenderReceiptId,
+        uint256 _borrowerReceiptId
+    ) external {
+        
+        require(_iloanManager.payLoan(
+        _loanId,
+        _lenderReceiptId,
+        _borrowerReceiptId),"PayBack loan failed");
+    }
+
+    function forCloseLoan(
+        uint256 _loanId
+    ) external {
+        
+     require(_iloanManager.forClose(_loanId),"Close loan called failed");
     }
 
     function claimToken(

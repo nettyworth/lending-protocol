@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+
 interface ILoanManager {
 
     struct LoanData {
@@ -40,13 +43,13 @@ interface ILoanManager {
         uint256 _tokenId,
         address _borrower,
         uint256 _nonce
-    ) external view returns (Loan memory);
+    ) external view returns (Loan memory loan, uint256 loanId);
 
-    function getLoanId(
-        address _contract,
-        uint256 _tokenId,
-        address _borrower
-    ) external pure returns (uint256);
+    // function getLoanId(
+    //     address _contract,
+    //     uint256 _tokenId,
+    //     address _borrower
+    // ) external pure returns (uint256);
 
     // function createLoan(
     //    LoanData memory 
@@ -63,6 +66,21 @@ interface ILoanManager {
         address _erc20Token,
         uint256 _nonce
     ) external;
+
+    function payLoan(
+        IERC20 erc20Token,
+        uint256 _loanId,
+        uint256 _lenderReceiptId,
+        uint256 _borrowerReceiptId
+    ) external  returns(bool);
+
+    function payLoan(
+        uint256 _loanId,
+        uint256 _lenderReceiptId,
+        uint256 _borrowerReceiptId
+    ) external  returns(bool);
+
+    function forClose(uint256 _loanId) external returns(bool);
 
     function getPayoffAmount(uint256 _loanId) external view returns(uint256);
 
