@@ -55,6 +55,7 @@ contract LoanManager is Ownable, ReentrancyGuard {
         address _currencyERC20,
         uint256 _nonce
     ) external onlyProxyManager {
+
         require(_nftContract != address(0), "NFT contract address is required");
         require(_tokenId > 0, "Token ID must be greater than 0");
         require(_borrower != address(0), "Borrower address is required");

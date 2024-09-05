@@ -202,11 +202,12 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         require(vault != address(0), "Vault address not set");
         require(loanManager != address(0), "Loan manager address not set");
         require(receiptContract != address(0), "Receipt contract address not set");
-        require(!_nonceUsedForUser[msg.sender][nonce], "Nonce already used");
-        _nonceUsedForUser[msg.sender][nonce] = true;
-        // require(!_nonceUsedForUser[lender][nonce] && !_nonceUsedForUser[borrower][nonce], "Offer nonce invalid");
-        // _nonceUsedForUser[lender][nonce] = true;
-        // _nonceUsedForUser[borrower][nonce] = true;
+        require(msg.sender != borrower || msg.sender != lender ,"Unauthorized sender");
+        // require(!_nonceUsedForUser[msg.sender][nonce], "Nonce already used");
+        // _nonceUsedForUser[msg.sender][nonce] = true;
+        require(!_nonceUsedForUser[lender][nonce] && !_nonceUsedForUser[borrower][nonce], "Offer nonce invalid");
+        _nonceUsedForUser[lender][nonce] = true;
+        _nonceUsedForUser[borrower][nonce] = true;
 
         ILoanManager.LoanData memory data = ILoanManager.LoanData(
             nftContractAddress,
@@ -219,6 +220,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             erc20TokenAddress,
             nonce
         );      
+
         if(msg.sender == borrower){
             require(
                 SignatureUtils.validateSignatureApprovalOffer(
@@ -251,9 +253,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
                 ),
                 "Invalid borrower signature"
             );
-        }
-        else {
-            revert("Unauthorized sender");
         }
         ILoanManager.Loan memory loan = _iloanManager.getLoan(
             nftContractAddress,
