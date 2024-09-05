@@ -141,13 +141,17 @@ contract LoanManager is Ownable, ReentrancyGuard {
 //*************************************************************************************************************************************************************************************************************/e
 //*************************************************************************************************************************************************************************************************************/
 
-
-
     function _repaymentAmount(uint256 loanAmount, uint256 interestRate,uint256 loanInitialTime,uint256 loanDuration) internal view returns(uint256){
 
-        uint256 computeAmountWithInterest = loanAmount + 
-        (loanAmount * interestRate * (block.timestamp - loanInitialTime)) /
-        (10000 * loanDuration);
+        uint256 timeElapsed = block.timestamp - loanInitialTime;
+
+        uint256 interestAccrued = (loanAmount * interestRate * (timeElapsed)) / (10000 * loanDuration);
+
+        uint256 computeAmountWithInterest = loanAmount + interestAccrued;
+
+        // uint256 computeAmountWithInterest = loanAmount + 
+        // (loanAmount * interestRate * (timeElapsed)) /
+        // (10000 * loanDuration);
 
         return computeAmountWithInterest;
      }

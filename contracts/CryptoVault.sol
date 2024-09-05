@@ -63,35 +63,6 @@ contract CryptoVault is
     }
 
 // //*************************************************************************************************************************************************************************************************************/
-//     // function of NFTfi contracts
-
-//     function _transferNftToAddress(address _nftContract, uint256 _nftId, address _borrower) internal returns (bool) {
-//     // Try to call transferFrom()
-//     bool transferFromSucceeded = _attemptTransferFrom(_nftContract, _nftId, _borrower);
-//     if (transferFromSucceeded) {
-//         return true;
-//     } else {
-//         // If transferFrom fails, try calling transfer()
-//         bool transferSucceeded = _attemptTransfer(_nftContract, _nftId, _borrower);
-//         return transferSucceeded;
-//      }
-//     }
-
-//      function _attemptTransferFrom(address _nftContract, uint256 _nftId, address _recipient) internal returns (bool) {
-  
-//        _nftContract.call(abi.encodeWithSelector(IERC721(_nftContract).approve.selector, address(this), _nftId));
-
-//         (bool success, ) = _nftContract.call(abi.encodeWithSelector(IERC721(_nftContract).transferFrom.selector, address(this), _recipient, _nftId));
-//         return success;
-//     }
-
-//     function _attemptTransfer(address _nftContract, uint256 _nftId, address _recipient) internal returns (bool) {
-      
-//         (bool success, ) = _nftContract.call(abi.encodeWithSelector(ICryptoKittiesCore(_nftContract).transfer.selector, _recipient, _nftId));
-//         return success;
-//     }
-
-
 //*************************************************************************************************************************************************************************************************************/
 
 
@@ -108,7 +79,7 @@ contract CryptoVault is
         );
 
         require(assets[nftColletralAddress][tokenId]== borrower,
-        "Caller is not the owner "); // added by op
+        "Caller is not the owner "); // added
 
         IERC721 token = IERC721(nftColletralAddress);
         require(
