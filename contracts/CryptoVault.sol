@@ -2,18 +2,20 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "./interfaces/IReceipts.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 // CryptoVault contract that serves as a vault for ERC721 tokens
-contract CryptoVault is Ownable {
+contract CryptoVault is ERC721Holder, Ownable {
 
     mapping(address => mapping(uint256 => address)) private assets; // Mapping to keep track of deposited ERC721 tokens
 
     // mapping(address => mapping(uint256 => uint256)) public receipts;
     using SafeERC20 for IERC20;
-    ReceiptInterface _ireceipts;
+    ReceiptInterface public _ireceipts;
     address public _proxy; // Address of the proxy contract used for access control
 
     // Event emitted when a user deposits an ERC721 token into the vault
@@ -50,6 +52,14 @@ contract CryptoVault is Ownable {
     //     // emit nftDepositToEscrow(borrower, nftCollateralAddress, tokenId);
     // }
 
+    function setReceiptContract(address _receiptContract) public onlyOwner {
+        require(_receiptContract != address(0), "Invalid address");
+        // receiptContract = _receiptContract;
+        _ireceipts = ReceiptInterface(_receiptContract);
+    }
+
+
+// need to be updated
     function depositNftToEscrowAndERC20ToBorrower(
         address nftContract,
         uint256 tokenId,
@@ -57,7 +67,9 @@ contract CryptoVault is Ownable {
         address lender,
         address borrower,
         uint256 loanAmount
-        ) external onlyProxyManager returns(uint256 receiptIdBorrower, uint256 receiptIdLender){
+        ) external onlyProxyManager  
+        // returns(uint256 receiptIdBorrower, uint256 receiptIdLender)
+        {
 
         IERC721 nft = IERC721(nftContract);
         require(
@@ -76,42 +88,105 @@ contract CryptoVault is Ownable {
         IERC20 erc20Token = IERC20(currencyERC20);
         erc20Token.safeTransferFrom(lender, borrower, loanAmount);
         // Generate promissory note nft to lender
-        receiptIdBorrower = _ireceipts.generateBorrowerReceipt(nftContract,tokenId,borrower);
+        // receiptIdBorrower = _ireceipts.generateBorrowerReceipt(nftContract,tokenId,borrower);
         // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdBorrower);
-        receiptIdLender = _ireceipts.generateLenderReceipt(nftContract,tokenId,lender);
+        // receiptIdLender = _ireceipts.generateLenderReceipt(nftContract,tokenId,lender);
         // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdLender);
         emit nftDepositToEscrow(borrower, nftContract, tokenId);
 
-        return (receiptIdBorrower,receiptIdLender);
+        // return (receiptIdBorrower,receiptIdLender);
+        // return (1,2);
+
     }
 
     // Function to withdraw an ERC721 token from the vault
-    function withdraw(
-        address nftColletralAddress,
+    function withdrawNftFromEscrowAndERC20ToLender(
+      address nftContract,
         uint256 tokenId,
-        address borrower
+        address borrower,
+        address lender,
+        uint256 remainingAmount,
+        address currencyERC20
     ) external onlyProxyManager {
         require(
-            assets[nftColletralAddress][tokenId] != address(0),
+            assets[nftContract][tokenId] != address(0),
             "This token is not stored in the vault"
         );
-
-        require(assets[nftColletralAddress][tokenId]== borrower,
+        require(assets[nftContract][tokenId]== borrower,
         "Caller is not the owner "); // added
-
-        IERC721 token = IERC721(nftColletralAddress);
+        IERC20 erc20Token = IERC20(currencyERC20);
+        require(erc20Token != IERC20(address(0)), "You have to pay loan via native currency");
+        require(erc20Token.balanceOf(borrower) >= remainingAmount ,"Insufficent balance to payloan");
+        IERC721 token = IERC721(nftContract);
         require(
             token.ownerOf(tokenId) == address(this),
             "The vault does not own this token"
         );
         // _transferNftToAddress(nftColletralAddress,tokenId,borrower);
 
-        token.safeTransferFrom(address(this), msg.sender, tokenId);
-        assets[nftColletralAddress][tokenId] = address(0);
+        erc20Token.safeTransferFrom(borrower, lender, remainingAmount);
 
-        emit nftWithdrawalFromEscrow(msg.sender, nftColletralAddress, tokenId);
+        token.safeTransferFrom(address(this),borrower, tokenId);
+
+        assets[nftContract][tokenId] = address(0);
+
+        emit nftWithdrawalFromEscrow(borrower, nftContract, tokenId);
+    }
+    
+        // Function to withdraw an ERC721 token from the vault
+    function withdrawNftFromEscrow(
+      address nftContract,
+        uint256 tokenId,
+        address borrower
+    ) external onlyProxyManager {
+        require(
+            assets[nftContract][tokenId] != address(0),
+            "This token is not stored in the vault"
+        );
+        require(assets[nftContract][tokenId]== borrower,
+        "Caller is not the owner "); // added
+
+        IERC721 token = IERC721(nftContract);
+        require(
+            token.ownerOf(tokenId) == address(this),
+            "The vault does not own this token"
+        );
+        // _transferNftToAddress(nftColletralAddress,tokenId,borrower);
+
+        token.safeTransferFrom(address(this), borrower, tokenId);
+
+        assets[nftContract][tokenId] = address(0);
+
+        emit nftWithdrawalFromEscrow(borrower, nftContract, tokenId);
     }
 
+          // Function to withdraw an ERC721 token from the vault
+    function withdrawNftFromEscrow(
+      address nftContract,
+        uint256 tokenId,
+        address borrower,
+        address lender
+    ) external onlyProxyManager {
+        require(
+            assets[nftContract][tokenId] != address(0),
+            "This token is not stored in the vault"
+        );
+        require(assets[nftContract][tokenId]== borrower,
+        "Caller is not the owner "); // added
+
+        IERC721 token = IERC721(nftContract);
+        require(
+            token.ownerOf(tokenId) == address(this),
+            "The vault does not own this token"
+        );
+        // _transferNftToAddress(nftColletralAddress,tokenId,borrower);
+
+        token.safeTransferFrom(address(this), lender, tokenId);
+
+        assets[nftContract][tokenId] = address(0);
+
+        emit nftWithdrawalFromEscrow(lender, nftContract, tokenId);
+    }
     // Function to check if an ERC721 token is stored in the vault
     function AssetStoredOwner(
         address tokenAddress,

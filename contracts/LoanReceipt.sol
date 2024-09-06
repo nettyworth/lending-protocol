@@ -31,12 +31,16 @@ contract LoanReceipt is ERC721A, Ownable {
         string memory _symbol
     ) ERC721A(_name, _symbol) Ownable(msg.sender) {}
 
-    function getBorrowerReceiptId(address nftContractAddress, uint256 tokenId)external view returns(BorrowerReceipt memory){
-        return  _borrowerReceipt[nftContractAddress][tokenId];
+    function getBorrowerReceiptId(address nftContractAddress, uint256 tokenId)external view returns(uint256 borrowerReceiptId, address borrowerAddress){
+        borrowerReceiptId = _borrowerReceipt[nftContractAddress][tokenId].receiptId;
+        borrowerAddress = _borrowerReceipt[nftContractAddress][tokenId].borrower;
+        return  (borrowerReceiptId, borrowerAddress );
     }
 
-    function getLenderReceiptId(address nftContractAddress, uint256 tokenId)external view returns(LenderReceipt memory){
-        return  _lenderReceipt[nftContractAddress][tokenId];
+    function getLenderReceiptId(address nftContractAddress, uint256 tokenId)external view returns(uint256 lenderReceiptId, address lenderAddress){
+        lenderReceiptId = _lenderReceipt[nftContractAddress][tokenId].receiptId;
+        lenderAddress = _lenderReceipt[nftContractAddress][tokenId].lender;
+        return  (lenderReceiptId, lenderAddress );
     }
 
     function mintReceipt(address to) internal  {

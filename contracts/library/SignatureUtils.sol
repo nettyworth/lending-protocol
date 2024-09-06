@@ -23,7 +23,7 @@ library SignatureUtils {
     struct LoanOffer {
         uint256 tokenId;           
         address nftContractAddress;
-        address erc20TokenAddrss;
+        address erc20TokenAddress;
         address lender;
         address borrower;
         uint256 loanAmount;
@@ -79,7 +79,7 @@ library SignatureUtils {
             abi.encode(
                 loanOffer.tokenId,
                 loanOffer.nftContractAddress,
-                loanOffer.erc20TokenAddrss,
+                loanOffer.erc20TokenAddress,
                 loanOffer.borrower,
                 loanOffer.loanAmount,
                 loanOffer.interestRate,
@@ -136,7 +136,7 @@ library SignatureUtils {
             abi.encode(
                 loanOffer.tokenId,
                 loanOffer.nftContractAddress,
-                loanOffer.erc20TokenAddrss,
+                loanOffer.erc20TokenAddress,
                 loanOffer.lender,
                 loanOffer.borrower,
                 loanOffer.loanAmount,
