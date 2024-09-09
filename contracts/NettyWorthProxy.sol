@@ -176,15 +176,20 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         return (_receiptIdBorrower, _receiptIdLender);
     }
 
+ function acceptLoanRequest(
+        bytes calldata acceptRequestSignature,
+        SignatureUtils.LoanRequest calldata loanRequest
+    ) external nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender) {
 
-    function acceptLoanOffer(
-        // bytes calldata acceptOfferSignature,
-        SignatureUtils.LoanOffer calldata loanOffer
-    ) external nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender ) {
+        // require(msg.sender == loanOffer.borrower || msg.sender == loanOffer.lender ,"Unauthorized sender");
 
-        require(msg.sender == loanOffer.borrower || msg.sender == loanOffer.lender ,"Unauthorized sender");
-
-        _sanityCheckAcceptOffer(loanOffer.nftContractAddress,loanOffer.lender,loanOffer.borrower,loanOffer.loanDuration,loanOffer.nonce);
+        _sanityCheckAcceptOffer(
+            loanRequest.nftContractAddress,
+            msg.sender, //loanOffer.lender,
+            loanRequest.borrower,
+            loanRequest.loanDuration,
+            loanRequest.nonce
+        );
      
         // if(loanOffer.borrower == msg.sender){
         //     require(
@@ -194,6 +199,57 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         //         ),
         //         "Invalid lender signature"
         //     );
+        // }
+        // if(loanOffer.lender == msg.sender){
+            require(
+                SignatureUtils.validateRequestLoanSignature(
+                    acceptRequestSignature,
+                    loanRequest
+                ),
+                "Invalid borrower signature"
+            );
+        // }
+
+       (receiptIdBorrower, receiptIdLender) = _acceptOffer(loanRequest.nftContractAddress,
+            loanRequest.tokenId,
+            loanRequest.borrower,
+            msg.sender,//loanRequest.lender,
+            loanRequest.loanAmount,
+            loanRequest.interestRate,
+            loanRequest.loanDuration,
+            loanRequest.erc20TokenAddress,
+            loanRequest.nonce
+        );
+
+        // receiptIdBorrower = _ireceipts.generateBorrowerReceipt(loanOffer.nftContractAddress,loanOffer.tokenId,loanOffer.borrower);
+        // receiptIdLender = _ireceipts.generateLenderReceipt(loanOffer.nftContractAddress,loanOffer.tokenId,loanOffer.lender);
+
+        return(receiptIdBorrower, receiptIdLender);
+    }
+
+    function acceptLoanOffer(
+        bytes calldata acceptOfferSignature,
+        SignatureUtils.LoanOffer calldata loanOffer
+    ) external nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender ) {
+
+        require(msg.sender == loanOffer.borrower || msg.sender == loanOffer.lender ,"Unauthorized sender");
+
+        _sanityCheckAcceptOffer(
+            loanOffer.nftContractAddress,
+            loanOffer.lender,
+            loanOffer.borrower,
+            loanOffer.loanDuration,
+            loanOffer.nonce
+        );
+     
+        // if(loanOffer.borrower == msg.sender){
+            require(
+                SignatureUtils.validateSignatureApprovalOffer(
+                    acceptOfferSignature,
+                    loanOffer
+                ),
+                "Invalid lender signature"
+            );
         // }
         // else if(loanOffer.lender ==msg.sender){
         //     require(
@@ -227,6 +283,8 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         SignatureUtils.LoanCollectionOffer calldata loanCollectionOffer,
         uint256 tokenId
     ) external nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender ) {
+        IERC721 nft = IERC721(loanCollectionOffer.collectionAddress);
+        require(nft.ownerOf(tokenId) == msg.sender, "Current caller is not the owner of NFT");
 
         _sanityCheckAcceptOffer(loanCollectionOffer.collectionAddress,loanCollectionOffer.lender,msg.sender,loanCollectionOffer.loanDuration,loanCollectionOffer.nonce);
 
@@ -238,7 +296,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         //         "Invalid lender signature"
         //     );
 
-       (receiptIdBorrower, receiptIdLender) =_acceptOffer(loanCollectionOffer.collectionAddress,
+       (receiptIdBorrower, receiptIdLender) = _acceptOffer(loanCollectionOffer.collectionAddress,
             tokenId,
             msg.sender,
             loanCollectionOffer.lender,
@@ -278,7 +336,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         _ireceipts.burnReceipt(_borrowerReceiptId);
         
         _iloanManager.updateIsPaid(_loanId, true);
-
 
         emit LoanRepaid(
             _loanId,
