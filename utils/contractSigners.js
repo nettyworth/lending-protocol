@@ -25,35 +25,36 @@ const signOffer = async function (
   tokenId,
   contract,
   erc20TokenAddress,
+  lender,
+  borrower,
   loanAmount,
   interestRate,
   loanDuration,
-  lender,
-  lenderNonce,
-  borrower
+  nonce,
 ) {
   const encoded = ethers.utils.defaultAbiCoder.encode(
     [
       "uint256",
       "address",
       "address",
-      "uint256",
-      "uint256",
-      "uint256",
+      "address",
       "address",
       "uint256",
-      "address",
+      "uint256",
+      "uint256",
+      "uint256",
+    
     ],
     [
       tokenId,
       contract,
       erc20TokenAddress,
+      lender,
+      borrower,
       loanAmount,
       interestRate,
       loanDuration,
-      lender,
-      lenderNonce,
-      borrower,
+      nonce,
     ]
   );
   return sign(encoded);
@@ -113,15 +114,16 @@ function sign(encoded) {
 const main = async () => {
   const getsign = await signOffer(
     1,
-    "0xe62b5Fa383dFfbD2e9ad429155612d7fAAEDBA04",
-    "0x08f7Cde6109a74BA43Eaf316e5DaD5D27f63Ff7B",
-    10000000000000000000n,
-    20,
-    1727936604,
+    "0xe9318493C0fD30140AFa8ECc47467B36DA23855e",
+    "0x4E2b47AdCFcEB40c0bb1Dd283a7E539B26CFF8c4",
     "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
-    223898,
-    "0xa611531661B5649688605a16ca7a245980F69A99"
+    "0xa611531661B5649688605a16ca7a245980F69A99",
+    10000000000000000000n,
+    2000,
+    1728482023,
+    12345, 
   );
+
 
   console.log("Sign Offer signature", getsign);
 
@@ -155,3 +157,25 @@ main();
 //   signOffer,
 //   signCreateLoan,
 // };
+
+
+// [1,
+// "0xe9318493C0fD30140AFa8ECc47467B36DA23855e",
+// "0x4E2b47AdCFcEB40c0bb1Dd283a7E539B26CFF8c4",
+// "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
+// "0xa611531661B5649688605a16ca7a245980F69A99",
+// 10000000000000000000n,
+// 2000,
+// 1728482023,
+// 1234]
+
+
+
+// [2,
+// "0xe9318493c0fd30140afa8ecc47467b36da23855e",
+// "0x4E2b47AdCFcEB40c0bb1Dd283a7E539B26CFF8c4",
+// "0xa611531661B5649688605a16ca7a245980F69A99", 
+// 10000000000000000000,
+// 2000,
+// 1728482023,
+// 54321]
