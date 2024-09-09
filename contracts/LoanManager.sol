@@ -70,7 +70,7 @@ contract LoanManager is Ownable {
 
     // Loan ID -> Loan
     mapping(uint256 => Loan) private loans;
-    mapping(address => mapping(uint256 => Loan)) private loansIndexed;
+    // mapping(address => mapping(uint256 => Loan)) private loansIndexed;
     address public _proxy;
 
     constructor() Ownable(msg.sender) {}
@@ -124,7 +124,7 @@ contract LoanManager is Ownable {
             isDefault: false,
             isApproved: false
         });
-        loansIndexed[_borrower][_loanId] = loans[_loanId];
+        // loansIndexed[_borrower][_loanId] = loans[_loanId];
 
         emit LoanCreated(_loanId,
             _nftContract,
@@ -159,9 +159,9 @@ contract LoanManager is Ownable {
     //     loans[loanId] = loan;
     //     return true;
     // }
-    function getLoanIndexedwithBorrower(address borrower, uint256 loanId) public view onlyOwner returns(Loan memory){
-        return  loansIndexed[borrower][loanId];
-    } 
+    // function getLoanIndexedwithBorrower( uint256 loanId) public view onlyOwner returns(Loan memory){
+    //     return  loans[loanId];
+    // } 
 
     // function deleteLoan(address nftColletralAddress, uint256 _tokenId ,address _borrower) external onlyProxyManager {
     //     Loan memory loan;

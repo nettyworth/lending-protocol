@@ -99,6 +99,30 @@ contract CryptoVault is ERC721Holder, Ownable {
 
     }
 
+    function depositNftToEscrowAndnativeToBorrower(
+        address nftContract,
+        uint256 tokenId,
+        // address lender,
+        address borrower
+        // uint256 loanAmount
+        ) external payable onlyProxyManager  
+        {
+
+        IERC721 nft = IERC721(nftContract);
+        require(
+            nft.ownerOf(tokenId) == borrower,
+            "You are not the owner of this token"
+        );
+
+        nft.safeTransferFrom(borrower, address(this), tokenId);
+        assets[nftContract][tokenId] = borrower;
+
+        (bool sentBorrower, ) = (borrower).call{value: msg.value}("");
+        require(sentBorrower, "Transfer to lender failed");
+    
+        emit nftDepositToEscrow(borrower, nftContract, tokenId);
+    }
+
     // Function to withdraw an ERC721 token from the vault
     function withdrawNftFromEscrowAndERC20ToLender(
       address nftContract,

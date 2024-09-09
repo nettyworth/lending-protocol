@@ -10,7 +10,9 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./interfaces/ICryptoVault.sol";
 import "./interfaces/ILoanManager.sol";
 import "./interfaces/IReceipts.sol";
+import "./interfaces/IwhiteListCollection.sol";
 import "./library/SignatureUtils.sol";
+
 
 contract NettyWorthProxy is ReentrancyGuard, Initializable {
 
@@ -20,12 +22,14 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     address public vault;
     address public loanManager;
     address public receiptContract;
-    address public owner;
+    address public whiteListContract;
+    address public _owner;
 
     ICryptoVault _icryptoVault;
     ILoanManager _iloanManager;
     ReceiptInterface _ireceipts;
-
+    IwhiteListCollection _iwhiteListCollection;
+    
     event LoanRepaid(
         uint256 indexed loanId,
         address indexed nftContract,
@@ -49,20 +53,29 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     mapping (address => mapping (uint256 => bool)) private _nonceUsedForUser;
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "Not the owner");
+        require(msg.sender == _owner, "Not the owner");
         _;
     }
 
     function initialize(
         address _vault,
         address _loanManager,
-        address _receiptContract
+        address _receiptContract,
+        address _iwhiteListContract
     ) external initializer {
-        owner = msg.sender;
+        _owner = msg.sender;
         setVault(_vault);
         setLoanManager(_loanManager);
         setReceiptContract(_receiptContract);
+        setWhiteListContract(_iwhiteListContract);
     }
+
+    function setWhiteListContract(address _whiteList) public onlyOwner {
+        require(_whiteList != address(0), "Invalid address");
+        whiteListContract = _whiteList;
+        _iwhiteListCollection = IwhitelistCollection(whiteListContract);
+    }
+
 
     function setVault(address _vault) public onlyOwner {
         require(_vault != address(0), "Invalid address");
@@ -267,7 +280,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     //     //  uint256 receiptLender =_ireceipts.generateLenderReceipt(loan.lender);
     // }
 
-// [1,"0x275aD0388c07f8e876BDD88cA2FE0ff986b17f8B","0x35C52B5ab1E373e6f7A030eE576e735A9D777FeD","0x5B38Da6a701c568545dCfcB03FcB875f56beddC4","0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2",1000,200,1728187189,1234]
+// [2,"0xF7c72F54eD6efbdF3fd076527E312E5652Aa148b","0x430d082e46091173B8A4f9f48752e16e3A3a4c62","0x5B38Da6a701c568545dCfcB03FcB875f56beddC4","0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2",1000,200,1728187189,1234]
     // Accept Offer parameters
     //     uint256 tokenId;           
     //     address nftContractAddress;
@@ -279,13 +292,19 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     //     uint256 loanDuration;
     //     uint256 nonce;
 
-//[1,"0x2961b3e121ebC1d889fFc88658E1b7141f0c35D3","0x93b0Df83e664D660B632d11fce823e4121Ef7F81","0x5B38Da6a701c568545dCfcB03FcB875f56beddC4","0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2",1000,200,1728187189,1234]
-    function acceptLoanOffer(
+//[1,"0xF7c72F54eD6efbdF3fd076527E312E5652Aa148b","0x5B38Da6a701c568545dCfcB03FcB875f56beddC4","0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2",2000000000000000000,200,1728187189,1234]
+    
+    
+    function acceptLoanOfferNative(
         // bytes calldata acceptOfferSignature,
-        SignatureUtils.LoanOffer calldata loanOffer
-    ) external nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender , ILoanManager.Loan memory) {
+        SignatureUtils.LoanOfferNative calldata loanOffer
+    ) external payable nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender ) {
 
         require(vault != address(0), "Vault address not set");
+
+        require(msg.value != 0,"Loan Amount Invalid");
+
+        require(_iwhiteListCollection.isWhiteList(loanOffer.nftContractAddress), "Collection is not White Listed");
 
         require(loanManager != address(0), "Loan manager address not set");
 
@@ -325,6 +344,90 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         );
 
         require(!loan.isPaid, "Loan offer is closed");
+        // require(!loan.isPaid || !loan.isDefault , "Changed the nonce. Already created against this NFT");
+
+
+        require(!loan.isApproved, "Loan offer is already approved");
+
+        _iloanManager.createLoan(
+            loanOffer.nftContractAddress,
+            loanOffer.tokenId,
+            loanOffer.borrower,
+            loanOffer.lender,
+            msg.value,
+            loanOffer.interestRate,
+            loanOffer.loanDuration,
+            address(0),
+            loanOffer.nonce
+        );
+
+        _iloanManager.updateIsApproved(_loanId, true);
+
+        _icryptoVault.depositNftToEscrowAndnativeToBorrower( 
+            loanOffer.nftContractAddress,
+            loanOffer.tokenId,
+            loanOffer.borrower);
+
+        // (bool sentBorrower, ) = (loanOffer.borrower).call{value: msg.value}("");
+        // require(sentBorrower, "Transfer to lender failed");
+            
+        receiptIdBorrower = _ireceipts.generateBorrowerReceipt(loanOffer.nftContractAddress,loanOffer.tokenId,loanOffer.borrower);
+        receiptIdLender = _ireceipts.generateLenderReceipt(loanOffer.nftContractAddress,loanOffer.tokenId,loanOffer.lender);
+
+        return(receiptIdBorrower, receiptIdLender);
+    }
+
+    function acceptLoanOffer(
+        // bytes calldata acceptOfferSignature,
+        SignatureUtils.LoanOffer calldata loanOffer
+    ) external nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender , ILoanManager.Loan memory) {
+
+        require(vault != address(0), "Vault address not set");
+
+        require(_iwhiteListCollection.isWhiteList(loanOffer.nftContractAddress), "Collection is not White Listed");
+
+        require(loanManager != address(0), "Loan manager address not set");
+
+        require(receiptContract != address(0), "Receipt contract address not set");
+
+        require(loanOffer.loanDuration > block.timestamp,"Loan duration must b greater than current timestamp");
+
+        require(msg.sender == loanOffer.borrower || msg.sender == loanOffer.lender ,"Unauthorized sender");
+
+        require(!_nonceUsedForUser[loanOffer.lender][loanOffer.nonce] && !_nonceUsedForUser[loanOffer.borrower][loanOffer.nonce], "Offer nonce invalid");
+        _nonceUsedForUser[loanOffer.lender][loanOffer.nonce] = true;
+        _nonceUsedForUser[loanOffer.borrower][loanOffer.nonce] = true;
+
+     
+        // if(loanOffer.borrower == msg.sender){
+        //     require(
+        //         SignatureUtils.validateSignatureApprovalOffer(
+        //             acceptOfferSignature,
+        //             loanOffer
+        //         ),
+        //         "Invalid lender signature"
+        //     );
+        // }
+        // else if(loanOffer.lender ==msg.sender){
+        //     require(
+        //         SignatureUtils.validateRequestLoanSignature(
+        //             acceptOfferSignature,
+        //             loanOffer
+        //         ),
+        //         "Invalid borrower signature"
+        //     );
+        // }
+
+        (ILoanManager.Loan memory loan,uint256 _loanId) = _iloanManager.getLoan(
+            loanOffer.nftContractAddress,
+            loanOffer.tokenId,
+            loanOffer.borrower,
+            loanOffer.nonce
+        );
+
+        require(!loan.isPaid, "Loan offer is closed");
+        // require(!loan.isPaid || !loan.isDefault , "Changed the nonce. Already created against this NFT");
+
 
         require(!loan.isApproved, "Loan offer is already approved");
 
@@ -465,9 +568,9 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         address borrower = _ireceipts.ownerOf(_borrowerReceiptId); 
         
         require(loan.borrower == borrower, "Invalid borrower");
-
-        require(loan.lender == msg.sender && lender == msg.sender, "You are not the lender");
-
+                                                
+        require(loan.lender == lender && lender == msg.sender, "You are not the lender");
+                    
         _iloanManager.updateIsDefault(_loanId, true);
 
         _icryptoVault.withdrawNftFromEscrow(loan.nftContract,loan.tokenId ,loan.borrower, msg.sender);

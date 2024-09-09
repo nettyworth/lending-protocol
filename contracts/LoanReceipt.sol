@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "./ERC721A.sol";
+import "./utils/ERC721A.sol";
 
 
 contract LoanReceipt is ERC721A, Ownable {
