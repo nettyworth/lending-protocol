@@ -11,12 +11,6 @@ interface ICryptoVault {
         uint256 loanAmount
         ) external;
 
-    function depositNftToEscrowAndnativeToBorrower(
-        address nftContract,
-        uint256 tokenId,
-        address borrower
-        ) external payable;
-
     function withdrawNftFromEscrowAndERC20ToLender(
         address nftContract,
         uint256 tokenId,
@@ -24,12 +18,6 @@ interface ICryptoVault {
         address lender,
         uint256 remainingAmount,
         address currencyERC20
-        ) external;
-    
-    function withdrawNftFromEscrow(
-        address nftContract,
-        uint256 tokenId,
-        address borrower
         ) external;
     
     function withdrawNftFromEscrow(

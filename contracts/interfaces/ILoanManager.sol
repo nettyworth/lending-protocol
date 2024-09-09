@@ -5,19 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 
 interface ILoanManager {
-    // struct LoanData {
-    //     address _contract;
-    //     uint256 _tokenId;
-    //     address _borrower;
-    //     address _lender;
-    //     uint256 _loanAmount;
-    //     uint256 _interestRate;
-    //     uint256 _loanDuration;
-    //     address _erc20Token;
-    //     uint256 _nonce;
-    // }
 
-    
     struct Loan {
         address nftContract;
         uint256 tokenId;
@@ -33,12 +21,6 @@ interface ILoanManager {
         bool isApproved;
     }
 
-    // function approveLoanOffer(
-    //     address _nftContract,
-    //     uint256 _tokenId,
-    //     address _borrower
-    // ) external;
-
     function createLoan(
         address _contract,
         uint256 _tokenId,
@@ -50,23 +32,6 @@ interface ILoanManager {
         address _erc20Token,
         uint256 _nonce
     ) external;
-
-    // function payLoan(
-    //     IERC20 erc20Token,
-    //     uint256 _loanId,
-    //     uint256 _lenderReceiptId,
-    //     uint256 _borrowerReceiptId
-    // ) external  returns(bool);
-
-    // function payLoan(
-    //     uint256 _loanId,
-    //     uint256 _lenderReceiptId,
-    //     uint256 _borrowerReceiptId
-    // ) external  returns(bool);
-
-    // function forClose(
-    //     uint256 _loanId
-    // ) external returns(bool);
 
     function updateLoan(Loan memory loan,uint256 loanId) external returns(bool);
 
@@ -86,7 +51,5 @@ interface ILoanManager {
     function getLoanById(uint256 _loanId) external view returns (Loan memory loan); 
 
     function getPayoffAmount(uint256 _loanId) external view returns(uint256);
-
-    // function deleteLoan(address nftColletralAddress, uint256 _tokenId ,address _borrower) external;
 
 }

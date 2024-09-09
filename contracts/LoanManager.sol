@@ -39,30 +39,6 @@ contract LoanManager is Ownable {
         bool isApproved
     );
     
-
-
-    // event LoanRepaid(
-    //     uint256 indexed loanId,
-    //     address indexed nftContract,
-    //     uint256 indexed tokenId,
-    //     address  borrower,
-    //     address  lender,
-    //     uint256 repayment,
-    //     address erc20Address,
-    //     bool isPaid
-    //     );
-
-
-    // event LoanForClosed(
-    //     uint256 indexed loanId,
-    //     address indexed nftContract,
-    //     uint256 indexed tokenId,
-    //     address  borrower,
-    //     address  lender,
-    //     bool isDefault
-    //     );
-    
-
     using SafeERC20 for IERC20;
 
     ICryptoVault _icryptoVault;
@@ -70,7 +46,6 @@ contract LoanManager is Ownable {
 
     // Loan ID -> Loan
     mapping(uint256 => Loan) private loans;
-    // mapping(address => mapping(uint256 => Loan)) private loansIndexed;
     address public _proxy;
 
     constructor() Ownable(msg.sender) {}
@@ -96,12 +71,8 @@ contract LoanManager is Ownable {
         require(_loanAmount > 0, "Loan amount must be greater than 0");
         require(_interestRate >= 0, "Interest rate cannot be negative");
         require(_loanDuration > 0, "Loan duration must be greater than 0");
-        // require(
-        //     _currencyERC20 != address(0),
-        //     "Currency ERC-20 contract address is required"
-        // );
         require(_lender != address(0), "Lender address is required");
-        // uint256 _loanId = getLoanId(_nftContract,_tokenId,_borrower);
+
         (, uint256 _loanId) = getLoan(_nftContract, _tokenId, _borrower, _nonce);
 
         // Create a new loan
@@ -124,7 +95,6 @@ contract LoanManager is Ownable {
             isDefault: false,
             isApproved: false
         });
-        // loansIndexed[_borrower][_loanId] = loans[_loanId];
 
         emit LoanCreated(_loanId,
             _nftContract,
@@ -153,24 +123,7 @@ contract LoanManager is Ownable {
 
     function updateIsApproved(uint256 loanId, bool state) external onlyProxyManager{
         loans[loanId].isApproved = state;
-    }
-
-    // function updateLoan(Loan memory loan,uint256 loanId) external onlyProxyManager returns(bool){
-    //     loans[loanId] = loan;
-    //     return true;
-    // }
-    // function getLoanIndexedwithBorrower( uint256 loanId) public view onlyOwner returns(Loan memory){
-    //     return  loans[loanId];
-    // } 
-
-    // function deleteLoan(address nftColletralAddress, uint256 _tokenId ,address _borrower) external onlyProxyManager {
-    //     Loan memory loan;
-    //     uint256 _loanId = getLoanId(nftColletralAddress,_tokenId,_borrower);
-
-    //     delete loans[_loanId];
-    //     delete loansIndexed[_borrower][_loanId];
-    //     delete loan;
-    // }
+    } 
 
     function getLoan(
         address _contract,
@@ -198,21 +151,6 @@ contract LoanManager is Ownable {
 //*************************************************************************************************************************************************************************************************************/e
 //*************************************************************************************************************************************************************************************************************/
 
-    // function _repaymentAmount(uint256 loanAmount, uint256 interestRate,uint256 loanInitialTime,uint256 loanDuration) internal view returns(uint256){
-
-    //     uint256 timeElapsed = block.timestamp - loanInitialTime;
-
-    //     uint256 interestAccrued = (loanAmount * interestRate * (timeElapsed)) / (10000 * loanDuration);
-
-    //     uint256 computeAmountWithInterest = loanAmount + interestAccrued;
-
-    //     // uint256 computeAmountWithInterest = loanAmount + 
-    //     // (loanAmount * interestRate * (timeElapsed)) /
-    //     // (10000 * loanDuration);
-
-    //     return computeAmountWithInterest;
-    //  }
-
       function getPayoffAmount(uint256 loanId) public view returns(uint256){
         Loan memory loan = loans[loanId];
 
@@ -226,136 +164,6 @@ contract LoanManager is Ownable {
 
         return computeAmountWithInterest;
     } 
-
-    // function _getPayoffAmount(Loan memory loan) internal view returns(uint256){
-    //     // Loan memory loan = loans[_loanId];
-    //     // require(!loan.isPaid, "Loan is Paid");
-    //     // require(loan.lender != address(0), "Loan is not assigned to a lender");
-
-    //     uint256 timeElapsed = block.timestamp - loan.loanInitialTime;
-
-    //     uint256 interestAccrued = (loan.loanAmount * loan.interestRate * (timeElapsed)) / (10000 * loan.loanDuration);
-
-    //     uint256 computeAmountWithInterest = loan.loanAmount + interestAccrued;
-
-    //     // uint256 computeAmountWithInterest = loanAmount + 
-    //     // (loanAmount * interestRate * (timeElapsed)) /
-    //     // (10000 * loanDuration);
-
-    //     return computeAmountWithInterest;
-
-    //     // uint256 remainingAmount = _repaymentAmount(
-    //     //     loan.loanAmount,
-    //     //     loan.interestRate,
-    //     //     loan.loanInitialTime,
-    //     //     loan.loanDuration
-    //     // );
-
-    //     // return remainingAmount;
-    // }    
-
-
-  
- // From borrower
-    // function makePayment(uint256 _loanId) external payable nonReentrant{
-    //     Loan memory loan = loans[_loanId];
-    //     require(loan.borrower == msg.sender, "caller is not borrower");
-    //     require(!loan.isClosed, "Loan is closed");
-    //     require(loan.lender != address(0), "Loan is not assigned to a lender");
-
-    //     uint256 remainingAmount = _repaymentAmount(
-    //         loan.loanAmount,
-    //         loan.interestRate,
-    //         loan.loanInitialTime,
-    //         loan.loanDuration
-    //     );
-
-    //     // require(
-    //     //     msg.value <= remainingAmount,
-    //     //     "Payment amount exceeds remaining amount"
-    //     // );
-
-    //     require(
-    //         msg.value <= remainingAmount - loan.totalPaid,
-    //         "Payment amount exceeds remaining amount"
-    //     );
-
-
-    //     loan.totalPaid += msg.value;
-    //     // if (loan.totalPaid >= loan.loanAmount) {
-    //     //     loan.isClosed = true;
-    //     // }
-    //     if (loan.totalPaid >= remainingAmount) {
-    //         loan.isClosed = true;
-    //     }
-            
-    //     // if (msg.value < remainingAmount) {
-    //         payable(loan.lender).transfer(msg.value);
-    //     // } 
-    //     // else
-    //     // {
-    //     //     payable(loan.lender).transfer(remainingAmount);
-    //     //     uint256 refundAmount = msg.value - remainingAmount;
-    //     //     payable(msg.sender).transfer(refundAmount);
-    //     // }
-    // }
-
-
-
-
-   
-
-    // function payLoan(
-    //     uint256 _loanId,
-    //     uint256 _lenderReceiptId,
-    //     uint256 _borrowerReceiptId,
-    //     IERC20 erc20Token
-
-    // )
-    //     external
-    //     view
-    //     returns(bool)
-    // {
-    //     Loan memory loan = loans[_loanId];
-
-
-        // _sanityCheck(loan,_lenderReceiptId,_borrowerReceiptId);
-
-    
-
-
-        // uint256 remainingAmount = _getPayoffAmount(loan);
-        // Transfer the ERC20 amount from the borrower to the vault
-        //  erc20Token = IERC20(_loan.currencyERC20);
-        // erc20Token.safeTransferFrom(msg.sender, vault, loan.loanAmount);
-
-
-        // loans[_loanId].isPaid = true;
-
-         
-        // emit LoanRepaid(
-        // _loanId,
-        // loan.nftContract,
-        // loan.tokenId,
-        // loan.borrower,
-        // loan.lender,
-        // remainingAmount,
-        // loan.currencyERC20,
-        // loan.isPaid
-        // );
-
-        // return true;
-        // deleteLoan(_nftCollateralContract, _tokenId, _loan.borrower);
-
-        //  uint256 receiptIdLender = _ireceipts.generateLenderReceipt(msg.sender);
-        // _icryptoVault.attachReceiptToNFT(_contract, _tokenId, receiptIdLender);
-
-        //_iloanManager.updateLoan(_contract, _tokenId, lender, loan);
-    // }
-    
-
-
-
 
     /**
      * @dev Throws if called by any account other than the owner.
