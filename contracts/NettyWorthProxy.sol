@@ -418,7 +418,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         require(!_nonceUsedForUser[lender][nonce] && !_nonceUsedForUser[borrower][nonce], "Offer nonce invalid");
         _nonceUsedForUser[lender][nonce] = true;
         _nonceUsedForUser[borrower][nonce] = true;
-
     }
 
 

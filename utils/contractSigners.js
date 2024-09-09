@@ -3,6 +3,9 @@ const { ethers } = require("ethers"); // Import the ethers library
 const SECRET_SIGNER_PRIVATE_KEY =
   "45368821537686a5a8afeb4ee89b127af53cee27ce2850ca272764181f5b6b87"; // Ensure the private key is prefixed with '0x'
 
+// const SECRET_SIGNER_PRIVATE_KEY =
+//   "cad64b32ccae3f80a422387aa8e709c2fb321aa77738b9596f938ef9fac2a764";
+
 // Initialize a provider using Infura's Sepolia testnet endpoint
 const provider = new ethers.providers.JsonRpcProvider(
   "https://sepolia.infura.io/v3/3df44251533e4df3b1f0407d6ec4f34b"
@@ -25,36 +28,35 @@ const signOffer = async function (
   tokenId,
   contract,
   erc20TokenAddress,
-  lender,
-  borrower,
   loanAmount,
   interestRate,
   loanDuration,
-  nonce,
+  lender,
+  lenderNonce,
+  borrower
 ) {
   const encoded = ethers.utils.defaultAbiCoder.encode(
     [
       "uint256",
       "address",
       "address",
+      "uint256",
+      "uint256",
+      "uint256",
       "address",
+      "uint256",
       "address",
-      "uint256",
-      "uint256",
-      "uint256",
-      "uint256",
-    
     ],
     [
       tokenId,
       contract,
       erc20TokenAddress,
-      lender,
-      borrower,
       loanAmount,
       interestRate,
       loanDuration,
-      nonce,
+      lender,
+      lenderNonce,
+      borrower,
     ]
   );
   return sign(encoded);
@@ -99,6 +101,73 @@ const signCreateLoan = function (
   return sign(encoded);
 };
 
+const acceptLoanRequest = async function (
+  tokenId,
+  nftContractAddress,
+  erc20TokenAddress,
+  borrower,
+  loanAmount,
+  interestRate,
+  loanDuration,
+  nonce
+) {
+  const encoded = ethers.utils.defaultAbiCoder.encode(
+    [
+      "uint256",
+      "address",
+      "address",
+      "address",
+      "uint256",
+      "uint256",
+      "uint256",
+      "uint256",
+    ],
+    [
+      tokenId,
+      nftContractAddress,
+      erc20TokenAddress,
+      borrower,
+      loanAmount,
+      interestRate,
+      loanDuration,
+      nonce,
+    ]
+  );
+  return sign(encoded);
+};
+
+const acceptLoanCollectionOffer = async function (
+  collectionAddress,
+  erc20TokenAddress,
+  lender,
+  loanAmount,
+  interestRate,
+  loanDuration,
+  nonce
+) {
+  const encoded = ethers.utils.defaultAbiCoder.encode(
+    [
+      "address",
+      "address",
+      "address",
+      "uint256",
+      "uint256",
+      "uint256",
+      "uint256",
+    ],
+    [
+      collectionAddress,
+      erc20TokenAddress,
+      lender,
+      loanAmount,
+      interestRate,
+      loanDuration,
+      nonce,
+    ]
+  );
+  return sign(encoded);
+};
+
 // Function to sign encoded data
 function sign(encoded) {
   const hash = ethers.utils.keccak256(encoded); // Create a keccak256 hash of the encoded data
@@ -112,20 +181,44 @@ function sign(encoded) {
 // erc20 = 0xd8b934580fce35a11b58c6d73adee468a2833fa8;
 // lender = 0x4b20993bc481177ec7e8f571cecae8a9e22c02db;
 const main = async () => {
-  const getsign = await signOffer(
-    1,
-    "0xe9318493C0fD30140AFa8ECc47467B36DA23855e",
-    "0x4E2b47AdCFcEB40c0bb1Dd283a7E539B26CFF8c4",
-    "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
-    "0xa611531661B5649688605a16ca7a245980F69A99",
-    10000000000000000000n,
-    2000,
-    1728482023,
-    12345, 
+  //   const getsign = await signOffer(
+  //     1,
+  //     "0xe62b5Fa383dFfbD2e9ad429155612d7fAAEDBA04",
+  //     "0x08f7Cde6109a74BA43Eaf316e5DaD5D27f63Ff7B",
+  //     10000000000000000000n,
+  //     20,
+  //     1727936604,
+  //     "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
+  //     223898,
+  //     "0xa611531661B5649688605a16ca7a245980F69A99"
+  //   );
+
+  //   console.log("Sign Offer signature", getsign);
+
+  //   const getacceptLoanRequest = await acceptLoanRequest(
+  //     2, // TokenId
+  //     "0xe9318493c0fd30140afa8ecc47467b36da23855e", //nftContractAddress,
+  //     "0x4E2b47AdCFcEB40c0bb1Dd283a7E539B26CFF8c4", //erc20TokenAddress,
+  //     "0xa611531661B5649688605a16ca7a245980F69A99", //borrower,
+  //     10000000000000000000n, //loanAmount,
+  //     2000, //interestRate,
+  //     1728482023, //loanDuration,
+  //     54321 //nonce
+  //   );
+
+  //   console.log("getacceptLoanRequest", getacceptLoanRequest);
+
+  const getacceptLoanCollectionOffer = await acceptLoanCollectionOffer(
+    "0xe9318493c0fd30140afa8ecc47467b36da23855e", //     collectionAddress,
+    "0x4E2b47AdCFcEB40c0bb1Dd283a7E539B26CFF8c4", //     erc20TokenAddress,
+    "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061", //     lender,
+    10000000000000000000n, //     loanAmount,
+    2000, //     interestRate,
+    1728482023, //     loanDuration,
+    56789 //     nonce
   );
 
-
-  console.log("Sign Offer signature", getsign);
+  console.log("getacceptLoanCollectionOffer", getacceptLoanCollectionOffer);
 
   //   const deposit = await signDeposit(
   //     "0x482CDDDff6adb44C0da472cfAA939fF615663025",
@@ -157,25 +250,3 @@ main();
 //   signOffer,
 //   signCreateLoan,
 // };
-
-
-// [1,
-// "0xe9318493C0fD30140AFa8ECc47467B36DA23855e",
-// "0x4E2b47AdCFcEB40c0bb1Dd283a7E539B26CFF8c4",
-// "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
-// "0xa611531661B5649688605a16ca7a245980F69A99",
-// 10000000000000000000n,
-// 2000,
-// 1728482023,
-// 1234]
-
-
-
-// [2,
-// "0xe9318493c0fd30140afa8ecc47467b36da23855e",
-// "0x4E2b47AdCFcEB40c0bb1Dd283a7E539B26CFF8c4",
-// "0xa611531661B5649688605a16ca7a245980F69A99", 
-// 10000000000000000000,
-// 2000,
-// 1728482023,
-// 54321]
