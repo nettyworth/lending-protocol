@@ -279,7 +279,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
 
 
     function acceptLoanCollectionOffer(
-        // bytes calldata acceptOfferSignature,
+        bytes calldata acceptOfferSignature,
         SignatureUtils.LoanCollectionOffer calldata loanCollectionOffer,
         uint256 tokenId
     ) external nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender ) {
@@ -288,13 +288,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
 
         _sanityCheckAcceptOffer(loanCollectionOffer.collectionAddress,loanCollectionOffer.lender,msg.sender,loanCollectionOffer.loanDuration,loanCollectionOffer.nonce);
 
-        // require(
-        //         SignatureUtils.validateLoanCollectionOfferSignature(
-        //             acceptOfferSignature,
-        //             loanCollectionOffer
-        //         ),
-        //         "Invalid lender signature"
-        //     );
+        require(
+                SignatureUtils.validateLoanCollectionOfferSignature(
+                    acceptOfferSignature,
+                    loanCollectionOffer
+                ),
+                "Invalid lender signature"
+            );
 
        (receiptIdBorrower, receiptIdLender) = _acceptOffer(loanCollectionOffer.collectionAddress,
             tokenId,
