@@ -31,6 +31,16 @@ library SignatureUtils {
         uint256 nonce;
     }
 
+    struct LoanCollectionOffer {
+        address collectionAddress;
+        address erc20TokenAddress;
+        address lender;
+        uint256 loanAmount;
+        uint256 interestRate;
+        uint256 loanDuration;
+        uint256 nonce;
+    }
+
     function verify(
         address signer,
         bytes memory signature,
@@ -60,18 +70,33 @@ library SignatureUtils {
         return _verifyHashSignature(_borrower, candidateHash, signature);
     }
 
+    function validateLoanCollectionOfferSignature(
+        bytes calldata signature,
+        LoanCollectionOffer calldata loanCollectionOffer
+    ) internal pure returns (bool) {
+        // Pack the 
+                bytes32 freshHash = keccak256(
+            abi.encode(
+                loanCollectionOffer.collectionAddress,
+                loanCollectionOffer.erc20TokenAddress,
+                loanCollectionOffer.lender,
+                loanCollectionOffer.loanAmount,
+                loanCollectionOffer.interestRate,
+                loanCollectionOffer.loanDuration,
+                loanCollectionOffer.nonce
+            )
+        );
+        // Get the packed payload hash
+        bytes32 candidateHash = keccak256(
+            abi.encodePacked("\x19Ethereum Signed Message:\n32", freshHash)
+        );
+        // Verify if the fresh hash is signed with the provided signature
+        return _verifyHashSignature(loanCollectionOffer.lender, candidateHash, signature);
+    }
+
     function validateRequestLoanSignature(
         bytes calldata signature,
         LoanOffer calldata loanOffer
-
-        // uint256 tokenId,
-        // address _contract,
-        // address _erc20Token,
-        // uint256 _loanAmount,
-        // uint256 _interestRate,
-        // uint256 _loanDuration,
-        // uint256 _borrowerNonce,
-        // address _borrower
     ) internal pure returns (bool) {
         // Pack the 
                 bytes32 freshHash = keccak256(
@@ -92,45 +117,16 @@ library SignatureUtils {
         );
         // Verify if the fresh hash is signed with the provided signature
         return _verifyHashSignature(loanOffer.borrower, candidateHash, signature);
-
-
-        // bytes32 freshHash = keccak256(
-        //     abi.encode(
-        //         tokenId,
-        //         _contract,
-        //         _erc20Token,
-        //         _loanAmount,
-        //         _interestRate,
-        //         _loanDuration,
-        //         _borrowerNonce,
-        //         _borrower
-        //     )
-        // );
-        // // Get the packed payload hash
-        // bytes32 candidateHash = keccak256(
-        //     abi.encodePacked("\x19Ethereum Signed Message:\n32", freshHash)
-        // );
-        // // Verify if the fresh hash is signed with the provided signature
-        // return _verifyHashSignature(_borrower, candidateHash, signature);
     }
  
     function validateSignatureApprovalOffer(   
         bytes calldata signature,
-        // uint256 tokenId,
-        // address _contract,
-        // address _erc20Token,
-        // uint256 _loanAmount,
-        // uint256 _interestRate,
-        // uint256 _loanDuration,
-        // address _lender,
-        // uint256 _nonce,
-        // address _borrower
         LoanOffer calldata loanOffer
     ) internal pure returns (bool) {
  
         // Verify if the fresh hash is signed with the provided signature
 
-            return _verifyHashSignature(loanOffer.lender, keccak256(
+    return _verifyHashSignature(loanOffer.lender, keccak256(
             abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(
             abi.encode(
                 loanOffer.tokenId,
@@ -145,22 +141,6 @@ library SignatureUtils {
             )
         ))
         ), signature);
-
-        // return _verifyHashSignature(_lender, keccak256(
-        //     abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(
-        //     abi.encode(
-        //         tokenId,
-        //         _contract,
-        //         _erc20Token,
-        //         _loanAmount,
-        //         _interestRate,
-        //         _loanDuration,
-        //         _lender,
-        //         _nonce,
-        //         _borrower
-        //     )
-        // ))
-        // ), signature);
     }
 
 
@@ -209,29 +189,6 @@ library SignatureUtils {
         ))
         ), signature);
     }
-
-    // function validateSignatureMakePayment(   
-    //     bytes calldata signature,
-    //     LoanOfferNative calldata loanOffer
-    // ) internal pure returns (bool) {
- 
-    //         return _verifyHashSignature(loanOffer.lender, keccak256(
-    //         abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(
-    //         abi.encode(
-    //             loanOffer.tokenId,
-    //             loanOffer.nftContractAddress,
-    //             loanOffer.lender,
-    //             loanOffer.borrower,
-    //             loanOffer.loanAmount, //Store the loan Amount in wei
-    //             loanOffer.interestRate,
-    //             loanOffer.loanDuration,
-    //             loanOffer.nonce
-    //         )
-    //     ))
-    //     ), signature);
-    // }
-
- 
 //********************************Verify Signatures********************************//
     function _verifyHashSignature(
         address secret,
