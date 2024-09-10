@@ -50,9 +50,6 @@ contract LoanManager is Ownable {
 
     constructor() Ownable(msg.sender) {}
 
-
-
-
     function createLoan(
         address _nftContract,
         uint256 _tokenId,
@@ -74,7 +71,6 @@ contract LoanManager is Ownable {
         require(_lender != address(0), "Lender address is required");
 
         (, uint256 _loanId) = getLoan(_nftContract, _tokenId, _borrower, _nonce);
-
         // Create a new loan
         require(
             loans[_loanId].nftContract == address(0),
@@ -137,32 +133,17 @@ contract LoanManager is Ownable {
         loan = loans[_loanId];
         loanId = _loanId;
 
-        return (loan , loanId);
+    return (loan , loanId);
     }
 
     function getLoanById(uint256 _loanId) public view returns (Loan memory loan) {      
         return loans[_loanId];
     }
 
-
-
-
-
-//*************************************************************************************************************************************************************************************************************/e
-//*************************************************************************************************************************************************************************************************************/
-
     function getPayoffAmount(uint256 loanId) public view returns(uint256){
         Loan memory loan = loans[loanId];
-
         require(!loan.isPaid, "Loan is Paid");
-
-        // uint256 timeElapsed = block.timestamp - loan.loanInitialTime;
-
-        // uint256 interestAccrued = (loan.loanAmount * loan.rePayment * (timeElapsed)) / (10000 * loan.loanDuration);
-
-        // uint256 computeAmountWithInterest = loan.loanAmount + interestAccrued;
-
-        return loan.rePayment;
+    return loan.rePayment;
     } 
 
     /**

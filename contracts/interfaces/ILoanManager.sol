@@ -48,8 +48,8 @@ interface ILoanManager {
 
     function updateIsApproved(uint256 loanId, bool state) external;
 
-    function getLoanById(uint256 _loanId) external view returns (Loan memory loan); 
-
     function getPayoffAmount(uint256 _loanId) external view returns(uint256);
+    
+    function getLoanById(uint256 _loanId) external view returns (Loan memory loan); 
 
 }

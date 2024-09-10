@@ -15,19 +15,19 @@ interface ReceiptInterface {
         uint256 timestamp;
     }
 
+    function open() external view returns (bool);
+
+    function burnReceipt(uint256 tokenId) external;
+
+    function ownerOf(uint256) external view returns (address);
+
+    function tokenExist(uint256) external view returns (bool);
+
     function generateLenderReceipt(address nftContractAddress, uint256 tokenId,address lender) external returns (uint256);
 
     function generateBorrowerReceipt(address nftContractAddress, uint256 tokenId, address borrower) external returns (uint256);
 
-    function burnReceipt(uint256 tokenId) external;
-
-    function getBorrowerReceiptId(address nftContractAddress, uint256 tokenId)external view returns(uint256 borrowerReceiptId, address borrowerAddress);
-
     function getLenderReceiptId(address nftContractAddress, uint256 tokenId)external view returns(uint256 lenderReceiptId, address lenderAddress);
 
-    function tokenExist(uint256) external view returns (bool);
-
-    function ownerOf(uint256) external view returns (address);
-
-    function open() external view returns (bool);
+    function getBorrowerReceiptId(address nftContractAddress, uint256 tokenId)external view returns(uint256 borrowerReceiptId, address borrowerAddress);
 }

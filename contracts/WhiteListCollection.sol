@@ -5,37 +5,26 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract WhiteListCollection is Ownable{
 
-    uint256 public getTotalWhitelistCollection;
-    uint256 public getTotalWhitelistErc20Token;
-
+    uint256 public totalWhitelistCollection;
+    uint256 public totalWhitelistErc20Token;
 
     mapping(address => bool) private _whiteListCollection;
-
     mapping(address => bool) private _whiteListErc20Token;
-
-
 
     constructor() Ownable(msg.sender) {}
 
     function isWhiteListCollection(address _collectionAddress) public view returns(bool){
-
         return _whiteListCollection[_collectionAddress];
     }
 
     function isWhiteListErc20Token(address _Erc20Address) public view returns(bool){
-
         return _whiteListErc20Token[_Erc20Address];
     }
-// ["0x5B38Da6a701c568545dCfcB03FcB875f56beddC4","0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2","0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db","0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabaB"]
 
     function whiteListCollection(address[] memory _collectionAddresses) external onlyOwner {
-
         uint256 whitelistSize =  _collectionAddresses.length;
-
-        getTotalWhitelistCollection += whitelistSize - 1;
-
+        totalWhitelistCollection += whitelistSize - 1;
         require(whitelistSize != 0, "Not able to call this with empty CollectionAddresses");
-
         if(whitelistSize <= 1){
             _whiteListCollection[_collectionAddresses[0]] = true;
         }
@@ -47,9 +36,8 @@ contract WhiteListCollection is Ownable{
     }
 
     function blackListCollection(address[] memory _collectionAddresses) external onlyOwner {
-
         uint256 whitelistSize =  _collectionAddresses.length;
-        getTotalWhitelistCollection -= whitelistSize - 1;
+        totalWhitelistCollection -= whitelistSize - 1;
         require(whitelistSize != 0, "Not able to call this with empty CollectionAddresses");
 
         if(whitelistSize <= 1){
@@ -63,9 +51,8 @@ contract WhiteListCollection is Ownable{
     }
 
     function whiteListErc20Token(address[] memory _Erc20Addresses) external onlyOwner {
-
         uint256 whitelistSize =  _Erc20Addresses.length;
-        getTotalWhitelistErc20Token += whitelistSize - 1;
+        totalWhitelistErc20Token += whitelistSize - 1;
         require(whitelistSize != 0, "Not able to call this with empty CollectionAddresses");
 
         if(whitelistSize <= 1){
@@ -81,7 +68,7 @@ contract WhiteListCollection is Ownable{
     function blackListErc20Token(address[] memory _Erc20Addresses) external onlyOwner {
 
         uint256 whitelistSize =  _Erc20Addresses.length;
-        getTotalWhitelistErc20Token -= whitelistSize - 1;
+        totalWhitelistErc20Token -= whitelistSize - 1;
         require(whitelistSize != 0, "Not able to call this with empty CollectionAddresses");
 
         if(whitelistSize <= 1){

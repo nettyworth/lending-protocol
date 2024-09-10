@@ -1,24 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "./interfaces/IReceipts.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 // CryptoVault contract that serves as a vault for ERC721 tokens
 contract CryptoVault is ERC721Holder, Ownable {
 
     mapping(address => mapping(uint256 => address)) private assets; // Mapping to keep track of deposited ERC721 tokens
-
- 
-
     using SafeERC20 for IERC20;
     ReceiptInterface public _ireceipts;
     address public _proxy; // Address of the proxy contract used for access control
-
 
     // Event emitted when a user deposits an ERC721 token into the vault
     event nftDepositToEscrow(
@@ -34,12 +30,8 @@ contract CryptoVault is ERC721Holder, Ownable {
         uint256 indexed tokenId
     );
 
-
-
     constructor() Ownable(msg.sender) {}
 
-
- 
     function depositNftToEscrowAndERC20ToBorrower(
         address nftContract,
         uint256 tokenId,
@@ -91,8 +83,6 @@ contract CryptoVault is ERC721Holder, Ownable {
             token.ownerOf(tokenId) == address(this),
             "The vault does not own this token"
         );
-
-        // uint256 computeAdminFee = _computeAdminFee(interestAmount,adminFeeInBasisPoints);
 
         rePaymentAmount -= computeAdminFee;
         

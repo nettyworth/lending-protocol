@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-// import "@openzeppelin/contracts/access/Ownable.sol";
+import "./interfaces/IReceipts.sol";
+import "./library/SignatureUtils.sol";
 import "./interfaces/ICryptoVault.sol";
 import "./interfaces/ILoanManager.sol";
-import "./interfaces/IReceipts.sol";
 import "./interfaces/IwhiteListCollection.sol";
-import "./library/SignatureUtils.sol";
-
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract NettyWorthProxy is ReentrancyGuard, Initializable {
 
@@ -26,12 +24,15 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     address public _owner;
 
     uint256 public adminFeeInBasisPoints = 500;
+    uint256 public constant BPS = 10000;
     address public adminWallet;
 
     ICryptoVault _icryptoVault;
     ILoanManager _iloanManager;
     ReceiptInterface _ireceipts;
     IwhiteListCollection _iwhiteListCollection;
+
+    mapping (address => mapping (uint256 => bool)) private _nonceUsedForUser;
     
     event LoanRepaid(
         uint256 indexed loanId,
@@ -61,9 +62,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         address newAdminWallet
     );
 
-
-    mapping (address => mapping (uint256 => bool)) private _nonceUsedForUser;
-
     modifier onlyOwner() {
         require(msg.sender == _owner, "Not the owner");
         _;
@@ -73,11 +71,11 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     function setAdminWallet(address _adminWallet) public onlyOwner {
         require(_adminWallet != address(0),"Invalid Address");
         adminWallet = _adminWallet;
-       emit  UpdatedAdminWallet(_adminWallet);
+       emit UpdatedAdminWallet(_adminWallet);
     }
 
     function updateAdminFee(uint256 _newAdminFee) public onlyOwner {
-        require(_newAdminFee <= 10000, 'By definition, basis points cannot exceed 10000');
+        require(_newAdminFee <= BPS, "By definition, basis points cannot exceed 10000");
         adminFeeInBasisPoints = _newAdminFee;
         emit UpdatedAdminFee(_newAdminFee);
     }
@@ -119,58 +117,121 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         _ireceipts = ReceiptInterface(receiptContract);
     }
 
-//*****************************************************************************************************************************//
-//*****************************************************************************************************************************//
-
-// [2,"0xF7c72F54eD6efbdF3fd076527E312E5652Aa148b","0x430d082e46091173B8A4f9f48752e16e3A3a4c62","0x5B38Da6a701c568545dCfcB03FcB875f56beddC4","0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2",1000,200,1728187189,1234]
-    // Accept Offer parameters
-    //     uint256 tokenId;           
-    //     address nftContractAddress;
-    //     address erc20TokenAddress;
-    //     address lender;
-    //     address borrower;
-    //     uint256 loanAmount;
-    //     uint256 interestRate;
-    //     uint256 loanDuration;
-    //     uint256 nonce;
-
-//[1,"0xF7c72F54eD6efbdF3fd076527E312E5652Aa148b","0x5B38Da6a701c568545dCfcB03FcB875f56beddC4","0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2",2000000000000000000,200,1728187189,1234]
-    function _deposit( address collectionAddress,
-            uint256 tokenId,
-            address erc20TokenAddress,
-            address lender,
-            address borrower,
-            uint256 loanAmount) internal {
-          _icryptoVault.depositNftToEscrowAndERC20ToBorrower( 
-            collectionAddress,
-            tokenId,
-            erc20TokenAddress,
-            lender,
-            borrower,
-            loanAmount
+    function acceptLoanRequest(bytes calldata acceptRequestSignature, SignatureUtils.LoanRequest calldata loanRequest) external
+        nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender){
+        _sanityCheckAcceptOffer(
+            loanRequest.nftContractAddress,
+            loanRequest.erc20TokenAddress,
+            msg.sender, //lender,
+            loanRequest.borrower,
+            loanRequest.loanDuration,
+            loanRequest.nonce
         );
+        require(
+            SignatureUtils.validateRequestLoanSignature(
+                acceptRequestSignature,
+                loanRequest
+            ),
+            "Invalid borrower signature"
+        );
+       (receiptIdBorrower, receiptIdLender) = _acceptOffer(loanRequest.nftContractAddress,
+            loanRequest.tokenId,
+            loanRequest.borrower,
+            msg.sender,//lender,
+            loanRequest.loanAmount,
+            loanRequest.interestRate,
+            loanRequest.loanDuration,
+            loanRequest.erc20TokenAddress,
+            loanRequest.nonce
+        );
+
+    return(receiptIdBorrower, receiptIdLender);
     }
 
-    function _acceptOffer(address collectionAddress,
-            uint256 tokenId,
-            address borrower,
-            address lender,
-            uint256 loanAmount,
-            uint256 rePayment,
-            uint256 loanDuration,
-            address erc20TokenAddress,
-            uint256 nonce) internal returns(uint256 _receiptIdBorrower, uint256 _receiptIdLender){
+    function acceptLoanOffer(bytes calldata acceptOfferSignature, SignatureUtils.LoanOffer calldata loanOffer) external
+        nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender ){
+        require(msg.sender == loanOffer.borrower, "Unauthorized sender");
+        _sanityCheckAcceptOffer(
+            loanOffer.nftContractAddress,
+            loanOffer.erc20TokenAddress,
+            loanOffer.lender,
+            loanOffer.borrower,
+            loanOffer.loanDuration,
+            loanOffer.nonce
+        );
+        require(
+            SignatureUtils.validateSignatureApprovalOffer(
+                acceptOfferSignature,
+                loanOffer
+            ),
+            "Invalid lender signature"
+        );
+        (receiptIdBorrower, receiptIdLender) = _acceptOffer(loanOffer.nftContractAddress,
+            loanOffer.tokenId,
+            loanOffer.borrower,
+            loanOffer.lender,
+            loanOffer.loanAmount,
+            loanOffer.interestRate,
+            loanOffer.loanDuration,
+            loanOffer.erc20TokenAddress,
+            loanOffer.nonce
+        );
 
+    return(receiptIdBorrower, receiptIdLender);
+    }
+
+    function acceptLoanCollectionOffer(bytes calldata acceptOfferSignature, SignatureUtils.LoanCollectionOffer calldata loanCollectionOffer,
+        uint256 tokenId) external nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender ){
+        IERC721 nft = IERC721(loanCollectionOffer.collectionAddress);
+        require(nft.ownerOf(tokenId) == msg.sender, "Current caller is not the owner of NFT");
+        _sanityCheckAcceptOffer(
+            loanCollectionOffer.collectionAddress,
+            loanCollectionOffer.erc20TokenAddress,
+            loanCollectionOffer.lender,
+            msg.sender,
+            loanCollectionOffer.loanDuration,
+            loanCollectionOffer.nonce
+        );
+        require(
+            SignatureUtils.validateLoanCollectionOfferSignature(
+                acceptOfferSignature,
+                loanCollectionOffer
+            ),
+            "Invalid lender signature"
+        );
+        (receiptIdBorrower, receiptIdLender) = _acceptOffer(
+            loanCollectionOffer.collectionAddress,
+            tokenId,
+            msg.sender,
+            loanCollectionOffer.lender,
+            loanCollectionOffer.loanAmount,
+            loanCollectionOffer.interestRate,
+            loanCollectionOffer.loanDuration,
+            loanCollectionOffer.erc20TokenAddress,
+            loanCollectionOffer.nonce
+        );
+
+    return(receiptIdBorrower, receiptIdLender);
+    }
+
+    function _acceptOffer(
+        address collectionAddress,
+        uint256 tokenId,
+        address borrower,
+        address lender,
+        uint256 loanAmount,
+        uint256 rePayment,
+        uint256 loanDuration,
+        address erc20TokenAddress,
+        uint256 nonce) internal returns(uint256 _receiptIdBorrower, uint256 _receiptIdLender){
         (ILoanManager.Loan memory loan,uint256 _loanId) = _iloanManager.getLoan(
             collectionAddress,
             tokenId,
             borrower,
             nonce
         );
-
         require(!loan.isPaid, "Loan offer is closed");
         require(!loan.isApproved, "Loan offer is already approved");
-        
         _iloanManager.createLoan(
             collectionAddress,
             tokenId,
@@ -182,9 +243,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             erc20TokenAddress,
             nonce
         );
-
         _iloanManager.updateIsApproved(_loanId, true);
-
         _deposit( 
             collectionAddress,
             tokenId,
@@ -197,150 +256,25 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         _receiptIdBorrower = _ireceipts.generateBorrowerReceipt(collectionAddress,tokenId,borrower);
         _receiptIdLender = _ireceipts.generateLenderReceipt(collectionAddress,tokenId,lender);
 
-        return (_receiptIdBorrower, _receiptIdLender);
+    return (_receiptIdBorrower, _receiptIdLender);
     }
-
- function acceptLoanRequest(
-        bytes calldata acceptRequestSignature,
-        SignatureUtils.LoanRequest calldata loanRequest
-    ) external nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender) {
-
-        // require(msg.sender == loanOffer.borrower || msg.sender == loanOffer.lender ,"Unauthorized sender");
-
-        _sanityCheckAcceptOffer(
-            loanRequest.nftContractAddress,
-            loanRequest.erc20TokenAddress,
-            msg.sender, //loanOffer.lender,
-            loanRequest.borrower,
-            loanRequest.loanDuration,
-            loanRequest.nonce
-        );
-     
-        // if(loanOffer.borrower == msg.sender){
-        //     require(
-        //         SignatureUtils.validateSignatureApprovalOffer(
-        //             acceptOfferSignature,
-        //             loanOffer
-        //         ),
-        //         "Invalid lender signature"
-        //     );
-        // }
-        // if(loanOffer.lender == msg.sender){
-            require(
-                SignatureUtils.validateRequestLoanSignature(
-                    acceptRequestSignature,
-                    loanRequest
-                ),
-                "Invalid borrower signature"
-            );
-        // }
-
-       (receiptIdBorrower, receiptIdLender) = _acceptOffer(loanRequest.nftContractAddress,
-            loanRequest.tokenId,
-            loanRequest.borrower,
-            msg.sender,//loanRequest.lender,
-            loanRequest.loanAmount,
-            loanRequest.interestRate,
-            loanRequest.loanDuration,
-            loanRequest.erc20TokenAddress,
-            loanRequest.nonce
-        );
-
-        // receiptIdBorrower = _ireceipts.generateBorrowerReceipt(loanOffer.nftContractAddress,loanOffer.tokenId,loanOffer.borrower);
-        // receiptIdLender = _ireceipts.generateLenderReceipt(loanOffer.nftContractAddress,loanOffer.tokenId,loanOffer.lender);
-
-        return(receiptIdBorrower, receiptIdLender);
-    }
-
-    function acceptLoanOffer(
-        bytes calldata acceptOfferSignature,
-        SignatureUtils.LoanOffer calldata loanOffer
-    ) external nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender ) {
-
-        require(msg.sender == loanOffer.borrower || msg.sender == loanOffer.lender ,"Unauthorized sender");
-
-        _sanityCheckAcceptOffer(
-            loanOffer.nftContractAddress,
-            loanOffer.erc20TokenAddress,
-            loanOffer.lender,
-            loanOffer.borrower,
-            loanOffer.loanDuration,
-            loanOffer.nonce
-        );
-     
-        // if(loanOffer.borrower == msg.sender){
-            require(
-                SignatureUtils.validateSignatureApprovalOffer(
-                    acceptOfferSignature,
-                    loanOffer
-                ),
-                "Invalid lender signature"
-            );
-        // }
-        // else if(loanOffer.lender ==msg.sender){
-        //     require(
-        //         SignatureUtils.validateRequestLoanSignature(
-        //             acceptOfferSignature,
-        //             loanOffer
-        //         ),
-        //         "Invalid borrower signature"
-        //     );
-        // }
-
-       (receiptIdBorrower, receiptIdLender) = _acceptOffer(loanOffer.nftContractAddress,
-            loanOffer.tokenId,
-            loanOffer.borrower,
-            loanOffer.lender,
-            loanOffer.loanAmount,
-            loanOffer.interestRate,
-            loanOffer.loanDuration,
-            loanOffer.erc20TokenAddress,
-            loanOffer.nonce);
-
-        // receiptIdBorrower = _ireceipts.generateBorrowerReceipt(loanOffer.nftContractAddress,loanOffer.tokenId,loanOffer.borrower);
-        // receiptIdLender = _ireceipts.generateLenderReceipt(loanOffer.nftContractAddress,loanOffer.tokenId,loanOffer.lender);
-
-        return(receiptIdBorrower, receiptIdLender);
-    }
-
-
-    function acceptLoanCollectionOffer(
-        bytes calldata acceptOfferSignature,
-        SignatureUtils.LoanCollectionOffer calldata loanCollectionOffer,
-        uint256 tokenId
-    ) external nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender ) {
-        IERC721 nft = IERC721(loanCollectionOffer.collectionAddress);
-        require(nft.ownerOf(tokenId) == msg.sender, "Current caller is not the owner of NFT");
-
-        _sanityCheckAcceptOffer(loanCollectionOffer.collectionAddress,loanCollectionOffer.erc20TokenAddress,loanCollectionOffer.lender,msg.sender,loanCollectionOffer.loanDuration,loanCollectionOffer.nonce);
-
-        require(
-                SignatureUtils.validateLoanCollectionOfferSignature(
-                    acceptOfferSignature,
-                    loanCollectionOffer
-                ),
-                "Invalid lender signature"
-            );
-
-       (receiptIdBorrower, receiptIdLender) = _acceptOffer(loanCollectionOffer.collectionAddress,
+    
+    function _deposit(
+        address collectionAddress,
+        uint256 tokenId,
+        address erc20TokenAddress,
+        address lender,
+        address borrower,
+        uint256 loanAmount) internal {
+          _icryptoVault.depositNftToEscrowAndERC20ToBorrower( 
+            collectionAddress,
             tokenId,
-            msg.sender,
-            loanCollectionOffer.lender,
-            loanCollectionOffer.loanAmount,
-            loanCollectionOffer.interestRate,
-            loanCollectionOffer.loanDuration,
-            loanCollectionOffer.erc20TokenAddress,
-            loanCollectionOffer.nonce);
-
-        return(receiptIdBorrower, receiptIdLender);
+            erc20TokenAddress,
+            lender,
+            borrower,
+            loanAmount
+        );
     }
-
-
-
-
-
-//*****************************************************************************************************************************//
-//*****************************************************************************************************************************//
 
     function payBackLoan(uint256 _loanId, address erc20Token) external nonReentrant returns (bool){
         ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
@@ -383,27 +317,19 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
 
     function forCloseLoan(uint256 _loanId) external  nonReentrant returns(bool){
         ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
-        
         require(block.timestamp >= loan.loanDuration,"User is not default yet::");
-        
         require(!loan.isPaid, "Loan Paid");
         require(!loan.isDefault , "Already Claimed");
-        
         (uint256 _borrowerReceiptId,) = _ireceipts.getBorrowerReceiptId(loan.nftContract, loan.tokenId);
         (uint256 _lenderReceiptId,) = _ireceipts.getLenderReceiptId(loan.nftContract, loan.tokenId);
-
         require(_ireceipts.tokenExist(_lenderReceiptId), "Receipt does not exist");
         require(_ireceipts.tokenExist(_borrowerReceiptId), "Receipt does not exist");
-
         address lender = _ireceipts.ownerOf(_lenderReceiptId);  
-        address borrower = _ireceipts.ownerOf(_borrowerReceiptId); 
-        
-        require(loan.borrower == borrower, "Invalid borrower");
-                                                
+        address borrower = _ireceipts.ownerOf(_borrowerReceiptId);  
+        require(loan.borrower == borrower, "Invalid borrower");                                     
         require(loan.lender == lender && lender == msg.sender, "You are not the lender");
                     
         _iloanManager.updateIsDefault(_loanId, true);
-
         _icryptoVault.withdrawNftFromEscrow(loan.nftContract,loan.tokenId ,loan.borrower, msg.sender);
 
         _ireceipts.burnReceipt(_lenderReceiptId);
@@ -422,7 +348,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     }
 
     function _computeAdminFee(uint256 _interest, uint256 _adminFee) internal pure returns (uint256) {
-    	return (_interest * (_adminFee))/10000;
+    	return (_interest * (_adminFee)) / BPS;
     }
 
 
@@ -441,23 +367,15 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
 
     function _sanityCheckAcceptOffer(address nftContractAddress, address erc20Address,address lender, address borrower,uint256 loanDuration, uint256 nonce) internal {
         require(vault != address(0), "Vault address not set");
-
         require(_iwhiteListCollection.isWhiteListCollection(nftContractAddress), "Collection is not White Listed");
-
         require(_iwhiteListCollection.isWhiteListErc20Token(erc20Address), "Token is not White Listed");
-
         require(loanManager != address(0), "Loan manager address not set");
-
         require(receiptContract != address(0), "Receipt contract address not set");
-
         require(loanDuration > block.timestamp,"Loan duration must b greater than current timestamp");
-
         require(!_nonceUsedForUser[lender][nonce] && !_nonceUsedForUser[borrower][nonce], "Offer nonce invalid");
         _nonceUsedForUser[lender][nonce] = true;
         _nonceUsedForUser[borrower][nonce] = true;
     }
-
-
 }
 
 
