@@ -14,7 +14,7 @@ contract LoanManager is Ownable {
         address borrower;
         address lender;
         uint256 loanAmount;
-        uint256 interestRate;
+        uint256 rePayment;
         uint256 loanDuration;
         address currencyERC20;
         uint256 loanInitialTime;
@@ -30,7 +30,7 @@ contract LoanManager is Ownable {
         address  borrower,
         address  lender,
         uint256 loanAmount,
-        uint256 interestRate,
+        uint256 rePayment,
         uint256 loanDuration,
         address erc20Address,
         uint256 loanInitialTime,
@@ -59,7 +59,7 @@ contract LoanManager is Ownable {
         address _borrower,
         address _lender,
         uint256 _loanAmount,
-        uint256 _interestRate,
+        uint256 _rePayment,
         uint256 _loanDuration,
         address _currencyERC20,
         uint256 _nonce
@@ -69,7 +69,7 @@ contract LoanManager is Ownable {
         require(_tokenId > 0, "Token ID must be greater than 0");
         require(_borrower != address(0), "Borrower address is required");
         require(_loanAmount > 0, "Loan amount must be greater than 0");
-        require(_interestRate >= 0, "Interest rate cannot be negative");
+        require(_rePayment >= 0, "Interest rate cannot be negative");
         require(_loanDuration > 0, "Loan duration must be greater than 0");
         require(_lender != address(0), "Lender address is required");
 
@@ -87,7 +87,7 @@ contract LoanManager is Ownable {
             borrower: _borrower,
             lender: _lender,
             loanAmount: _loanAmount,
-            interestRate: _interestRate,
+            rePayment: _rePayment,
             loanDuration: _loanDuration,
             currencyERC20: _currencyERC20,
             loanInitialTime: block.timestamp,
@@ -102,7 +102,7 @@ contract LoanManager is Ownable {
             _borrower,
             _lender,
             _loanAmount,
-            _interestRate,
+            _rePayment,
             _loanDuration,
             _currencyERC20,
             block.timestamp,
@@ -151,18 +151,18 @@ contract LoanManager is Ownable {
 //*************************************************************************************************************************************************************************************************************/e
 //*************************************************************************************************************************************************************************************************************/
 
-      function getPayoffAmount(uint256 loanId) public view returns(uint256){
+    function getPayoffAmount(uint256 loanId) public view returns(uint256){
         Loan memory loan = loans[loanId];
 
         require(!loan.isPaid, "Loan is Paid");
 
-        uint256 timeElapsed = block.timestamp - loan.loanInitialTime;
+        // uint256 timeElapsed = block.timestamp - loan.loanInitialTime;
 
-        uint256 interestAccrued = (loan.loanAmount * loan.interestRate * (timeElapsed)) / (10000 * loan.loanDuration);
+        // uint256 interestAccrued = (loan.loanAmount * loan.rePayment * (timeElapsed)) / (10000 * loan.loanDuration);
 
-        uint256 computeAmountWithInterest = loan.loanAmount + interestAccrued;
+        // uint256 computeAmountWithInterest = loan.loanAmount + interestAccrued;
 
-        return computeAmountWithInterest;
+        return loan.rePayment;
     } 
 
     /**

@@ -12,7 +12,7 @@ interface ILoanManager {
         address borrower;
         address lender;
         uint256 loanAmount;
-        uint256 interestRate;
+        uint256 rePayment;
         uint256 loanDuration;
         address currencyERC20;
         uint256 loanInitialTime;
@@ -27,7 +27,7 @@ interface ILoanManager {
         address _borrower,
         address _lender,
         uint256 _loanAmount,
-        uint256 _interestRate,
+        uint256 _rePayment,
         uint256 _loanDuration,
         address _erc20Token,
         uint256 _nonce

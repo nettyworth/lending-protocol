@@ -16,8 +16,10 @@ interface ICryptoVault {
         uint256 tokenId,
         address borrower,
         address lender,
-        uint256 remainingAmount,
-        address currencyERC20
+        uint256 rePaymentAmount,
+        uint256 computeAdminFee,
+        address currencyERC20,
+        address adminWallet
         ) external;
     
     function withdrawNftFromEscrow(

@@ -25,6 +25,9 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     address public whiteListContract;
     address public _owner;
 
+    uint256 public adminFeeInBasisPoints = 500;
+    address public adminWallet;
+
     ICryptoVault _icryptoVault;
     ILoanManager _iloanManager;
     ReceiptInterface _ireceipts;
@@ -50,11 +53,33 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         bool isDefault
     );
 
+    event UpdatedAdminFee(
+        uint256 newAdminFee
+    );
+
+    event UpdatedAdminWallet(
+        address newAdminWallet
+    );
+
+
     mapping (address => mapping (uint256 => bool)) private _nonceUsedForUser;
 
     modifier onlyOwner() {
         require(msg.sender == _owner, "Not the owner");
         _;
+    }
+
+
+    function setAdminWallet(address _adminWallet) public onlyOwner {
+        require(_adminWallet != address(0),"Invalid Address");
+        adminWallet = _adminWallet;
+       emit  UpdatedAdminWallet(_adminWallet);
+    }
+
+    function updateAdminFee(uint256 _newAdminFee) public onlyOwner {
+        require(_newAdminFee <= 10000, 'By definition, basis points cannot exceed 10000');
+        adminFeeInBasisPoints = _newAdminFee;
+        emit UpdatedAdminFee(_newAdminFee);
     }
 
     function initialize(
@@ -75,7 +100,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         whiteListContract = _whiteList;
         _iwhiteListCollection = IwhiteListCollection(whiteListContract);
     }
-
 
     function setVault(address _vault) public onlyOwner {
         require(_vault != address(0), "Invalid address");
@@ -132,7 +156,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             address borrower,
             address lender,
             uint256 loanAmount,
-            uint256 interestRate,
+            uint256 rePayment,
             uint256 loanDuration,
             address erc20TokenAddress,
             uint256 nonce) internal returns(uint256 _receiptIdBorrower, uint256 _receiptIdLender){
@@ -153,7 +177,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             borrower,
             lender,
             loanAmount,
-            interestRate,
+            rePayment,
             loanDuration,
             erc20TokenAddress,
             nonce
@@ -185,6 +209,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
 
         _sanityCheckAcceptOffer(
             loanRequest.nftContractAddress,
+            loanRequest.erc20TokenAddress,
             msg.sender, //loanOffer.lender,
             loanRequest.borrower,
             loanRequest.loanDuration,
@@ -236,6 +261,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
 
         _sanityCheckAcceptOffer(
             loanOffer.nftContractAddress,
+            loanOffer.erc20TokenAddress,
             loanOffer.lender,
             loanOffer.borrower,
             loanOffer.loanDuration,
@@ -286,7 +312,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         IERC721 nft = IERC721(loanCollectionOffer.collectionAddress);
         require(nft.ownerOf(tokenId) == msg.sender, "Current caller is not the owner of NFT");
 
-        _sanityCheckAcceptOffer(loanCollectionOffer.collectionAddress,loanCollectionOffer.lender,msg.sender,loanCollectionOffer.loanDuration,loanCollectionOffer.nonce);
+        _sanityCheckAcceptOffer(loanCollectionOffer.collectionAddress,loanCollectionOffer.erc20TokenAddress,loanCollectionOffer.lender,msg.sender,loanCollectionOffer.loanDuration,loanCollectionOffer.nonce);
 
         require(
                 SignatureUtils.validateLoanCollectionOfferSignature(
@@ -319,18 +345,22 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     function payBackLoan(uint256 _loanId, address erc20Token) external nonReentrant returns (bool){
         ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
         require(loan.currencyERC20 == erc20Token, "Currency Invalid");
-        uint256 remainingAmount = _iloanManager.getPayoffAmount(_loanId);
-
+        uint256 rePaymentAmount = _iloanManager.getPayoffAmount(_loanId);
+        uint256 interestAmount = rePaymentAmount - loan.loanAmount;
+        uint256 computeAdminFee = _computeAdminFee(interestAmount,adminFeeInBasisPoints);
         (uint256 _borrowerReceiptId,) = _ireceipts.getBorrowerReceiptId(loan.nftContract, loan.tokenId);
         (uint256 _lenderReceiptId,) = _ireceipts.getLenderReceiptId(loan.nftContract, loan.tokenId);
         _sanityCheckPayBack(loan, _lenderReceiptId, _borrowerReceiptId);
+         
         _icryptoVault.withdrawNftFromEscrowAndERC20ToLender(
             loan.nftContract,
             loan.tokenId,
             loan.borrower,
             loan.lender,
-            remainingAmount,
-            erc20Token
+            rePaymentAmount,
+            computeAdminFee,
+            erc20Token,
+            adminWallet
         );
         _ireceipts.burnReceipt(_lenderReceiptId);
         _ireceipts.burnReceipt(_borrowerReceiptId);
@@ -343,7 +373,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             loan.tokenId,
             loan.borrower,
             loan.lender,
-            remainingAmount,
+            rePaymentAmount,
             loan.currencyERC20,
             loan.isPaid
         );
@@ -389,7 +419,12 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         );
 
     return true;
-    } 
+    }
+
+    function _computeAdminFee(uint256 _interest, uint256 _adminFee) internal pure returns (uint256) {
+    	return (_interest * (_adminFee))/10000;
+    }
+
 
     function _sanityCheckPayBack(ILoanManager.Loan memory loan, uint256 _lenderReceiptId,uint256 _borrowerReceiptId) internal view {
         require(loan.isApproved, "Loan offer not approved");
@@ -404,10 +439,12 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         require(loan.lender == lender, "Invalid Lender");
     }
 
-    function _sanityCheckAcceptOffer(address nftContractAddress, address lender, address borrower,uint256 loanDuration, uint256 nonce) internal {
+    function _sanityCheckAcceptOffer(address nftContractAddress, address erc20Address,address lender, address borrower,uint256 loanDuration, uint256 nonce) internal {
         require(vault != address(0), "Vault address not set");
 
-        require(_iwhiteListCollection.isWhiteList(nftContractAddress), "Collection is not White Listed");
+        require(_iwhiteListCollection.isWhiteListCollection(nftContractAddress), "Collection is not White Listed");
+
+        require(_iwhiteListCollection.isWhiteListErc20Token(erc20Address), "Token is not White Listed");
 
         require(loanManager != address(0), "Loan manager address not set");
 
