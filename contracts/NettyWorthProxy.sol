@@ -84,13 +84,15 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         address _vault,
         address _loanManager,
         address _receiptContract,
-        address _iwhiteListContract
+        address _iwhiteListContract,
+        address _adminWallet
     ) external initializer {
         _owner = msg.sender;
         setVault(_vault);
         setLoanManager(_loanManager);
         setReceiptContract(_receiptContract);
         setWhiteListContract(_iwhiteListContract);
+        setAdminWallet(_adminWallet);
     }
 
     function setWhiteListContract(address _whiteList) public onlyOwner {
