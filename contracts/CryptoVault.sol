@@ -13,7 +13,6 @@ contract CryptoVault is ERC721Holder, Ownable {
 
     mapping(address => mapping(uint256 => address)) private assets; // Mapping to keep track of deposited ERC721 tokens
     using SafeERC20 for IERC20;
-    ReceiptInterface public _ireceipts;
     address public _proxy; // Address of the proxy contract used for access control
 
     // Event emitted when a user deposits an ERC721 token into the vault

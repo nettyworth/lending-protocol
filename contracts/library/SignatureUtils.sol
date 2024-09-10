@@ -15,7 +15,7 @@ library SignatureUtils {
         address erc20TokenAddress;
         address borrower;
         uint256 loanAmount;
-        uint256 interestRate;
+        uint256 rePayment;
         uint256 loanDuration;
         uint256 nonce;
     }
@@ -27,7 +27,7 @@ library SignatureUtils {
         address lender;
         address borrower;
         uint256 loanAmount;
-        uint256 interestRate;
+        uint256 rePayment;
         uint256 loanDuration;
         uint256 nonce;
     }
@@ -37,7 +37,7 @@ library SignatureUtils {
         address erc20TokenAddress;
         address lender;
         uint256 loanAmount;
-        uint256 interestRate;
+        uint256 rePayment;
         uint256 loanDuration;
         uint256 nonce;
     }
@@ -82,7 +82,7 @@ library SignatureUtils {
                 collectionOffer.erc20TokenAddress,
                 collectionOffer.lender,
                 collectionOffer.loanAmount,
-                collectionOffer.interestRate,
+                collectionOffer.rePayment,
                 collectionOffer.loanDuration,
                 collectionOffer.nonce
             )
@@ -107,7 +107,7 @@ library SignatureUtils {
                 loanRequest.erc20TokenAddress,
                 loanRequest.borrower,
                 loanRequest.loanAmount,
-                loanRequest.interestRate,
+                loanRequest.rePayment,
                 loanRequest.loanDuration,
                 loanRequest.nonce
             )
@@ -136,7 +136,7 @@ library SignatureUtils {
                 loanOffer.lender,
                 loanOffer.borrower,
                 loanOffer.loanAmount,
-                loanOffer.interestRate,
+                loanOffer.rePayment,
                 loanOffer.loanDuration,
                 loanOffer.nonce
             )

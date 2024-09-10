@@ -141,7 +141,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             loanRequest.borrower,
             msg.sender,//lender,
             loanRequest.loanAmount,
-            loanRequest.interestRate,
+            loanRequest.rePayment,
             loanRequest.loanDuration,
             loanRequest.erc20TokenAddress,
             loanRequest.nonce
@@ -173,7 +173,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             loanOffer.borrower,
             loanOffer.lender,
             loanOffer.loanAmount,
-            loanOffer.interestRate,
+            loanOffer.rePayment,
             loanOffer.loanDuration,
             loanOffer.erc20TokenAddress,
             loanOffer.nonce
@@ -207,7 +207,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             msg.sender,
             loanCollectionOffer.lender,
             loanCollectionOffer.loanAmount,
-            loanCollectionOffer.interestRate,
+            loanCollectionOffer.rePayment,
             loanCollectionOffer.loanDuration,
             loanCollectionOffer.erc20TokenAddress,
             loanCollectionOffer.nonce
