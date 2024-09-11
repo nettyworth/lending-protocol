@@ -6,7 +6,7 @@ const { ERC20HolderWallet, ERC721HolderWallet, gasLimit, PUBLIC_KEY } =
 
 const customProviderUrl = "http://localhost:7545"; // Replace with your custom provider URL
 const customProvider = new ethers.providers.JsonRpcProvider(customProviderUrl);
-const signerUtil = require("../utils/contractSigner");
+const signerUtil = require("../../utils/contractSigner");
 const totalMinted = 10;
 
 describe("CryptoVault", function () {

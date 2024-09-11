@@ -8,4 +8,8 @@ typechain-types
 # Hardhat files
 cache
 artifacts
-
+.deploys/
+.states/
+.DS_Store
+.deps/
+.git
