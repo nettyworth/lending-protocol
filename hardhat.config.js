@@ -9,22 +9,22 @@ module.exports = {
   networks: {
     hardhat: {},
     localhost: {
-      url: "http://127.0.0.1:8545"
+      url: "http://127.0.0.1:8545",
     },
-    sepolia: {
-      url: process.env.QUICKNODE_SEPOLIA_URL,
-      accounts: [process.env.PRIVATE_KEY]
-    },
-    holesky: {
-      url: process.env.QUICKNODE_HOLESKY_URL,
-      accounts: [process.env.PRIVATE_KEY]
-    },
-    mainnet: {
-      url: process.env.QUICKNODE_MAINNET_URL,
-      accounts: [process.env.PRIVATE_KEY]
-    }
+    // sepolia: {
+    //   url: process.env.QUICKNODE_SEPOLIA_URL,
+    //   accounts: [process.env.PRIVATE_KEY]
+    // },
+    // holesky: {
+    //   url: process.env.QUICKNODE_HOLESKY_URL,
+    //   accounts: [process.env.PRIVATE_KEY]
+    // },
+    // mainnet: {
+    //   url: process.env.QUICKNODE_MAINNET_URL,
+    //   accounts: [process.env.PRIVATE_KEY]
   },
-  etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY
-  }
 };
+// etherscan: {
+//   apiKey: process.env.ETHERSCAN_API_KEY
+// }
+// };
