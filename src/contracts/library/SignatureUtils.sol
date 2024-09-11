@@ -42,19 +42,6 @@ library SignatureUtils {
         uint256 nonce;
     }
 
-    function verify(
-        address signer,
-        bytes memory signature,
-        uint256 amount
-    ) internal view returns (bool) {
-        bytes32 payload = keccak256(abi.encode(msg.sender, amount));
-        bytes32 message = keccak256(
-            abi.encodePacked("\x19Ethereum Signed Message:\n32", payload)
-        );
- 
-        return _verifyHashSignature(signer, message, signature);
-    }
- 
     function validateNftDepositSignature(
         bytes calldata signature,
         address _contract,

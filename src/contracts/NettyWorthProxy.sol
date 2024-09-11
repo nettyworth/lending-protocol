@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "./interfaces/IReceipts.sol";
-import "./library/SignatureUtils.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "./interfaces/IwhiteListCollection.sol";
 import "./interfaces/ICryptoVault.sol";
 import "./interfaces/ILoanManager.sol";
-import "./interfaces/IwhiteListCollection.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./library/SignatureUtils.sol";
+import "./interfaces/IReceipts.sol";
 
 contract NettyWorthProxy is ReentrancyGuard, Initializable {
 

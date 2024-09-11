@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 // solhint-disable-next-line
 pragma solidity ^0.8.24;
-import "../utils/ERC721A.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "../utils/ERC721A.sol";
 
 contract NFTExample is ERC721A, ReentrancyGuard, Ownable {
     using Strings for uint256;

@@ -1,8 +1,8 @@
 // scripts/deploy.js
 
-require("dotenv").config();
 const { parseEther } = require("ethers");
 const { ethers } = require("hardhat");
+require("dotenv").config();
 
 async function main() {
   try {

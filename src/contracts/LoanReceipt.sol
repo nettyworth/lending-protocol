@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./utils/ERC721A.sol";
 
-
 contract LoanReceipt is ERC721A, Ownable {
     struct BorrowerReceipt {
         address borrower;
