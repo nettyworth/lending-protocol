@@ -26,21 +26,38 @@ async function main() {
 
     // Deploy LoanReceipt
     const LoanReceipt = await ethers.getContractFactory("LoanReceipt");
-    const loanReceipt = await LoanReceipt.deploy("NettyWorth Loan Receipt", "NWLR");
+    const loanReceipt = await LoanReceipt.deploy(
+      "NettyWorth Loan Receipt",
+      "NWLR"
+    );
     await loanReceipt.waitForDeployment();
     console.log("LoanReceipt deployed to:", await loanReceipt.getAddress());
+
+    const WhiteListCollection = await ethers.getContractFactory(
+      "WhiteListCollection"
+    );
+    const whiteListCollection = await WhiteListCollection.deploy();
+    await whiteListCollection.waitForDeployment();
+    console.log(
+      "whiteListCollection deployed to:",
+      await whiteListCollection.getAddress()
+    );
 
     // Deploy NettyWorthProxy
     const NettyWorthProxy = await ethers.getContractFactory("NettyWorthProxy");
     const nettyWorthProxy = await NettyWorthProxy.deploy();
     await nettyWorthProxy.waitForDeployment();
-    console.log("NettyWorthProxy deployed to:", await nettyWorthProxy.getAddress());
+    console.log(
+      "NettyWorthProxy deployed to:",
+      await nettyWorthProxy.getAddress()
+    );
 
     // Initialize NettyWorthProxy
     await nettyWorthProxy.initialize(
       await cryptoVault.getAddress(),
       await loanManager.getAddress(),
-      await loanReceipt.getAddress()
+      await loanReceipt.getAddress(),
+      await whiteListCollection.getAddress()
     );
     console.log("NettyWorthProxy initialized");
 
@@ -51,30 +68,68 @@ async function main() {
     console.log("Proxy manager set for all contracts");
 
     // Deploy TestToken (for testing purposes)
-    const TestToken = await ethers.getContractFactory("TestToken");
-    const testToken = await TestToken.deploy("TestProject", "Test NFT", "TNFT", 1000);
-    await testToken.waitForDeployment();
-    console.log("TestToken deployed to:", await testToken.getAddress());
+    const NFTExample = await ethers.getContractFactory("NFTExample");
+    const nftExample = await NFTExample.deploy(
+      "TestNettyWorth",
+      "TestNettyWorth NFT",
+      "TNFT",
+      1000
+    );
+    await nftExample.waitForDeployment();
+    console.log(
+      "TestNettyWorth NFT Contract deployed to:",
+      await nftExample.getAddress()
+    );
 
     // Deploy ERC20 token (for testing purposes)
-    const MyToken = await ethers.getContractFactory("MyToken");
-    const myToken = await MyToken.deploy(1000000); // 1 million initial supply
-    await myToken.waitForDeployment();
-    console.log("MyToken (ERC20) deployed to:", await myToken.getAddress());
+    const NettyWorthToken = await ethers.getContractFactory("NettyWorthToken");
+    const nettyWorthToken = await NettyWorthToken.deploy(
+      ethers.utils.parseEther("10000")
+    ); // 1 million initial supply
+    await nettyWorthToken.waitForDeployment();
+    console.log(
+      "MyToken (ERC20) deployed to:",
+      await nettyWorthToken.getAddress()
+    );
+
+    //  await NettyWorthToken.setProxyManager(await nettyWorthProxy.getAddress());
+    // await loanReceipt.setProxyManager(await nettyWorthProxy.getAddress());
 
     // Verify contracts on Etherscan (only for public networks)
     if (network.name !== "hardhat" && network.name !== "localhost") {
       console.log("Waiting for block confirmations...");
       // Wait for 5 blocks to be mined
-      await ethers.provider.waitForTransaction(await cryptoVault.getAddress(), 5);
-      await ethers.provider.waitForTransaction(await loanManager.getAddress(), 5);
-      await ethers.provider.waitForTransaction(await loanReceipt.getAddress(), 5);
-      await ethers.provider.waitForTransaction(await nettyWorthProxy.getAddress(), 5);
-      await ethers.provider.waitForTransaction(await testToken.getAddress(), 5);
-      await ethers.provider.waitForTransaction(await myToken.getAddress(), 5);
+      await ethers.provider.waitForTransaction(
+        await cryptoVault.getAddress(),
+        5
+      );
+      await ethers.provider.waitForTransaction(
+        await loanManager.getAddress(),
+        5
+      );
+      await ethers.provider.waitForTransaction(
+        await loanReceipt.getAddress(),
+        5
+      );
+      await ethers.provider.waitForTransaction(
+        await whiteListCollection.getAddress(),
+        5
+      );
+      await ethers.provider.waitForTransaction(
+        await nettyWorthProxy.getAddress(),
+        5
+      );
+      await ethers.provider.waitForTransaction(
+        await nftExample.getAddress(),
+        5
+      );
+      await ethers.provider.waitForTransaction(
+        await nettyWorthToken.getAddress(),
+        5
+      );
 
       console.log("Verifying contracts on Etherscan...");
-      
+
       await hre.run("verify:verify", {
         address: await cryptoVault.getAddress(),
         contract: "contracts/CryptoVault.sol:CryptoVault",
@@ -93,19 +148,29 @@ async function main() {
 
       await hre.run("verify:verify", {
         address: await nettyWorthProxy.getAddress(),
+        contract: "contracts/WhiteListCollection.sol:WhiteListCollection",
+      });
+
+      await hre.run("verify:verify", {
+        address: await nettyWorthProxy.getAddress(),
         contract: "contracts/NettyWorthProxy.sol:NettyWorthProxy",
       });
 
       await hre.run("verify:verify", {
-        address: await testToken.getAddress(),
-        contract: "contracts/TestToken.sol:TestToken",
-        constructorArguments: ["TestProject", "Test NFT", "TNFT", 1000],
+        address: await nftExample.getAddress(),
+        contract: "contracts/Examples/NFTExample.sol:NFTExample",
+        constructorArguments: [
+          "TestNettyWorth",
+          "TestNettyWorth NFT",
+          "TNFT",
+          1000,
+        ],
       });
 
       await hre.run("verify:verify", {
-        address: await myToken.getAddress(),
-        contract: "contracts/ERC20Example.sol:MyToken",
-        constructorArguments: [1000000],
+        address: await nettyWorthToken.getAddress(),
+        contract: "contracts/Examples/ERC20Example.sol:NettyWorthToken",
+        constructorArguments: [ethers.utils.parseEther("10000")],
       });
 
       console.log("Contracts verified on Etherscan");

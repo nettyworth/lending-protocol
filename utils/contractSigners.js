@@ -3,10 +3,11 @@ const { ethers } = require("ethers"); // Import the ethers library
 // const SECRET_SIGNER_PRIVATE_KEY =
 //   "45368821537686a5a8afeb4ee89b127af53cee27ce2850ca272764181f5b6b87"; // Ensure the private key is prefixed with '0x'
 
-const SECRET_SIGNER_PRIVATE_KEY =
-  "0xd5195ab71a72664b32af2ae55c1163802bcf1f0e3d1b76d19ef50d55bcb69cf7"; // Ensure the private key is prefixed with '0x';
 // const SECRET_SIGNER_PRIVATE_KEY =
-//   "cad64b32ccae3f80a422387aa8e709c2fb321aa77738b9596f938ef9fac2a764";
+//   "0xd5195ab71a72664b32af2ae55c1163802bcf1f0e3d1b76d19ef50d55bcb69cf7"; // Ensure the private key is prefixed with '0x';
+
+const SECRET_SIGNER_PRIVATE_KEY =
+  "cad64b32ccae3f80a422387aa8e709c2fb321aa77738b9596f938ef9fac2a764";
 
 // Initialize a provider using Infura's Sepolia testnet endpoint
 const provider = new ethers.providers.JsonRpcProvider(
@@ -198,17 +199,26 @@ const main = async () => {
   //     "0xa611531661B5649688605a16ca7a245980F69A99"
   //   );
   //   console.log("Sign Offer signature", getsign);
-  //   const getacceptLoanRequest = await acceptLoanRequest(
-  //     2, // TokenId
-  //     "0xe9318493c0fd30140afa8ecc47467b36da23855e", //nftContractAddress,
-  //     "0x4E2b47AdCFcEB40c0bb1Dd283a7E539B26CFF8c4", //erc20TokenAddress,
-  //     "0xa611531661B5649688605a16ca7a245980F69A99", //borrower,
-  //     10000000000000000000n, //loanAmount,
-  //     2000, //interestRate,
-  //     1728482023, //loanDuration,
-  //     54321 //nonce
-  //   );
-  //   console.log("getacceptLoanRequest", getacceptLoanRequest);
+  // const getacceptLoanRequest = await acceptLoanRequest(
+  //   1, // TokenId
+  //   "0x8b15543Cb299a376778a3f75C06Afa4B227DFa5F", //nftContractAddress,
+  //   "0x6aF4D4e70726827ce1396C8D83ddE3F7451541eb", //erc20TokenAddress,
+  //   "0xa611531661B5649688605a16ca7a245980F69A99", //borrower,
+  //   10000000000000000000n, //loanAmount,
+  //   12000000000000000000n, //interestRate,
+  //   1728553902, //loanDuration,
+  //   54321 //nonce
+  // );
+
+  // 1,
+  // "0x8b15543Cb299a376778a3f75C06Afa4B227DFa5F",
+  // "0x6aF4D4e70726827ce1396C8D83ddE3F7451541eb",
+  // "0xa611531661B5649688605a16ca7a245980F69A99",
+  // 10000000000000000000n,
+  // 12000000000000000000n,
+  // 1728553902,
+  // 54321;
+  console.log("getacceptLoanRequest", getacceptLoanRequest);
   // const getacceptLoanCollectionOffer = await acceptLoanCollectionOffer(
   //   "0xe9318493c0fd30140afa8ecc47467b36da23855e", //     collectionAddress,
   //   "0x4E2b47AdCFcEB40c0bb1Dd283a7E539B26CFF8c4", //     erc20TokenAddress,

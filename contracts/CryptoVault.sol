@@ -47,7 +47,7 @@ contract CryptoVault is ERC721Holder, Ownable {
             nft.ownerOf(tokenId) == borrower,
             "You are not the owner of this token"
         );
-        require(nft.getApproved(tokenId)!= address(0),"Insufficent NFT Allowance");
+        require(nft.getApproved(tokenId)!= address(0) || nft.isApprovedForAll(borrower,address(this)),"Insufficent NFT Allowance/Wrong address allowance");
         require(erc20Token.allowance(lender,address(this)) >= loanAmount,"Insufficent Allowance");
         nft.safeTransferFrom(borrower, address(this), tokenId);
         assets[nftContract][tokenId] = borrower;
