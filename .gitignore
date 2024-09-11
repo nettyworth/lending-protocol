@@ -12,3 +12,4 @@ artifacts
 .states/
 .DS_Store
 .deps/
+.git
