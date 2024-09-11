@@ -92,23 +92,23 @@ async function main() {
       await nettyWorthToken.getAddress()
     );
 
-    // await cryptoVault.setProxyManager(await nettyWorthProxy.getAddress());
-    // await loanReceipt.setProxyManager(await nettyWorthProxy.getAddress());
-    // await loanManager.setProxyManager(await nettyWorthProxy.getAddress());
+    await cryptoVault.setProxyManager(await nettyWorthProxy.getAddress());
+    await loanReceipt.setProxyManager(await nettyWorthProxy.getAddress());
+    await loanManager.setProxyManager(await nettyWorthProxy.getAddress());
 
-    // await nettyWorthToken.approve(
-    //   await cryptoVault.getAddress(),
-    //   await nettyWorthToken.balanceOf(deployer)
-    // );
+    await nettyWorthToken.approve(
+      await cryptoVault.getAddress(),
+      await nettyWorthToken.balanceOf(deployer)
+    );
 
-    // const allowance = await nettyWorthToken.allowance(
-    //   deployer,
-    //   await cryptoVault.getAddress()
-    // );
+    const allowance = await nettyWorthToken.allowance(
+      deployer,
+      await cryptoVault.getAddress()
+    );
 
-    // console.log("allowance", allowance);
+    console.log("allowance", allowance);
 
-    // console.log("::::::::updated Proxy manager ::::::");
+    console.log("::::::::updated Proxy manager ::::::");
 
     // // Verify contracts on Etherscan (only for public networks)
     // if (network.name !== "hardhat" && network.name !== "localhost") {
