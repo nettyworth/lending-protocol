@@ -29,7 +29,7 @@ contract CryptoVault is ERC721Holder, Ownable {
         uint256 indexed tokenId
     );
 
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender){}
 
     function depositNftToEscrowAndERC20ToBorrower(
         address nftContract,
@@ -49,8 +49,8 @@ contract CryptoVault is ERC721Holder, Ownable {
         );
         require(nft.getApproved(tokenId)!= address(0) || nft.isApprovedForAll(borrower,address(this)),"Insufficent NFT Allowance/Wrong address allowance");
         require(erc20Token.allowance(lender,address(this)) >= loanAmount,"Insufficent Allowance");
-        nft.safeTransferFrom(borrower, address(this), tokenId);
         assets[nftContract][tokenId] = borrower;
+        nft.safeTransferFrom(borrower, address(this), tokenId);
         erc20Token.safeTransferFrom(lender, borrower, loanAmount);
         emit nftDepositToEscrow(borrower, nftContract, tokenId);
     }
@@ -66,29 +66,33 @@ contract CryptoVault is ERC721Holder, Ownable {
         address currencyERC20,
         address adminWallet
     ) external onlyProxyManager {
+
+        IERC20 erc20Token = IERC20(currencyERC20);
+        IERC721 token = IERC721(nftContract);
+
         require(
             assets[nftContract][tokenId] != address(0),
             "This token is not stored in the vault"
         );
         require(assets[nftContract][tokenId]== borrower,
-        "Caller is not the owner ");
-        IERC20 erc20Token = IERC20(currencyERC20);
+        "Borrower is not the owner ");
+        require(erc20Token != IERC20(address(0)), "Invalid ERC20 token address");
         require(erc20Token.allowance(borrower,address(this)) >= rePaymentAmount,"Insufficent Allowance");
-        require(erc20Token != IERC20(address(0)), "You have to pay loan via native currency");
         require(erc20Token.balanceOf(borrower) >= rePaymentAmount ,"Insufficent balance to payloan");
      
-        IERC721 token = IERC721(nftContract);
         require(
             token.ownerOf(tokenId) == address(this),
             "The vault does not own this token"
         );
 
         rePaymentAmount -= computeAdminFee;
+
+        require(rePaymentAmount >= computeAdminFee, "Admin fee exceeds repayment");
         
+        assets[nftContract][tokenId] = address(0);
         erc20Token.safeTransferFrom(borrower, adminWallet, computeAdminFee);
         erc20Token.safeTransferFrom(borrower, lender, rePaymentAmount);
         token.safeTransferFrom(address(this),borrower, tokenId);
-        assets[nftContract][tokenId] = address(0);
 
         emit nftWithdrawalFromEscrow(borrower, nftContract, tokenId);
     }
@@ -99,21 +103,22 @@ contract CryptoVault is ERC721Holder, Ownable {
         uint256 tokenId,
         address borrower
     ) external onlyProxyManager {
+
+        IERC721 token = IERC721(nftContract);
+
         require(
             assets[nftContract][tokenId] != address(0),
             "This token is not stored in the vault"
         );
         require(assets[nftContract][tokenId]== borrower,
-        "Caller is not the owner "); 
-
-        IERC721 token = IERC721(nftContract);
+        "borrower is not the owner"); 
         require(
             token.ownerOf(tokenId) == address(this),
             "The vault does not own this token"
         );
 
-        token.safeTransferFrom(address(this), borrower, tokenId);
         assets[nftContract][tokenId] = address(0);
+        token.safeTransferFrom(address(this), borrower, tokenId);
         emit nftWithdrawalFromEscrow(borrower, nftContract, tokenId);
     }
 
@@ -124,21 +129,22 @@ contract CryptoVault is ERC721Holder, Ownable {
         address borrower,
         address lender
     ) external onlyProxyManager {
+
+        IERC721 token = IERC721(nftContract);
+
         require(
             assets[nftContract][tokenId] != address(0),
             "This token is not stored in the vault"
         );
         require(assets[nftContract][tokenId]== borrower,
-        "Caller is not the owner "); // added
-
-        IERC721 token = IERC721(nftContract);
+        "borrower is not the owner "); // added
         require(
             token.ownerOf(tokenId) == address(this),
             "The vault does not own this token"
         );
 
-        token.safeTransferFrom(address(this), lender, tokenId);
         assets[nftContract][tokenId] = address(0);
+        token.safeTransferFrom(address(this), lender, tokenId);
         emit nftWithdrawalFromEscrow(lender, nftContract, tokenId);
     }
 
