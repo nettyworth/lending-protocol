@@ -353,7 +353,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     	return (_interest * (_adminFee)) / BPS;
     }
 
-
     function _sanityCheckPayBack(ILoanManager.Loan memory loan, uint256 _lenderReceiptId,uint256 _borrowerReceiptId) internal view {
         require(loan.isApproved, "Loan offer not approved");
         require(!loan.isDefault,"borrower is defaulter now");
