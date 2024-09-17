@@ -15,7 +15,6 @@ contract LoanManager is Ownable {
         address lender;
         uint256 loanAmount;
         uint256 aprBasisPoints;
-        // uint256 rePayment;
         uint256 loanDuration;
         address currencyERC20;
         uint256 loanInitialTime;
@@ -32,7 +31,6 @@ contract LoanManager is Ownable {
         address  lender,
         uint256 loanAmount,
         uint256 aprBasisPoints,
-        // uint256 rePayment,
         uint256 loanDuration,
         address erc20Address,
         uint256 loanInitialTime,
@@ -62,7 +60,6 @@ contract LoanManager is Ownable {
         address _lender,
         uint256 _loanAmount,
         uint256 _aprBasisPoints,
-        // uint256 _rePayment,
         uint256 _loanDuration,
         address _currencyERC20,
         uint256 _nonce
