@@ -11,7 +11,7 @@ interface ILoanManager {
         address borrower;
         address lender;
         uint256 loanAmount;
-        uint256 rePayment;
+        uint256 aprBasisPoints;
         uint256 loanDuration;
         address currencyERC20;
         uint256 loanInitialTime;
@@ -26,7 +26,7 @@ interface ILoanManager {
         address _borrower,
         address _lender,
         uint256 _loanAmount,
-        uint256 _rePayment,
+        uint256 __aprBasisPoints,
         uint256 _loanDuration,
         address _erc20Token,
         uint256 _nonce
@@ -47,7 +47,7 @@ interface ILoanManager {
 
     function updateIsApproved(uint256 loanId, bool state) external;
 
-    function getPayoffAmount(uint256 _loanId) external view returns(uint256);
+    function getPayoffAmount(uint256 loanId) external view returns(uint256,uint256);
     
     function getLoanById(uint256 _loanId) external view returns (Loan memory loan); 
 
