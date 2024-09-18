@@ -8,7 +8,7 @@ async function main() {
   try {
     const [deployer] = await ethers.getSigners();
     console.log("Deploying contracts with the account:", deployer.address);
-
+    
     // Log the current network
     const network = await ethers.provider.getNetwork();
     console.log("Deploying to network:", network.name);
@@ -95,7 +95,7 @@ async function main() {
     // Verify contracts on Etherscan (only for public networks)
     if (network.name !== "hardhat" && network.name !== "localhost") {
       console.log("Waiting for block confirmations...");
-      // Wait for 5 blocks to be mined
+     // Wait for 5 blocks to be mined
       await ethers.provider.waitForTransaction(
         await cryptoVault.getAddress(),
         5

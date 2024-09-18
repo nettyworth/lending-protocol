@@ -1,10 +1,11 @@
 const { ethers } = require("ethers");
-const {PRIVATE_KEY, PROVIDER} =  process.env;
+require("dotenv").config();
+const {BORROWER_PRIVATE_KEY, QUICKNODE_SEPOLIA_URL} = process.env;
 
 // Initialize a provider using Infura's Sepolia testnet endpoint
-const provider = new ethers.providers.JsonRpcProvider(PROVIDER);
+const provider = new ethers.providers.JsonRpcProvider(QUICKNODE_SEPOLIA_URL);
 // Create a signer instance from the private key
-const signer = new ethers.Wallet(PRIVATE_KEY, provider);
+const signer = new ethers.Wallet(BORROWER_PRIVATE_KEY, provider);
 // Function to sign a deposit operation
 const signDeposit = function (contract, tokenId, walletAddress) {
   const encoded = ethers.utils.defaultAbiCoder.encode(
@@ -20,7 +21,7 @@ const signOffer = async function (
   contract,
   erc20TokenAddress,
   loanAmount,
-  rePayment,
+  aprBasisPoints,
   loanDuration,
   lender,
   lenderNonce,
@@ -43,7 +44,7 @@ const signOffer = async function (
       contract,
       erc20TokenAddress,
       loanAmount,
-      rePayment,
+      aprBasisPoints,
       loanDuration,
       lender,
       lenderNonce,
@@ -59,7 +60,7 @@ const signCreateLoan = function (
   contract,
   erc20TokenAddress,
   loanAmount,
-  rePayment,
+  aprBasisPoints,
   loanDuration,
   lender,
   nonce,
@@ -82,7 +83,7 @@ const signCreateLoan = function (
       contract,
       erc20TokenAddress,
       loanAmount,
-      rePayment,
+      aprBasisPoints,
       loanDuration,
       lender,
       nonce,
@@ -98,7 +99,7 @@ const acceptLoanRequest = async function (
   erc20TokenAddress,
   borrower,
   loanAmount,
-  rePayment,
+  aprBasisPoints,
   loanDuration,
   nonce
 ) {
@@ -119,7 +120,7 @@ const acceptLoanRequest = async function (
       erc20TokenAddress,
       borrower,
       loanAmount,
-      rePayment,
+      aprBasisPoints,
       loanDuration,
       nonce,
     ]
@@ -132,7 +133,7 @@ const acceptLoanCollectionOffer = async function (
   erc20TokenAddress,
   lender,
   loanAmount,
-  rePayment,
+  aprBasisPoints,
   loanDuration,
   nonce
 ) {
@@ -151,7 +152,7 @@ const acceptLoanCollectionOffer = async function (
       erc20TokenAddress,
       lender,
       loanAmount,
-      rePayment,
+      aprBasisPoints,
       loanDuration,
       nonce,
     ]
@@ -181,13 +182,13 @@ const main = async () => {
     console.log("Sign Offer signature", getsign);
   const getacceptLoanRequest = await acceptLoanRequest(
     1, // TokenId
-    "0x8b15543Cb299a376778a3f75C06Afa4B227DFa5F", //nftContractAddress,
-    "0x6aF4D4e70726827ce1396C8D83ddE3F7451541eb", //erc20TokenAddress,
+    "0x5fEa03d2718c4C42Ffbb051766a14C3b8aC1205e", //nftContractAddress,
+    "0x10094F060Bae53A18723b941735c7dd28A844875", //erc20TokenAddress,
     "0xa611531661B5649688605a16ca7a245980F69A99", //borrower,
     10000000000000000000n, //loanAmount,
-    12000000000000000000n, //rePayment,
-    1728553902, //loanDuration,
-    54321 //nonce
+    500, // 5% aprBasisPoints,
+    1729223075, //loanDuration,
+    6734 //nonce
   );
 
   console.log("getacceptLoanRequest", getacceptLoanRequest);
@@ -196,7 +197,7 @@ const main = async () => {
     "0x4E2b47AdCFcEB40c0bb1Dd283a7E539B26CFF8c4", //     erc20TokenAddress,
     "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061", //     lender,
     10000000000000000000n, //     loanAmount,
-    11000000000000000000n, //     rePayment,
+    500, //  5% aprBasisPoints,
     1728482023, //     loanDuration,
     56789 //     nonce
   );
