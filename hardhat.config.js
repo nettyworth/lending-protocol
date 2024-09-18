@@ -2,14 +2,11 @@
 
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
-<<<<<<< Updated upstream
-=======
 const {ADMIN_PRIVATE_KEY,
   QUICKNODE_SEPOLIA_URL,
   // QUICKNODE_MAINNET_URL,
   // QUICKNODE_HOLESKY_URL,
   ETHERSCAN_API_KEY } =  process.env;
->>>>>>> Stashed changes
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -19,7 +16,6 @@ module.exports = {
     localhost: {
       url: "http://127.0.0.1:8545",
     },
-<<<<<<< Updated upstream
     // sepolia: {
     //   url: process.env.QUICKNODE_SEPOLIA_URL,
     //   accounts: [process.env.PRIVATE_KEY]
@@ -31,7 +27,6 @@ module.exports = {
     // mainnet: {
     //   url: process.env.QUICKNODE_MAINNET_URL,
     //   accounts: [process.env.PRIVATE_KEY]
-=======
     sepolia: {
       url: QUICKNODE_SEPOLIA_URL,
       accounts: [ADMIN_PRIVATE_KEY]
@@ -55,7 +50,6 @@ module.exports = {
   },
   etherscan: {
     apiKey: ETHERSCAN_API_KEY
->>>>>>> Stashed changes
   },
 };
 // etherscan: {
