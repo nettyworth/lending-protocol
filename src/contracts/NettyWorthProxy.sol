@@ -23,7 +23,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     address public whiteListContract;
     address public _owner;
 
-    uint256 public adminFeeInBasisPoints = 500;
+    uint256 public adminFeeInBasisPoints = 400;
     uint256 public constant BPS = 10000;
     address public adminWallet;
 
@@ -141,7 +141,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             loanRequest.borrower,
             msg.sender,//lender,
             loanRequest.loanAmount,
-            loanRequest.rePayment,
+            loanRequest.aprBasisPoints,
             loanRequest.loanDuration,
             loanRequest.erc20TokenAddress,
             loanRequest.nonce
@@ -150,7 +150,9 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     return(receiptIdBorrower, receiptIdLender);
     }
 
-    function acceptLoanOffer(bytes calldata acceptOfferSignature, SignatureUtils.LoanOffer calldata loanOffer) external
+    function acceptLoanOffer(
+        bytes calldata acceptOfferSignature,
+        SignatureUtils.LoanOffer calldata loanOffer) external
         nonReentrant returns(uint256 receiptIdBorrower, uint256 receiptIdLender ){
         require(msg.sender == loanOffer.borrower, "Unauthorized sender");
         _sanityCheckAcceptOffer(
@@ -173,7 +175,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             loanOffer.borrower,
             loanOffer.lender,
             loanOffer.loanAmount,
-            loanOffer.rePayment,
+            loanOffer.aprBasisPoints,
             loanOffer.loanDuration,
             loanOffer.erc20TokenAddress,
             loanOffer.nonce
@@ -207,7 +209,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             msg.sender,
             loanCollectionOffer.lender,
             loanCollectionOffer.loanAmount,
-            loanCollectionOffer.rePayment,
+            loanCollectionOffer.aprBasisPoints,
             loanCollectionOffer.loanDuration,
             loanCollectionOffer.erc20TokenAddress,
             loanCollectionOffer.nonce
@@ -222,7 +224,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         address borrower,
         address lender,
         uint256 loanAmount,
-        uint256 rePayment,
+        uint256 aprBasisPoints,
         uint256 loanDuration,
         address erc20TokenAddress,
         uint256 nonce) internal returns(uint256 _receiptIdBorrower, uint256 _receiptIdLender){
@@ -240,7 +242,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             borrower,
             lender,
             loanAmount,
-            rePayment,
+            aprBasisPoints,
             loanDuration,
             erc20TokenAddress,
             nonce
@@ -281,8 +283,8 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     function payBackLoan(uint256 _loanId, address erc20Token) external nonReentrant returns (bool){
         ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
         require(loan.currencyERC20 == erc20Token, "Currency Invalid");
-        uint256 rePaymentAmount = _iloanManager.getPayoffAmount(_loanId);
-        uint256 interestAmount = rePaymentAmount - loan.loanAmount;
+        (uint256 rePaymentAmount, uint256 interestAmount)= _iloanManager.getPayoffAmount(_loanId);
+        // uint256 interestAmount = rePaymentAmount - loan.loanAmount;
         uint256 computeAdminFee = _computeAdminFee(interestAmount,adminFeeInBasisPoints);
         (uint256 _borrowerReceiptId,) = _ireceipts.getBorrowerReceiptId(loan.nftContract, loan.tokenId);
         (uint256 _lenderReceiptId,) = _ireceipts.getLenderReceiptId(loan.nftContract, loan.tokenId);
@@ -353,7 +355,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     	return (_interest * (_adminFee)) / BPS;
     }
 
-
     function _sanityCheckPayBack(ILoanManager.Loan memory loan, uint256 _lenderReceiptId,uint256 _borrowerReceiptId) internal view {
         require(loan.isApproved, "Loan offer not approved");
         require(!loan.isDefault,"borrower is defaulter now");
@@ -378,6 +379,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         _nonceUsedForUser[lender][nonce] = true;
         _nonceUsedForUser[borrower][nonce] = true;
     }
+
 }
 
 

@@ -2,6 +2,11 @@
 
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
+const {ADMIN_PRIVATE_KEY,
+  QUICKNODE_SEPOLIA_URL,
+  QUICKNODE_MAINNET_URL,
+  QUICKNODE_HOLESKY_URL,
+  ETHERSCAN_API_KEY } =  process.env;
 
 /** @type import('hardhat/config').HardhatUserConfig */
 
@@ -18,16 +23,16 @@ module.exports = {
       url: "http://127.0.0.1:8545",
     },
     sepolia: {
-      url: process.env.QUICKNODE_SEPOLIA_URL,
-      accounts: [process.env.PRIVATE_KEY]
+      url: QUICKNODE_SEPOLIA_URL,
+      accounts: [ADMIN_PRIVATE_KEY]
     },
     holesky: {
-      url: process.env.QUICKNODE_HOLESKY_URL,
-      accounts: [process.env.PRIVATE_KEY]
+      url: QUICKNODE_HOLESKY_URL,
+      accounts: [ADMIN_PRIVATE_KEY]
     },
     mainnet: {
-      url: process.env.QUICKNODE_MAINNET_URL,
-      accounts: [process.env.PRIVATE_KEY]
+      url: QUICKNODE_MAINNET_URL,
+      accounts: [ADMIN_PRIVATE_KEY]
   },
 },
   solidity: {
@@ -39,7 +44,7 @@ module.exports = {
     artifacts: 'src/artifacts',
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY
+    apiKey: ETHERSCAN_API_KEY
   },
 };
 
