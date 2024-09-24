@@ -1,6 +1,6 @@
 const { ethers } = require("ethers");
 require("dotenv").config();
-const {BORROWER_PRIVATE_KEY, QUICKNODE_SEPOLIA_URL} = process.env;
+const { BORROWER_PRIVATE_KEY, QUICKNODE_SEPOLIA_URL } = process.env;
 
 // Initialize a provider using Infura's Sepolia testnet endpoint
 const provider = new ethers.providers.JsonRpcProvider(QUICKNODE_SEPOLIA_URL);
@@ -168,18 +168,18 @@ function sign(encoded) {
 }
 
 const main = async () => {
-    const getsign = await signOffer(
-      1,
-      "0xe62b5Fa383dFfbD2e9ad429155612d7fAAEDBA04",
-      "0x08f7Cde6109a74BA43Eaf316e5DaD5D27f63Ff7B",
-      10000000000000000000n,
-      20,
-      1727936604,
-      "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
-      223898,
-      "0xa611531661B5649688605a16ca7a245980F69A99"
-    );
-    console.log("Sign Offer signature", getsign);
+  const getsign = await signOffer(
+    1,
+    "0xe62b5Fa383dFfbD2e9ad429155612d7fAAEDBA04",
+    "0x08f7Cde6109a74BA43Eaf316e5DaD5D27f63Ff7B",
+    10000000000000000000n,
+    20,
+    1727936604,
+    "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
+    223898,
+    "0xa611531661B5649688605a16ca7a245980F69A99"
+  );
+  console.log("Sign Offer signature", getsign);
   const getacceptLoanRequest = await acceptLoanRequest(
     1, // TokenId
     "0x5fEa03d2718c4C42Ffbb051766a14C3b8aC1205e", //nftContractAddress,
@@ -207,7 +207,7 @@ const main = async () => {
 main();
 
 module.exports = {
-  signDeposit,
-  signOffer,
+  acceptLoanCollectionOffer,
+  acceptLoanRequest,
   signCreateLoan,
 };

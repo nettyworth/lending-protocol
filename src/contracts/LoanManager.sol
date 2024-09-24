@@ -131,9 +131,9 @@ contract LoanManager is Ownable {
         uint256 _nonce
     ) public view returns (Loan memory loan, uint256 loanId) {
         uint64 _loanId = uint64(uint256(
-            keccak256(abi.encodePacked(_borrower, _contract, _tokenId, _nonce))
-        ));
-        loan = loans[_loanId];
+                keccak256(abi.encodePacked(_borrower, _contract, _tokenId, _nonce))
+            ));
+                loan = loans[_loanId];
         loanId = _loanId;
 
     return (loan , loanId);
