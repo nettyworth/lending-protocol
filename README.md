@@ -14,12 +14,12 @@
 
 ## Overview
 
-NettyWorth lending protocol is a decentralized finance (DeFi) project that allows users to use their NFTs as collateral for loans. The system consists of several smart contracts that work together to facilitate NFT-backed loans.
+NettyWorth Lending Protocol is a decentralized finance (DeFi) project that enables users to use their NFTs as collateral for loans. The system comprises several smart contracts working together to facilitate NFT-backed loans, providing a seamless experience for borrowers and lenders.
 
 ## Prerequisites
 
-- Node.js (v14.0.0 or later)
-- npm (v6.0.0 or later)
+- Node.js (v22.8.0 or later)
+- npm (v10.8.2 or later)
 - Git
 - Metamask or another Ethereum wallet
 - QuickNode account for blockchain access
@@ -29,9 +29,18 @@ NettyWorth lending protocol is a decentralized finance (DeFi) project that allow
 
 1. Clone the repository:
 
+   Using HTTPS:
+
    ```
-   git clone https://github.com/your-username/nettyworth-project.git
-   cd nettyworth-project
+   git clone https://github.com/nettyworth/lending-protocol.git
+   cd lending-protocol
+   ```
+
+   Using SSH:
+
+   ```
+   git clone git@github.com:nettyworth/lending-protocol.git
+   cd lending-protocol
    ```
 
 2. Install dependencies:
@@ -58,40 +67,46 @@ The project consists of the following main contracts:
 
 1. **CryptoVault**: Manages the storage of NFTs used as collateral.
 2. **LoanManager**: Handles loan creation, payments, and loan state.
-3. **LoanReceipt**: An ERC721 token representing loan receipts.
+3. **LoanReceipt**: An ERC721A token representing loan receipts.
 4. **NettyWorthProxy**: The main contract that orchestrates interactions between other contracts.
-5. **TestToken**: An ERC721 token for testing purposes.
-6. **MyToken**: An ERC20 token for testing purposes.
+5. **WhiteListCollection**: Manages whitelisting of NFT collections and ERC20 tokens.
 
-### High-Level Function Overview
+### Key Functions Overview
 
 #### CryptoVault
 
-- `deposit`: Allows users to deposit NFTs as collateral.
-- `withdraw`: Allows users to withdraw their NFTs after loan repayment.
-- `isAssetStored`: Checks if an NFT is stored in the vault.
+- `depositNftToEscrowAndERC20ToBorrower`: Deposits an NFT into the vault and transfers ERC20 tokens to the borrower.
+- `withdrawNftFromEscrowAndERC20ToLender`: Withdraws an NFT from the vault and transfers ERC20 tokens to the lender.
+- `withdrawNftFromEscrow`: Withdraws an NFT from the vault.
+- `AssetStoredOwner`: Checks if an NFT is stored in the vault and returns the owner.
 
 #### LoanManager
 
 - `createLoan`: Creates a new loan.
-- `makePayment`: Processes loan payments.
+- `updateLoan`: Updates an existing loan.
 - `getLoan`: Retrieves loan information.
+- `getPayoffAmount`: Calculates the payoff amount for a loan.
 
 #### LoanReceipt
 
-- `generateReceipts`: Mints receipt tokens for lenders.
+- `generateLenderReceipt`: Mints receipt tokens for lenders.
 - `generateBorrowerReceipt`: Mints receipt tokens for borrowers.
 - `burnReceipt`: Burns a receipt token.
 
 #### NettyWorthProxy
 
-- `depositToEscrow`: Deposits an NFT into the vault.
-- `claimFromEscrow`: Withdraws an NFT from the vault.
-- `makeOffer`: Makes a loan offer.
-- `approveLoan`: Approves a loan offer.
-- `payLoan`: Processes a loan payment.
-- `claimToken`: Claims an NFT after loan repayment.
-- `claimERC20`: Claims ERC20 tokens after loan default.
+- `acceptLoanRequest`: Accepts a loan request from a borrower.
+- `acceptLoanOffer`: Accepts a loan offer from a lender.
+- `acceptLoanCollectionOffer`: Accepts a loan offer for a specific NFT collection.
+- `payBackLoan`: Processes a loan repayment.
+- `forCloseLoan`: Forecloses a loan after default.
+
+#### WhiteListCollection
+
+- `whiteListCollection`: Adds NFT collections to the whitelist.
+- `blackListCollection`: Removes NFT collections from the whitelist.
+- `whiteListErc20Token`: Adds ERC20 tokens to the whitelist.
+- `blackListErc20Token`: Removes ERC20 tokens from the whitelist.
 
 ## Local Development
 
@@ -152,10 +167,23 @@ async function main() {
   const NettyWorthProxy = await ethers.getContractFactory("NettyWorthProxy");
   const proxy = await NettyWorthProxy.attach("DEPLOYED_PROXY_ADDRESS");
 
-  // Example: Make a loan offer
-  const tx = await proxy.makeOffer(/* parameters */);
+  // Example: Accept a loan request
+  const loanRequest = {
+    nftContractAddress: "0x...",
+    tokenId: 1,
+    borrower: "0x...",
+    loanAmount: ethers.utils.parseEther("1"),
+    aprBasisPoints: 1000, // 10% APR
+    loanDuration: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30 days from now
+    erc20TokenAddress: "0x...",
+    nonce: 1,
+  };
+
+  const signature = "0x..."; // Borrower's signature
+
+  const tx = await proxy.acceptLoanRequest(signature, loanRequest);
   await tx.wait();
-  console.log("Offer made successfully");
+  console.log("Loan request accepted successfully");
 }
 
 main()
@@ -174,4 +202,10 @@ main()
 
 3. **Contract verification fails**: Ensure you're using the correct Etherscan API key and that the contract code hasn't changed since deployment.
 
-For more help, please open an issue in the GitHub repository.
+4. **Whitelist issues**: Make sure the NFT collection and ERC20 token are whitelisted using the WhiteListCollection contract before attempting to create or accept loans.
+
+5. **Signature validation fails**: Ensure that the signature is correctly generated and matches the loan request or offer parameters.
+
+6. **Insufficient allowance**: When accepting loan offers or repaying loans, make sure the required ERC20 tokens have been approved for the NettyWorthProxy contract.
+
+For more help or to report issues, please open an issue in the GitHub repository: https://github.com/nettyworth/lending-protocol/issues
