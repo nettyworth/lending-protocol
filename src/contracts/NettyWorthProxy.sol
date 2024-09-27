@@ -286,8 +286,8 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         (uint256 rePaymentAmount, uint256 interestAmount)= _iloanManager.getPayoffAmount(_loanId);
         // uint256 interestAmount = rePaymentAmount - loan.loanAmount;
         uint256 computeAdminFee = _computeAdminFee(interestAmount,adminFeeInBasisPoints);
-        (uint256 _borrowerReceiptId,) = _ireceipts.getBorrowerReceiptId(loan.nftContract, loan.tokenId);
-        (uint256 _lenderReceiptId,) = _ireceipts.getLenderReceiptId(loan.nftContract, loan.tokenId);
+        (uint256 _borrowerReceiptId,address unusedBorrowerAddress) = _ireceipts.getBorrowerReceiptId(loan.nftContract, loan.tokenId);
+        (uint256 _lenderReceiptId,address unusedLenderAddress) = _ireceipts.getLenderReceiptId(loan.nftContract, loan.tokenId);
         _sanityCheckPayBack(loan, _lenderReceiptId, _borrowerReceiptId);
          
         _icryptoVault.withdrawNftFromEscrowAndERC20ToLender(
@@ -297,7 +297,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
             loan.lender,
             rePaymentAmount,
             computeAdminFee,
-            erc20Token,
+            loan.currencyERC20,
             adminWallet
         );
         _ireceipts.burnReceipt(_lenderReceiptId);
@@ -324,8 +324,8 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         require(block.timestamp >= loan.loanDuration,"User is not default yet::");
         require(!loan.isPaid, "Loan Paid");
         require(!loan.isDefault , "Already Claimed");
-        (uint256 _borrowerReceiptId,) = _ireceipts.getBorrowerReceiptId(loan.nftContract, loan.tokenId);
-        (uint256 _lenderReceiptId,) = _ireceipts.getLenderReceiptId(loan.nftContract, loan.tokenId);
+        (uint256 _borrowerReceiptId,address unusedBorrowerAddress) = _ireceipts.getBorrowerReceiptId(loan.nftContract, loan.tokenId);
+        (uint256 _lenderReceiptId,address unusedlenderAddress) = _ireceipts.getLenderReceiptId(loan.nftContract, loan.tokenId);
         require(_ireceipts.tokenExist(_lenderReceiptId), "Receipt does not exist");
         require(_ireceipts.tokenExist(_borrowerReceiptId), "Receipt does not exist");
         address lender = _ireceipts.ownerOf(_lenderReceiptId);  

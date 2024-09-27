@@ -15,7 +15,7 @@ describe("NettyWorth", async function () {
   let owner, lender, borrower, admin, other;
 
   // beforeEach(): This function runs before each test case, setting up the contract environment, deploying contracts, and initializing states.
-  beforeEach(async function () {
+  before(async function () {
     // wallet addresses of the Nettyworth proxy users
     [owner, lender, borrower, admin, other] = await ethers.getSigners();
 
@@ -202,338 +202,338 @@ describe("NettyWorth", async function () {
   });
 
   // ********************************Accept Loan Collection Offer*********************************/
-  describe("Accept Loan Collection Offer", async function () {
-    async function createSignature(signer, data) {
-      let abiencode = new ethers.AbiCoder();
-      abiencode = abiencode.encode(data.types, data.values);
-      const hash = ethers.keccak256(abiencode);
-      const signature = await signer.signMessage(ethers.getBytes(hash));
-      return signature;
-    }
-    it("should accept a loan Collection offer when valid signatures are provided", async function () {
-      const tokenId = 1;
-      const LoanCollectionOffer = {
-        collectionAddress: await nftExample.getAddress(),
-        erc20TokenAddress: await nettyWorthToken.getAddress(),
-        lender: lender.address,
-        loanAmount: ethers.parseUnits("10", 18),
-        aprBasisPoints: 500,
-        loanDuration: 1729332157,
-        nonce: 1234,
-      };
+  // describe("Accept Loan Collection Offer", async function () {
+  //   async function createSignature(signer, data) {
+  //     let abiencode = new ethers.AbiCoder();
+  //     abiencode = abiencode.encode(data.types, data.values);
+  //     const hash = ethers.keccak256(abiencode);
+  //     const signature = await signer.signMessage(ethers.getBytes(hash));
+  //     return signature;
+  //   }
+  //   it("should accept a loan Collection offer when valid signatures are provided", async function () {
+  //     const tokenId = 1;
+  //     const LoanCollectionOffer = {
+  //       collectionAddress: await nftExample.getAddress(),
+  //       erc20TokenAddress: await nettyWorthToken.getAddress(),
+  //       lender: lender.address,
+  //       loanAmount: ethers.parseUnits("10", 18),
+  //       aprBasisPoints: 500,
+  //       loanDuration: 1729332157,
+  //       nonce: 1234,
+  //     };
 
-      const signature = await createSignature(lender, {
-        types: [
-          "address",
-          "address",
-          "address",
-          "uint256",
-          "uint256",
-          "uint256",
-          "uint256",
-        ],
-        values: [
-          LoanCollectionOffer.collectionAddress,
-          LoanCollectionOffer.erc20TokenAddress,
-          LoanCollectionOffer.lender,
-          LoanCollectionOffer.loanAmount,
-          LoanCollectionOffer.aprBasisPoints,
-          LoanCollectionOffer.loanDuration,
-          LoanCollectionOffer.nonce,
-        ],
-      });
+  //     const signature = await createSignature(lender, {
+  //       types: [
+  //         "address",
+  //         "address",
+  //         "address",
+  //         "uint256",
+  //         "uint256",
+  //         "uint256",
+  //         "uint256",
+  //       ],
+  //       values: [
+  //         LoanCollectionOffer.collectionAddress,
+  //         LoanCollectionOffer.erc20TokenAddress,
+  //         LoanCollectionOffer.lender,
+  //         LoanCollectionOffer.loanAmount,
+  //         LoanCollectionOffer.aprBasisPoints,
+  //         LoanCollectionOffer.loanDuration,
+  //         LoanCollectionOffer.nonce,
+  //       ],
+  //     });
 
-      console.log("signature++++++++++=", signature);
+  //     console.log("signature++++++++++=", signature);
 
-      const LoanCollectionOffer2 = {
-        collectionAddress: await nftExample.getAddress(),
-        erc20TokenAddress: await nettyWorthToken.getAddress(),
-        lender: lender.address,
-        loanAmount: ethers.parseUnits("10", 18),
-        aprBasisPoints: 500,
-        loanDuration: 1729332157,
-        nonce: 1234,
-      };
+  //     const LoanCollectionOffer2 = {
+  //       collectionAddress: await nftExample.getAddress(),
+  //       erc20TokenAddress: await nettyWorthToken.getAddress(),
+  //       lender: lender.address,
+  //       loanAmount: ethers.parseUnits("10", 18),
+  //       aprBasisPoints: 500,
+  //       loanDuration: 1729332157,
+  //       nonce: 1234,
+  //     };
 
-      expect(
-        await nettyWorthToken.allowance(
-          lender.address,
-          await cryptoVault.getAddress()
-        )
-      ).to.equal(ethers.parseUnits("100000000", 18).toString());
+  //     expect(
+  //       await nettyWorthToken.allowance(
+  //         lender.address,
+  //         await cryptoVault.getAddress()
+  //       )
+  //     ).to.equal(ethers.parseUnits("100000000", 18).toString());
 
-      console.log(
-        "ERC20 Allowance",
-        await nettyWorthToken.allowance(
-          lender.address,
-          await cryptoVault.getAddress()
-        )
-      );
+  //     console.log(
+  //       "ERC20 Allowance",
+  //       await nettyWorthToken.allowance(
+  //         lender.address,
+  //         await cryptoVault.getAddress()
+  //       )
+  //     );
 
-      expect(
-        await nftExample.isApprovedForAll(
-          borrower.address,
-          await cryptoVault.getAddress()
-        )
-      ).to.equal(true);
-      console.log(
-        "NFT IS APPROVED OR NOT",
-        await nftExample.isApprovedForAll(
-          borrower.address,
-          await cryptoVault.getAddress()
-        )
-      );
+  //     expect(
+  //       await nftExample.isApprovedForAll(
+  //         borrower.address,
+  //         await cryptoVault.getAddress()
+  //       )
+  //     ).to.equal(true);
+  //     console.log(
+  //       "NFT IS APPROVED OR NOT",
+  //       await nftExample.isApprovedForAll(
+  //         borrower.address,
+  //         await cryptoVault.getAddress()
+  //       )
+  //     );
 
-      expect(
-        await nettyWorthProxy
-          .connect(borrower)
-          .acceptLoanCollectionOffer(signature, LoanCollectionOffer2, tokenId),
-        "invalid signature"
-      );
-      // .to.equal(1, 2);
-      console.log("borrower", borrower.address);
-      console.log("crypto vault address", await cryptoVault.getAddress());
-      console.log("NFT Owner after transfer ", await nftExample.ownerOf(1));
-      console.log(
-        "balance of Borrower After acceptOffer Call ",
-        await nettyWorthToken.balanceOf(borrower.address)
-      );
+  //     expect(
+  //       await nettyWorthProxy
+  //         .connect(borrower)
+  //         .acceptLoanCollectionOffer(signature, LoanCollectionOffer2, tokenId),
+  //       "invalid signature"
+  //     );
+  //     // .to.equal(1, 2);
+  //     console.log("borrower", borrower.address);
+  //     console.log("crypto vault address", await cryptoVault.getAddress());
+  //     console.log("NFT Owner after transfer ", await nftExample.ownerOf(1));
+  //     console.log(
+  //       "balance of Borrower After acceptOffer Call ",
+  //       await nettyWorthToken.balanceOf(borrower.address)
+  //     );
 
-      // .to.emit(nettyWorthProxy, "LoanRepaid") // replace with correct event if needed
-      // .withArgs(/*expected arguments based on emitted event*/);
-    });
-  });
+  //     // .to.emit(nettyWorthProxy, "LoanRepaid") // replace with correct event if needed
+  //     // .withArgs(/*expected arguments based on emitted event*/);
+  //   });
+  // });
 
   // ********************************Accept Loan Request*********************************/
 
-  describe("Accept Loan Request", async function () {
-    async function createSignature(signer, data) {
-      let abiencode = new ethers.AbiCoder();
-      abiencode = abiencode.encode(data.types, data.values);
-      const hash = ethers.keccak256(abiencode);
-      const signature = await signer.signMessage(ethers.getBytes(hash));
-      return signature;
-    }
-    it("should accept a loanRequest when valid signatures are provided", async function () {
-      const loanRequest = {
-        tokenId: 1,
-        nftContractAddress: await nftExample.getAddress(),
-        erc20TokenAddress: await nettyWorthToken.getAddress(),
-        borrower: borrower.address,
-        loanAmount: ethers.parseUnits("10", 18),
-        aprBasisPoints: 500,
-        loanDuration: 1729332157,
-        nonce: 1234,
-      };
+  // describe("Accept Loan Request", async function () {
+  //   async function createSignature(signer, data) {
+  //     let abiencode = new ethers.AbiCoder();
+  //     abiencode = abiencode.encode(data.types, data.values);
+  //     const hash = ethers.keccak256(abiencode);
+  //     const signature = await signer.signMessage(ethers.getBytes(hash));
+  //     return signature;
+  //   }
+  //   it("should accept a loanRequest when valid signatures are provided", async function () {
+  //     const loanRequest = {
+  //       tokenId: 1,
+  //       nftContractAddress: await nftExample.getAddress(),
+  //       erc20TokenAddress: await nettyWorthToken.getAddress(),
+  //       borrower: borrower.address,
+  //       loanAmount: ethers.parseUnits("10", 18),
+  //       aprBasisPoints: 500,
+  //       loanDuration: 1729332157,
+  //       nonce: 1234,
+  //     };
 
-      const signature = await createSignature(borrower, {
-        types: [
-          "uint256",
-          "address",
-          "address",
-          "address",
-          "uint256",
-          "uint256",
-          "uint256",
-          "uint256",
-        ],
-        values: [
-          loanRequest.tokenId,
-          loanRequest.nftContractAddress,
-          loanRequest.erc20TokenAddress,
-          loanRequest.borrower,
-          loanRequest.loanAmount,
-          loanRequest.aprBasisPoints,
-          loanRequest.loanDuration,
-          loanRequest.nonce,
-        ],
-      });
+  //     const signature = await createSignature(borrower, {
+  //       types: [
+  //         "uint256",
+  //         "address",
+  //         "address",
+  //         "address",
+  //         "uint256",
+  //         "uint256",
+  //         "uint256",
+  //         "uint256",
+  //       ],
+  //       values: [
+  //         loanRequest.tokenId,
+  //         loanRequest.nftContractAddress,
+  //         loanRequest.erc20TokenAddress,
+  //         loanRequest.borrower,
+  //         loanRequest.loanAmount,
+  //         loanRequest.aprBasisPoints,
+  //         loanRequest.loanDuration,
+  //         loanRequest.nonce,
+  //       ],
+  //     });
 
-      console.log("signature++++++++++=", signature);
+  //     console.log("signature++++++++++=", signature);
 
-      const loanRequest2 = {
-        tokenId: 1,
-        nftContractAddress: await nftExample.getAddress(),
-        erc20TokenAddress: await nettyWorthToken.getAddress(),
-        borrower: borrower.address,
-        loanAmount: ethers.parseUnits("10", 18),
-        aprBasisPoints: 500,
-        loanDuration: 1729332157,
-        nonce: 1234,
-      };
+  //     const loanRequest2 = {
+  //       tokenId: 1,
+  //       nftContractAddress: await nftExample.getAddress(),
+  //       erc20TokenAddress: await nettyWorthToken.getAddress(),
+  //       borrower: borrower.address,
+  //       loanAmount: ethers.parseUnits("10", 18),
+  //       aprBasisPoints: 500,
+  //       loanDuration: 1729332157,
+  //       nonce: 1234,
+  //     };
 
-      expect(
-        await nettyWorthToken.allowance(
-          lender.address,
-          await cryptoVault.getAddress()
-        )
-      ).to.equal(ethers.parseUnits("100000000", 18).toString());
+  //     expect(
+  //       await nettyWorthToken.allowance(
+  //         lender.address,
+  //         await cryptoVault.getAddress()
+  //       )
+  //     ).to.equal(ethers.parseUnits("100000000", 18).toString());
 
-      console.log(
-        "ERC20 Allowance",
-        await nettyWorthToken.allowance(
-          lender.address,
-          await cryptoVault.getAddress()
-        )
-      );
+  //     console.log(
+  //       "ERC20 Allowance",
+  //       await nettyWorthToken.allowance(
+  //         lender.address,
+  //         await cryptoVault.getAddress()
+  //       )
+  //     );
 
-      expect(
-        await nftExample.isApprovedForAll(
-          borrower.address,
-          await cryptoVault.getAddress()
-        )
-      ).to.equal(true);
-      console.log(
-        "NFT IS APPROVED OR NOT",
-        await nftExample.isApprovedForAll(
-          borrower.address,
-          await cryptoVault.getAddress()
-        )
-      );
+  //     expect(
+  //       await nftExample.isApprovedForAll(
+  //         borrower.address,
+  //         await cryptoVault.getAddress()
+  //       )
+  //     ).to.equal(true);
+  //     console.log(
+  //       "NFT IS APPROVED OR NOT",
+  //       await nftExample.isApprovedForAll(
+  //         borrower.address,
+  //         await cryptoVault.getAddress()
+  //       )
+  //     );
 
-      // console.log("NFT Owner", await nftExample.ownerOf(1));
-      // console.log("Contract is open or not :: ", await loanReceipt.open());
-      // console.log("owner", owner.address);
-      // console.log("lender", lender.address);
-      // console.log("borrower", borrower.address);
-      // console.log("admin", admin.address);
-      // console.log("other", other.address);
-      // console.log("\nnettyWorthToken", await nettyWorthToken.getAddress());
-      // console.log("nftExample", await nftExample.getAddress());
-      // console.log("cryptoVault", await cryptoVault.getAddress());
-      // console.log("loanManager", await loanManager.getAddress());
-      // console.log("loanReceipt", await loanReceipt.getAddress());
-      // console.log(
-      //   "whiteListCollectionawait",
-      //   await whiteListCollection.getAddress()
-      // );
-      // console.log("nettyWorthProxys", await nettyWorthProxy.getAddress());
+  //     // console.log("NFT Owner", await nftExample.ownerOf(1));
+  //     // console.log("Contract is open or not :: ", await loanReceipt.open());
+  //     // console.log("owner", owner.address);
+  //     // console.log("lender", lender.address);
+  //     // console.log("borrower", borrower.address);
+  //     // console.log("admin", admin.address);
+  //     // console.log("other", other.address);
+  //     // console.log("\nnettyWorthToken", await nettyWorthToken.getAddress());
+  //     // console.log("nftExample", await nftExample.getAddress());
+  //     // console.log("cryptoVault", await cryptoVault.getAddress());
+  //     // console.log("loanManager", await loanManager.getAddress());
+  //     // console.log("loanReceipt", await loanReceipt.getAddress());
+  //     // console.log(
+  //     //   "whiteListCollectionawait",
+  //     //   await whiteListCollection.getAddress()
+  //     // );
+  //     // console.log("nettyWorthProxys", await nettyWorthProxy.getAddress());
 
-      expect(
-        await nettyWorthProxy
-          .connect(lender)
-          .acceptLoanRequest(signature, loanRequest2),
-        "invalid signature"
-      );
-      // .to.equal(1, 2);
-      console.log("borrower", borrower.address);
-      console.log("crypto vault address", await cryptoVault.getAddress());
-      console.log("NFT Owner after transfer ", await nftExample.ownerOf(1));
-      console.log(
-        "balance of Borrower After acceptOffer Call ",
-        await nettyWorthToken.balanceOf(borrower.address)
-      );
+  //     expect(
+  //       await nettyWorthProxy
+  //         .connect(lender)
+  //         .acceptLoanRequest(signature, loanRequest2),
+  //       "invalid signature"
+  //     );
+  //     // .to.equal(1, 2);
+  //     console.log("borrower", borrower.address);
+  //     console.log("crypto vault address", await cryptoVault.getAddress());
+  //     console.log("NFT Owner after transfer ", await nftExample.ownerOf(1));
+  //     console.log(
+  //       "balance of Borrower After acceptOffer Call ",
+  //       await nettyWorthToken.balanceOf(borrower.address)
+  //     );
 
-      // await expect(
-      //   nettyWorthProxy
-      //     .connect(lender)
-      //     .acceptLoanRequest(signature, loanRequest2),
-      //   "invalid signature"
-      // ).to.not.be.reverted;
-      // const acceptloanRequest = nettyWorthProxy
-      //   .connect(lender)
-      //   .acceptLoanRequest(signature, loanRequest2);
-      // console.log("acceptLoanRequest successfull", acceptloanRequest.hash);
+  //     // await expect(
+  //     //   nettyWorthProxy
+  //     //     .connect(lender)
+  //     //     .acceptLoanRequest(signature, loanRequest2),
+  //     //   "invalid signature"
+  //     // ).to.not.be.reverted;
+  //     // const acceptloanRequest = nettyWorthProxy
+  //     //   .connect(lender)
+  //     //   .acceptLoanRequest(signature, loanRequest2);
+  //     // console.log("acceptLoanRequest successfull", acceptloanRequest.hash);
 
-      // .to.emit(nettyWorthProxy, "LoanRepaid") // replace with correct event if needed
-      // .withArgs(/*expected arguments based on emitted event*/);
-    });
-    // it("should accept a LoanCollectionOffer when valid signatures are provided", async function () {
-    //   console.log(
-    //     " await nftExample.getAddress()",
-    //     await nftExample.getAddress()
-    //   );
-    //   const tokenId = 1;
-    //   const LoanCollectionOffer = {
-    //     collectionAddress: await nftExample.getAddress(),
-    //     erc20TokenAddress: await nettyWorthToken.getAddress(),
-    //     lender: lender.address,
-    //     loanAmount: ethers.parseUnits("10", 18),
-    //     aprBasisPoints: 500,
-    //     loanDuration: 1729332157,
-    //     nonce: 1234,
-    //   };
+  //     // .to.emit(nettyWorthProxy, "LoanRepaid") // replace with correct event if needed
+  //     // .withArgs(/*expected arguments based on emitted event*/);
+  //   });
+  //   // it("should accept a LoanCollectionOffer when valid signatures are provided", async function () {
+  //   //   console.log(
+  //   //     " await nftExample.getAddress()",
+  //   //     await nftExample.getAddress()
+  //   //   );
+  //   //   const tokenId = 1;
+  //   //   const LoanCollectionOffer = {
+  //   //     collectionAddress: await nftExample.getAddress(),
+  //   //     erc20TokenAddress: await nettyWorthToken.getAddress(),
+  //   //     lender: lender.address,
+  //   //     loanAmount: ethers.parseUnits("10", 18),
+  //   //     aprBasisPoints: 500,
+  //   //     loanDuration: 1729332157,
+  //   //     nonce: 1234,
+  //   //   };
 
-    //   console.log("lender.address 1", lender.address);
+  //   //   console.log("lender.address 1", lender.address);
 
-    //   const signature = await createSignature(lender, {
-    //     types: [
-    //       "address",
-    //       "address",
-    //       "address",
-    //       "uint256",
-    //       "uint256",
-    //       "uint256",
-    //       "uint256",
-    //     ],
-    //     values: [
-    //       LoanCollectionOffer.collectionAddress,
-    //       LoanCollectionOffer.erc20TokenAddress,
-    //       LoanCollectionOffer.lender,
-    //       LoanCollectionOffer.loanAmount,
-    //       LoanCollectionOffer.aprBasisPoints,
-    //       LoanCollectionOffer.loanDuration,
-    //       LoanCollectionOffer.nonce,
-    //     ],
-    //   });
+  //   //   const signature = await createSignature(lender, {
+  //   //     types: [
+  //   //       "address",
+  //   //       "address",
+  //   //       "address",
+  //   //       "uint256",
+  //   //       "uint256",
+  //   //       "uint256",
+  //   //       "uint256",
+  //   //     ],
+  //   //     values: [
+  //   //       LoanCollectionOffer.collectionAddress,
+  //   //       LoanCollectionOffer.erc20TokenAddress,
+  //   //       LoanCollectionOffer.lender,
+  //   //       LoanCollectionOffer.loanAmount,
+  //   //       LoanCollectionOffer.aprBasisPoints,
+  //   //       LoanCollectionOffer.loanDuration,
+  //   //       LoanCollectionOffer.nonce,
+  //   //     ],
+  //   //   });
 
-    //   console.log("signature collection++++++++++=", signature);
+  //   //   console.log("signature collection++++++++++=", signature);
 
-    //   const LoanCollectionOffer2 = {
-    //     collectionAddress: await nftExample.getAddress(),
-    //     erc20TokenAddress: await nettyWorthToken.getAddress(),
-    //     lender: lender.address,
-    //     loanAmount: ethers.parseUnits("10", 18),
-    //     aprBasisPoints: 500,
-    //     loanDuration: 1729332157,
-    //     nonce: 1234,
-    //   };
+  //   //   const LoanCollectionOffer2 = {
+  //   //     collectionAddress: await nftExample.getAddress(),
+  //   //     erc20TokenAddress: await nettyWorthToken.getAddress(),
+  //   //     lender: lender.address,
+  //   //     loanAmount: ethers.parseUnits("10", 18),
+  //   //     aprBasisPoints: 500,
+  //   //     loanDuration: 1729332157,
+  //   //     nonce: 1234,
+  //   //   };
 
-    //   expect(
-    //     await nettyWorthToken.allowance(
-    //       lender.address,
-    //       await cryptoVault.getAddress()
-    //     )
-    //   ).to.equal(ethers.parseUnits("1000", 18).toString());
+  //   //   expect(
+  //   //     await nettyWorthToken.allowance(
+  //   //       lender.address,
+  //   //       await cryptoVault.getAddress()
+  //   //     )
+  //   //   ).to.equal(ethers.parseUnits("1000", 18).toString());
 
-    //   console.log(
-    //     "ERC20 Allowance",
-    //     await nettyWorthToken.allowance(
-    //       lender.address,
-    //       await cryptoVault.getAddress()
-    //     )
-    //   );
+  //   //   console.log(
+  //   //     "ERC20 Allowance",
+  //   //     await nettyWorthToken.allowance(
+  //   //       lender.address,
+  //   //       await cryptoVault.getAddress()
+  //   //     )
+  //   //   );
 
-    //   expect(
-    //     await nftExample.isApprovedForAll(
-    //       borrower.address,
-    //       await cryptoVault.getAddress()
-    //     )
-    //   ).to.equal(true);
+  //   //   expect(
+  //   //     await nftExample.isApprovedForAll(
+  //   //       borrower.address,
+  //   //       await cryptoVault.getAddress()
+  //   //     )
+  //   //   ).to.equal(true);
 
-    //   console.log(
-    //     "NFT IS APPROVED OR NOT",
-    //     await nftExample.isApprovedForAll(
-    //       borrower.address,
-    //       await cryptoVault.getAddress()
-    //     )
-    //   );
+  //   //   console.log(
+  //   //     "NFT IS APPROVED OR NOT",
+  //   //     await nftExample.isApprovedForAll(
+  //   //       borrower.address,
+  //   //       await cryptoVault.getAddress()
+  //   //     )
+  //   //   );
 
-    //   expect(
-    //     await nettyWorthProxy
-    //       .connect(borrower)
-    //       .acceptLoanCollectionOffer(signature, LoanCollectionOffer2, tokenId),
-    //     "invalid signature"
-    //   );
-    //   //   // .to.equal(1, 2);
+  //   //   expect(
+  //   //     await nettyWorthProxy
+  //   //       .connect(borrower)
+  //   //       .acceptLoanCollectionOffer(signature, LoanCollectionOffer2, tokenId),
+  //   //     "invalid signature"
+  //   //   );
+  //   //   //   // .to.equal(1, 2);
 
-    //   console.log("NFT Owner after transfer ", await nftExample.ownerOf(1));
-    //   console.log(
-    //     "balance of Borrower After acceptOffer Call ",
-    //     await nettyWorthToken.balanceOf(borrower.address)
-    //   );
-    // });
-  });
+  //   //   console.log("NFT Owner after transfer ", await nftExample.ownerOf(1));
+  //   //   console.log(
+  //   //     "balance of Borrower After acceptOffer Call ",
+  //   //     await nettyWorthToken.balanceOf(borrower.address)
+  //   //   );
+  //   // });
+  // });
 
   // //********************************Accept Loan Offer*********************************/
   describe("Accept Loan Offer", async function () {

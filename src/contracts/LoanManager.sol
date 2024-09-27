@@ -69,7 +69,7 @@ contract LoanManager is Ownable {
         require(_tokenId > 0, "Token ID must be greater than 0");
         require(_borrower != address(0), "Borrower address is required");
         require(_loanAmount > 0, "Loan amount must be greater than 0");
-        require(_aprBasisPoints >= 0, "Interest rate cannot be negative");
+        require(_aprBasisPoints > 0, "Interest rate cannot be negative");
         require(_loanDuration > 0, "Loan duration must be greater than 0");
         require(_lender != address(0), "Lender address is required");
 
