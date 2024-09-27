@@ -48,14 +48,14 @@ function sign(encoded) {
 
 const main = async () => {
   const getacceptLoanRequest = await acceptLoanRequest(
-    1, // TokenId
+    7, // TokenId
     "0x5fEa03d2718c4C42Ffbb051766a14C3b8aC1205e", //nftContractAddress,
     "0x10094F060Bae53A18723b941735c7dd28A844875", //erc20TokenAddress,
     "0xa611531661B5649688605a16ca7a245980F69A99", //borrower,
     10000000000000000000n, //loanAmount,
     500, // 5% aprBasisPoints,
-    1729223075, //loanDuration,
-    6734 //nonce
+    1727456564, //loanDuration,
+    2222 //nonce
   );
 
   console.log("getacceptLoanRequest", getacceptLoanRequest);
@@ -66,3 +66,15 @@ main();
 module.exports = {
   acceptLoanRequest,
 };
+// command
+// node src/utils/acceptLoanOffer.js
+
+// tuple  pass in request loan offer
+// [   7,
+//     "0x5fEa03d2718c4C42Ffbb051766a14C3b8aC1205e",
+//     "0x10094F060Bae53A18723b941735c7dd28A844875",
+//     "0xa611531661B5649688605a16ca7a245980F69A99",
+//     10000000000000000000,
+//     500,
+//     1727438019,
+//     2222 ]
