@@ -1,4 +1,5 @@
 node_modules
+path
 .env
 coverage
 coverage.json
