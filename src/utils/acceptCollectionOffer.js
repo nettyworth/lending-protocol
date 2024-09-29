@@ -40,7 +40,7 @@ const acceptLoanCollectionOffer = async function (
       nonce,
     ]
   );
-  return sign(encoded);
+  return await sign(encoded);
 };
 
 // Function to sign encoded data

@@ -1,9 +1,11 @@
-const { ethers } = require("ethers");
+const ethers = require("ethers");
 require("dotenv").config();
 const { BORROWER_PRIVATE_KEY, QUICKNODE_SEPOLIA_URL } = process.env;
 
-const provider = new ethers.providers.JsonRpcProvider(QUICKNODE_SEPOLIA_URL);
+const provider = new ethers.JsonRpcProvider(QUICKNODE_SEPOLIA_URL);
 const signer = new ethers.Wallet(BORROWER_PRIVATE_KEY, provider);
+
+const abiCoder = new ethers.AbiCoder();
 
 const acceptLoanRequest = async function (
   tokenId,
@@ -15,7 +17,7 @@ const acceptLoanRequest = async function (
   loanDuration,
   nonce
 ) {
-  const encoded = ethers.utils.defaultAbiCoder.encode(
+  const encoded = abiCoder.encode(
     [
       "uint256",
       "address",
@@ -37,12 +39,12 @@ const acceptLoanRequest = async function (
       nonce,
     ]
   );
-  return sign(encoded);
+  return await sign(encoded);
 };
 
-function sign(encoded) {
-  const hash = ethers.utils.keccak256(encoded); // Create a keccak256 hash of the encoded data
-  const signature = signer.signMessage(ethers.utils.arrayify(hash)); // Sign the hash using the signer's private key
+async function sign(encoded) {
+  const hash = ethers.keccak256(encoded); // Create a keccak256 hash of the encoded data
+  const signature = await signer.signMessage(ethers.getBytes(hash)); // Sign the hash using the signer's private key
   return signature;
 }
 

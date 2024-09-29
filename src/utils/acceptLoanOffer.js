@@ -47,13 +47,13 @@ const signOffer = async function (
       lenderNonce,
     ]
   );
-  return sign(encoded);
+  return await sign(encoded);
 };
 
 // Function to sign encoded data
-function sign(encoded) {
+async function sign(encoded) {
   const hash = ethers.keccak256(encoded); // Create a keccak256 hash of the encoded data
-  const signature = signer.signMessage(ethers.getBytes(hash)); // Sign the hash using the signer's private key
+  const signature = await signer.signMessage(ethers.getBytes(hash)); // Sign the hash using the signer's private key
   return signature;
 }
 
