@@ -59,15 +59,15 @@ async function sign(encoded) {
 
 const main = async () => {
   const getsign = await signOffer(
-    6,
+    8,
     "0x5fEa03d2718c4C42Ffbb051766a14C3b8aC1205e",
     "0x10094F060Bae53A18723b941735c7dd28A844875",
     "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
     "0xa611531661B5649688605a16ca7a245980F69A99",
     10000000000000000000n,
     500,
-    1729223075,
-    1111
+    1727712300,
+    11111122
   );
   console.log("Sign Offer signature", getsign);
 };
@@ -79,14 +79,14 @@ module.exports = {
 };
 
 // tuple  pass in Accept loan offer
-// [
-//   6,
-//   "0x5fEa03d2718c4C42Ffbb051766a14C3b8aC1205e",
-//   "0x10094F060Bae53A18723b941735c7dd28A844875",
-//   "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
-//   "0xa611531661B5649688605a16ca7a245980F69A99",
-//   10000000000000000000,
-//   500,
-//   1729223075,
-//   1111
-// ]
+[
+  8,
+  "0x5fEa03d2718c4C42Ffbb051766a14C3b8aC1205e",
+  "0x10094F060Bae53A18723b941735c7dd28A844875",
+  "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
+  "0xa611531661B5649688605a16ca7a245980F69A99",
+  10000000000000000000,
+  500,
+  1727712300,
+  11111122
+]

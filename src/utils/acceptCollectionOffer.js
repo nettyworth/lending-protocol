@@ -57,8 +57,8 @@ const main = async () => {
     "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061", //     lender,
     10000000000000000000n, //     loanAmount,
     500, //  5% aprBasisPoints,
-    1730028043, //     loanDuration,
-    1321 //     nonce
+    1727907073, //     loanDuration,
+    13211 //     nonce
   );
   console.log("getacceptLoanCollectionOffer", getacceptLoanCollectionOffer);
 };
@@ -70,12 +70,12 @@ module.exports = {
 };
 
 //tuple pass in the function
-// [
-//   "0x5fEa03d2718c4C42Ffbb051766a14C3b8aC1205e",
-//   "0x10094F060Bae53A18723b941735c7dd28A844875",
-//   "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
-//   10000000000000000000,
-//   500,
-//   1730028043,
-//   1321
-// ]
+[
+  "0x5fEa03d2718c4C42Ffbb051766a14C3b8aC1205e",
+  "0x10094F060Bae53A18723b941735c7dd28A844875",
+  "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
+  10000000000000000000,
+  500,
+  1727907073,
+  13211
+]
