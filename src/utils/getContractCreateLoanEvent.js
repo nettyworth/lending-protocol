@@ -1,11 +1,11 @@
-const { ethers } = require("ethers");
+const { ethers } = require('ethers');
 
-const loanContractABI = require("../../src/artifacts/src/contracts/LoanManager.sol/LoanManager.json");
+const loanContractABI = require('../../src/artifacts/src/contracts/LoanManager.sol/LoanManager.json');
 
-const loanContractAddress = "0x86240D27E698f6dA336E060a527441879de39c53";
+const loanContractAddress = '0x86240D27E698f6dA336E060a527441879de39c53';
 
 const provider = new ethers.JsonRpcProvider(
-  "https://sepolia.infura.io/v3/3df44251533e4df3b1f0407d6ec4f34b"
+  'https://sepolia.infura.io/v3/3df44251533e4df3b1f0407d6ec4f34b'
 );
 
 const loanContract = new ethers.Contract(
@@ -18,10 +18,10 @@ let Loans = [];
 const getevents = async () => {
   try {
     const currentBlock = await provider.getBlockNumber();
-    console.log("Current Block Number:", currentBlock);
+    console.log('Current Block Number:', currentBlock);
 
     const loanCreatedEvents = await loanContract.queryFilter(
-      "LoanCreated",
+      'LoanCreated',
       0,
       currentBlock
     );
@@ -57,17 +57,17 @@ const getevents = async () => {
       //   console.log("Is Paid: ", event.args.isPaid);
       //   console.log("Is Closed: ", event.args.isClosed);
       //   console.log("Is Approved: ", event.args.isApproved);
-    //   console.log("-----");
+      //   console.log("-----");
     });
   } catch (error) {
-    console.error("Error fetching events:", error);
+    console.error('Error fetching events:', error);
   }
 };
 
 async function main() {
   await getevents();
-  console.log("LoansCount", Loans.length);
-  console.log("Loans", Loans);
+  console.log('LoansCount', Loans.length);
+  console.log('Loans', Loans);
 }
 
 main();

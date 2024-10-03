@@ -34,7 +34,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     mapping(address => mapping(uint256 => bool)) private _nonceUsedForUser;
 
     event LoanRepaid(
-        uint256 indexed loanId,
+        uint64 indexed loanId,
         address indexed nftContract,
         uint256 indexed tokenId,
         address borrower,
@@ -45,7 +45,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     );
 
     event LoanForClosed(
-        uint256 indexed loanId,
+        uint64 indexed loanId,
         address indexed nftContract,
         uint256 indexed tokenId,
         address borrower,
@@ -248,7 +248,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
         address erc20TokenAddress,
         uint256 nonce
     ) internal returns (uint256 _receiptIdBorrower, uint256 _receiptIdLender) {
-        (ILoanManager.Loan memory loan, uint256 _loanId) = _iloanManager
+        (ILoanManager.Loan memory loan, uint64 _loanId) = _iloanManager
             .getLoan(collectionAddress, tokenId, borrower, nonce);
         require(!loan.isPaid, "Loan offer is closed");
         require(!loan.isApproved, "Loan offer is already approved");
@@ -306,7 +306,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     }
 
     function payBackLoan(
-        uint256 _loanId,
+        uint64 _loanId,
         address erc20Token
     ) external nonReentrant returns (bool) {
         ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
@@ -354,7 +354,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable {
     }
 
     function forCloseLoan(
-        uint256 _loanId
+        uint64 _loanId
     ) external nonReentrant returns (bool) {
         ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
         require(

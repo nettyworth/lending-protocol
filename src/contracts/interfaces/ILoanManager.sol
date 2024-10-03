@@ -32,23 +32,23 @@ interface ILoanManager {
         uint256 _nonce
     ) external;
 
-    function updateLoan(Loan memory loan,uint256 loanId) external returns(bool);
+    function updateLoan(Loan memory loan, uint64 loanId) external returns(bool);
 
     function getLoan(
         address _contract,
         uint256 _tokenId,
         address _borrower,
         uint256 _nonce
-    ) external view returns (Loan memory loan, uint256 loanId);
+    ) external view returns (Loan memory loan, uint64 loanId);
 
-    function updateIsPaid(uint256 loanId, bool state) external;
+    function updateIsPaid(uint64 loanId, bool state) external;
 
-    function updateIsDefault(uint256 loanId, bool state) external;
+    function updateIsDefault(uint64 loanId, bool state) external;
 
-    function updateIsApproved(uint256 loanId, bool state) external;
+    function updateIsApproved(uint64 loanId, bool state) external;
 
-    function getPayoffAmount(uint256 loanId) external view returns(uint256,uint256);
+    function getPayoffAmount(uint64 loanId) external view returns(uint256, uint256);
     
-    function getLoanById(uint256 _loanId) external view returns (Loan memory loan); 
+    function getLoanById(uint64 loanId) external view returns (Loan memory loan); 
 
 }

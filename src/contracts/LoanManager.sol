@@ -24,11 +24,11 @@ contract LoanManager is Ownable {
     }
 
     event LoanCreated(
-        uint256 indexed loanId,
+        uint64 indexed loanId,
         address indexed nftContract,
         uint256 indexed tokenId,
-        address  borrower,
-        address  lender,
+        address borrower,
+        address lender,
         uint256 loanAmount,
         uint256 aprBasisPoints,
         uint256 loanDuration,
@@ -40,7 +40,6 @@ contract LoanManager is Ownable {
     );
     
     using SafeERC20 for IERC20;
-
     ICryptoVault _icryptoVault;
     ReceiptInterface _ireceipts;
 
@@ -48,7 +47,7 @@ contract LoanManager is Ownable {
     uint256 public constant BPS = 10000;
 
     // Loan ID -> Loan
-    mapping(uint256 => Loan) private loans;
+    mapping(uint64 => Loan) private loans;
     address public _proxy;
 
     constructor() Ownable(msg.sender) {}
@@ -73,7 +72,7 @@ contract LoanManager is Ownable {
         require(_loanDuration > 0, "Loan duration must be greater than 0");
         require(_lender != address(0), "Lender address is required");
 
-        (, uint256 _loanId) = getLoan(_nftContract, _tokenId, _borrower, _nonce);
+        (, uint64 _loanId) = getLoan(_nftContract, _tokenId, _borrower, _nonce);
         // Create a new loan
         require(
             loans[_loanId].nftContract == address(0),
@@ -112,15 +111,15 @@ contract LoanManager is Ownable {
     }
 
 
-    function updateIsPaid(uint256 loanId, bool state) external onlyProxyManager{
+    function updateIsPaid(uint64 loanId, bool state) external onlyProxyManager{
         loans[loanId].isPaid = state;
     }
 
-    function updateIsDefault(uint256 loanId, bool state) external onlyProxyManager{
+    function updateIsDefault(uint64 loanId, bool state) external onlyProxyManager{
         loans[loanId].isDefault = state;
     }
 
-    function updateIsApproved(uint256 loanId, bool state) external onlyProxyManager{
+    function updateIsApproved(uint64 loanId, bool state) external onlyProxyManager{
         loans[loanId].isApproved = state;
     } 
 
@@ -129,21 +128,19 @@ contract LoanManager is Ownable {
         uint256 _tokenId,
         address _borrower,
         uint256 _nonce
-    ) public view returns (Loan memory loan, uint256 loanId) {
-        uint64 _loanId = uint64(uint256(
+    ) public view returns (Loan memory loan, uint64 loanId) {
+        loanId = uint64(uint256(
                 keccak256(abi.encodePacked(_borrower, _contract, _tokenId, _nonce))
             ));
-                loan = loans[_loanId];
-        loanId = _loanId;
-
+        loan = loans[loanId];
     return (loan , loanId);
     }
 
-    function getLoanById(uint256 _loanId) public view returns (Loan memory loan) {      
-        return loans[_loanId];
+    function getLoanById(uint64 loanId) public view returns (Loan memory loan) {      
+        return loans[loanId];
     }
 
-    function getPayoffAmount(uint256 loanId) public view returns(uint256,uint256){
+    function getPayoffAmount(uint64 loanId) public view returns(uint256,uint256){
         Loan memory loan = loans[loanId];
         require(!loan.isPaid, "Loan is Paid");
         require(loan.loanAmount > 0, "Principal must be greater than zero");
