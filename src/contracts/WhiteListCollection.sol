@@ -23,44 +23,48 @@ contract WhiteListCollection is Ownable{
 
     function whiteListCollection(address[] memory _collectionAddresses) external onlyOwner {
         uint256 whitelistSize =  _collectionAddresses.length;
-        totalWhitelistCollection += whitelistSize - 1;
+        totalWhitelistCollection += whitelistSize; // audit fix # 7 
         require(whitelistSize != 0, "Not able to call this with empty CollectionAddresses");
-        if(whitelistSize <= 1){
+        if(whitelistSize == 1){ // audit fix 7
             _whiteListCollection[_collectionAddresses[0]] = true;
         }
         else{
             for(uint256 index; index < whitelistSize; index ++ ){
             _whiteListCollection[_collectionAddresses[index]] = true;
+            unchecked { index++; }
             }
         }
     }
 
     function blackListCollection(address[] memory _collectionAddresses) external onlyOwner {
         uint256 whitelistSize =  _collectionAddresses.length;
-        totalWhitelistCollection -= whitelistSize - 1;
+        totalWhitelistCollection -= whitelistSize; //audit fix # 7
         require(whitelistSize != 0, "Not able to call this with empty CollectionAddresses");
 
-        if(whitelistSize <= 1){
+        if(whitelistSize == 1){ //audit fix # 7 
             _whiteListCollection[_collectionAddresses[0]] = false;
         }
         else{
             for(uint256 index; index < whitelistSize; index ++ ){
             _whiteListCollection[_collectionAddresses[index]] = false;
+            unchecked { index++; }
             }
         }
     }
 
     function whiteListErc20Token(address[] memory _Erc20Addresses) external onlyOwner {
         uint256 whitelistSize =  _Erc20Addresses.length;
-        totalWhitelistErc20Token += whitelistSize - 1;
+        totalWhitelistErc20Token += whitelistSize; //audit fix # 7
+
         require(whitelistSize != 0, "Not able to call this with empty CollectionAddresses");
 
-        if(whitelistSize <= 1){
+        if(whitelistSize == 1){ //audit fix # 7
             _whiteListErc20Token[_Erc20Addresses[0]] = true;
         }
         else{
             for(uint256 index; index < whitelistSize; index ++ ){
             _whiteListErc20Token[_Erc20Addresses[index]] = true;
+            unchecked { index++; }
             }
         }
     }
@@ -68,17 +72,22 @@ contract WhiteListCollection is Ownable{
     function blackListErc20Token(address[] memory _Erc20Addresses) external onlyOwner {
 
         uint256 whitelistSize =  _Erc20Addresses.length;
-        totalWhitelistErc20Token -= whitelistSize - 1;
+        totalWhitelistErc20Token -= whitelistSize; //audit fix # 7
         require(whitelistSize != 0, "Not able to call this with empty CollectionAddresses");
 
-        if(whitelistSize <= 1){
+        if(whitelistSize == 1){ //audit fix # 7
             _whiteListErc20Token[_Erc20Addresses[0]] = false;
         }
         else{
             for(uint256 index; index < whitelistSize; index ++ ){
             _whiteListErc20Token[_Erc20Addresses[index]] = false;
+            unchecked { index++; }
             }
         }
+    }
+    
+    // audit fix 12
+    function renounceOwnership() public view override onlyOwner {
     }
 
 }

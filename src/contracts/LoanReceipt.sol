@@ -18,12 +18,16 @@ contract LoanReceipt is ERC721A, Ownable {
 
     using Strings for uint256;
     bool public open;
+    bool private _purposeOpen; // Audit fix # 11
+
     string public baseURI;
     mapping(uint256 => string) private _tokenURIs;
     mapping (address => mapping(uint256 => BorrowerReceipt )) private _borrowerReceipt;
     mapping (address => mapping(uint256 => LenderReceipt )) private _lenderReceipt;
 
     address public _proxy;
+    address private _purposeproxy; // Audit fix # 11
+
 
     constructor(
         string memory _name,
@@ -42,7 +46,7 @@ contract LoanReceipt is ERC721A, Ownable {
         return  (lenderReceiptId, lenderAddress );
     }
 
-    function mintReceipt(address to) internal  {
+    function _mintReceipt(address to) internal  {
         _safeMint(to, 1);
     }
 
@@ -52,7 +56,7 @@ contract LoanReceipt is ERC721A, Ownable {
         address lender
     ) external onlyProxyManager returns (uint256) {
         require(open, "Contract closed");
-        mintReceipt(lender);
+        _mintReceipt(lender);
         uint256 nftId = _nextTokenId() - 1;
         _lenderReceipt[nftContractAddress][tokenId] = LenderReceipt(lender, nftId);
 
@@ -65,7 +69,7 @@ contract LoanReceipt is ERC721A, Ownable {
         address borrower
     ) external onlyProxyManager returns (uint256) {
         require(open, "Contract closed");
-        mintReceipt(borrower);
+        _mintReceipt(borrower);
          uint256 nftId = _nextTokenId() - 1;
         _borrowerReceipt[nftContractAddress][tokenId] = BorrowerReceipt(borrower,nftId);
 
@@ -76,9 +80,14 @@ contract LoanReceipt is ERC721A, Ownable {
         _burn(_tokenId);
     }
 
-    function setOpen(bool _open) external onlyOwner {
-        open = _open;
-    }
+    function purposeSetOpen(bool _open) external onlyOwner {
+        _purposeOpen = _open;
+    }// Audit fix # 11
+
+    function SetOpen() external onlyOwner {
+        open = _purposeOpen;
+        _purposeOpen = false;
+    }// Audit fix # 11
 
     function setBaseURI(string memory newBaseURI) external onlyOwner {
         baseURI = newBaseURI;
@@ -118,10 +127,15 @@ contract LoanReceipt is ERC721A, Ownable {
         _;
     }
 
-    function setProxyManager(address newProxy) external onlyOwner {
+    function purposeProxyManager(address newProxy) external onlyOwner {
         require(newProxy != address(0), "200:ZERO_ADDRESS");
-        _proxy = newProxy;
-    }
+        _purposeproxy = newProxy;
+    }// Audit fix # 11
+
+    function setProxyManager() external onlyOwner {
+        _proxy = _purposeproxy;
+        _purposeproxy = address(0);
+    }// Audit fix # 11
 
     function _startTokenId() internal view virtual override returns (uint256) {
         return 1;
@@ -129,5 +143,8 @@ contract LoanReceipt is ERC721A, Ownable {
 
     function tokenExist(uint256 id) external view returns (bool) {
         return _exists(id);
+    }
+    // audit fix 12
+    function renounceOwnership() public view override onlyOwner {
     }
 }

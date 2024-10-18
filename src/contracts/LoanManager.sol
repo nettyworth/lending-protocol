@@ -24,7 +24,7 @@ contract LoanManager is Ownable {
     }
 
     event LoanCreated(
-        uint64 indexed loanId,
+        uint256 indexed loanId,
         address indexed nftContract,
         uint256 indexed tokenId,
         address borrower,
@@ -47,8 +47,11 @@ contract LoanManager is Ownable {
     uint256 public constant BPS = 10000;
 
     // Loan ID -> Loan
-    mapping(uint64 => Loan) private loans;
+    mapping(uint256 => Loan) private _loans;
+    mapping(address => mapping(uint256 => bool)) private _nonceUsedForUser; // Audit fix # 10
+
     address public _proxy;
+    address private _purposeproxy;// Audit fix # 11
 
     constructor() Ownable(msg.sender) {}
 
@@ -71,15 +74,24 @@ contract LoanManager is Ownable {
         require(_aprBasisPoints > 0, "Interest rate cannot be negative");
         require(_loanDuration > 0, "Loan duration must be greater than 0");
         require(_lender != address(0), "Lender address is required");
+        require(
+            !_nonceUsedForUser[_lender][_nonce] &&
+                !_nonceUsedForUser[_borrower][_nonce],
+            "Offer nonce invalid"
+        ); // audit fix # 10
 
-        (, uint64 _loanId) = getLoan(_nftContract, _tokenId, _borrower, _nonce);
+        _nonceUsedForUser[_lender][_nonce] = true; // audit fix # 10
+        _nonceUsedForUser[_borrower][_nonce] = true; // audit fix # 10
+
+     
+        (, uint256 _loanId) = getLoan(_nftContract, _tokenId, _borrower, _nonce);
         // Create a new loan
         require(
-            loans[_loanId].nftContract == address(0),
+            _loans[_loanId].nftContract == address(0),
             "Loan already created"
         );
     
-        loans[_loanId] = Loan({
+        _loans[_loanId] = Loan({
             nftContract: _nftContract,
             tokenId: _tokenId,
             borrower: _borrower,
@@ -111,16 +123,16 @@ contract LoanManager is Ownable {
     }
 
 
-    function updateIsPaid(uint64 loanId, bool state) external onlyProxyManager{
-        loans[loanId].isPaid = state;
+    function updateIsPaid(uint256 loanId, bool state) external onlyProxyManager{
+        _loans[loanId].isPaid = state;
     }
 
-    function updateIsDefault(uint64 loanId, bool state) external onlyProxyManager{
-        loans[loanId].isDefault = state;
+    function updateIsDefault(uint256 loanId, bool state) external onlyProxyManager{
+        _loans[loanId].isDefault = state;
     }
 
-    function updateIsApproved(uint64 loanId, bool state) external onlyProxyManager{
-        loans[loanId].isApproved = state;
+    function updateIsApproved(uint256 loanId, bool state) external onlyProxyManager{
+        _loans[loanId].isApproved = state;
     } 
 
     function getLoan(
@@ -128,29 +140,33 @@ contract LoanManager is Ownable {
         uint256 _tokenId,
         address _borrower,
         uint256 _nonce
-    ) public view returns (Loan memory loan, uint64 loanId) {
-        loanId = uint64(uint256(
-                keccak256(abi.encodePacked(_borrower, _contract, _tokenId, _nonce))
-            ));
-        loan = loans[loanId];
+    ) public view returns (Loan memory loan, uint256 loanId) {
+        loanId = uint256(
+                keccak256(abi.encode(_borrower, _contract, _tokenId, _nonce))
+            ); //audit fix 4  // audit fix # 6 abi.encode(arg);
+        loan = _loans[loanId];
     return (loan , loanId);
     }
 
-    function getLoanById(uint64 loanId) public view returns (Loan memory loan) {      
-        return loans[loanId];
+    function getLoanById(uint256 loanId) public view returns (Loan memory loan) {      
+        return _loans[loanId];
     }
 
-    function getPayoffAmount(uint64 loanId) public view returns(uint256,uint256){
-        Loan memory loan = loans[loanId];
+    function getPayoffAmount(uint256 loanId) public view returns(uint256,uint256){
+        Loan memory loan = _loans[loanId];
         require(!loan.isPaid, "Loan is Paid");
         require(loan.loanAmount > 0, "Principal must be greater than zero");
         require(loan.aprBasisPoints > 0 && loan.aprBasisPoints <= BPS, "Invalid APR");
         require(loan.loanDuration > 0, "Loan duration must be greater than zero");
 
         uint256 loanDurationinSeconds = loan.loanDuration - loan.loanInitialTime;
-        
-        uint256 interestAmount = (loan.loanAmount * loan.aprBasisPoints * loanDurationinSeconds) / (BPS * SECONDS_IN_YEAR);
 
+        uint256 scalingFactor = 1e18; // aduit fix 08
+        
+        uint256 interestAmount = (loan.loanAmount * loan.aprBasisPoints * loanDurationinSeconds * scalingFactor)
+        / (BPS * SECONDS_IN_YEAR);
+
+        interestAmount = interestAmount / scalingFactor; // aduit fix 08
         uint256 repaymentAmount = loan.loanAmount + interestAmount;
 
         return (repaymentAmount, interestAmount);
@@ -167,8 +183,17 @@ contract LoanManager is Ownable {
         _;
     }
 
-    function setProxyManager(address newProxy) external onlyOwner {
+    function purposeProxyManager(address newProxy) external onlyOwner {
         require(newProxy != address(0), "200:ZERO_ADDRESS");
-        _proxy = newProxy;
+        _purposeproxy = newProxy;
+    }// Audit fix # 11
+
+    function setProxyManager() external onlyOwner {
+        _proxy = _purposeproxy;
+        _purposeproxy = address(0);
+    }// Audit fix # 11
+
+      // audit fix 12
+    function renounceOwnership() public view override onlyOwner {
     }
 }

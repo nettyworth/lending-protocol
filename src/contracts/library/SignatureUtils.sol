@@ -42,23 +42,23 @@ library SignatureUtils {
         uint256 nonce;
     }
 
-    function validateNftDepositSignature(
-        bytes calldata signature,
-        address _contract,
-        uint256 _tokenId,
-        address _borrower
-    ) public pure returns (bool) {
-        // Pack the payload
-        bytes32 freshHash = keccak256(abi.encode(_contract, _tokenId, _borrower));
-        // Get the packed payload hash
-        bytes32 candidateHash = keccak256(
-            abi.encodePacked("\x19Ethereum Signed Message:\n32", freshHash)
-        );
-        // Verify if the fresh hash is signed with the provided signature
-        return _verifyHashSignature(_borrower, candidateHash, signature);
-    }
+    // function validateNftDepositSignature(
+    //     bytes calldata signature,
+    //     address _contract,
+    //     uint256 _tokenId,
+    //     address _borrower
+    // ) public pure returns (bool) {
+    //     // Pack the payload
+    //     bytes32 freshHash = keccak256(abi.encode(_contract, _tokenId, _borrower));
+    //     // Get the packed payload hash
+    //     bytes32 candidateHash = keccak256(
+    //         abi.encodePacked("\x19Ethereum Signed Message:\n32", freshHash)
+    //     );
+    //     // Verify if the fresh hash is signed with the provided signature
+    //     return _verifyHashSignature(_borrower, candidateHash, signature);
+    // }  // Aduit fix # 09
 
-    function validateLoanCollectionOfferSignature(
+    function _validateLoanCollectionOfferSignature(
         bytes calldata signature,
         LoanCollectionOffer calldata collectionOffer
     ) internal pure returns (bool) {
@@ -81,8 +81,8 @@ library SignatureUtils {
         // Verify if the fresh hash is signed with the provided signature
         return _verifyHashSignature(collectionOffer.lender, candidateHash, signature);
     }
-
-    function validateRequestLoanSignature(
+     
+    function _validateRequestLoanSignature(
         bytes calldata signature,
         LoanRequest calldata loanRequest
     ) internal pure returns (bool) {
@@ -107,7 +107,7 @@ library SignatureUtils {
         return _verifyHashSignature(loanRequest.borrower, candidateHash, signature);
     }
  
-    function validateSignatureApprovalOffer(   
+    function _validateSignatureApprovalOffer(   
         bytes calldata signature,
         LoanOffer calldata loanOffer
     ) internal pure returns (bool) {
