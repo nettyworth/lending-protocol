@@ -3,11 +3,11 @@ pragma solidity ^0.8.24;
  
 library SignatureUtils {
 
-    struct NftDeposit {
-        address nftContractAddress;
-        uint256 tokenId;
-        address borrower;
-    }
+    // struct NftDeposit {
+    //     address nftContractAddress;
+    //     uint256 tokenId;
+    //     address borrower;
+    // }
     
     struct LoanRequest {
         uint256 tokenId;           

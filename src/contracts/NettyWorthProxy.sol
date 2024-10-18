@@ -18,19 +18,10 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     using Address for address;
 
     address public vault;
-    address private purposevault;
-
     address public loanManager;
-    address private purposeloanManager;
-
     address public receiptContract;
-    address private purposereceiptContract;
-
     address public whiteListContract;
-    address private purposewhiteListContract;   
-
     // address public _Owner;
-
     uint256 public adminFeeInBasisPoints = 400;
     uint256 private purposeAdminFeeInBasisPoints;
 
@@ -46,7 +37,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     // mapping(address => mapping(uint256 => bool)) private _nonceUsedForUser; // audit fix # 10
 
     event LoanRepaid(
-        uint64 indexed loanId,
+        uint256 indexed loanId,
         address indexed nftContract,
         uint256 indexed tokenId,
         address borrower,
@@ -57,7 +48,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     );
 
     event LoanForClosed(
-        uint64 indexed loanId,
+        uint256 indexed loanId,
         address indexed nftContract,
         uint256 indexed tokenId,
         address borrower,
@@ -92,8 +83,8 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     // audit # 11 
     function purposeUpdateAdminFee(uint256 _newAdminFee) public onlyOwner {
         require(
-            _newAdminFee <= 1000,
-            "By definition, basis points cannot exceed 10000"
+            _newAdminFee <= 1000, // 1000 in BPS = 10%
+            "By definition, basis points cannot exceed 1000 "
         ); // audit fix # 5 to be asked
         purposeAdminFeeInBasisPoints = _newAdminFee;
     }
@@ -324,7 +315,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     }
 
     function payBackLoan(
-        uint64 _loanId,
+        uint256 _loanId,
         address erc20Token
     ) external nonReentrant returns (bool) {
         ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
@@ -372,7 +363,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     }
 
     function forCloseLoan(
-        uint64 _loanId
+        uint256 _loanId
     ) external nonReentrant returns (bool) {
         ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
         require(
