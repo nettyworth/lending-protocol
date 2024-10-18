@@ -21,10 +21,10 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     address public loanManager;
     address public receiptContract;
     address public whiteListContract;
-    uint256 public adminFeeInBasisPoints = 400;
+    uint256 public adminFeeInBasisPoints = 400; // initial admin fee 4%.
     uint256 private proposeAdminFeeInBasisPoints;
 
-    uint256 public constant BPS = 10000;
+    uint256 public constant BPS = 10000; // 10000 in basis points = 100%.
     address public adminWallet;
     address private _updateAdminWallet;
 
@@ -75,7 +75,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         );
         proposeAdminFeeInBasisPoints = _newAdminFee;
     }
-    
+
     function updateAdminFee() public onlyOwner {
         uint256 oldAdminFee = adminFeeInBasisPoints;
         adminFeeInBasisPoints = proposeAdminFeeInBasisPoints;
