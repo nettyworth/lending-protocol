@@ -70,8 +70,8 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
 
     function proposeUpdateAdminFee(uint256 _newAdminFee) public onlyOwner {
         require(
-            _newAdminFee <= 1000, // 1000 in BPS = 10%
-            "By definition, basis points cannot exceed 1000 "
+            _newAdminFee <= 500, // 500 in BPS = 5%
+            "By definition, basis points cannot exceed 500(5%)."
         );
         proposeAdminFeeInBasisPoints = _newAdminFee;
     }
