@@ -18,7 +18,7 @@ contract LoanReceipt is ERC721A, Ownable {
 
     using Strings for uint256;
     bool public open;
-    bool private _purposeOpen; 
+    bool private _proposeOpen; 
 
     string public baseURI;
     mapping(uint256 => string) private _tokenURIs;
@@ -26,7 +26,7 @@ contract LoanReceipt is ERC721A, Ownable {
     mapping (address => mapping(uint256 => LenderReceipt )) private _lenderReceipt;
 
     address public _proxy;
-    address private _purposeproxy;
+    address private _proposeproxy;
 
 
     constructor(
@@ -80,13 +80,13 @@ contract LoanReceipt is ERC721A, Ownable {
         _burn(_tokenId);
     }
 
-    function purposeSetOpen(bool _open) external onlyOwner {
-        _purposeOpen = _open;
+    function proposeSetOpen(bool _open) external onlyOwner {
+        _proposeOpen = _open;
     }
 
     function SetOpen() external onlyOwner {
-        open = _purposeOpen;
-        _purposeOpen = false;
+        open = _proposeOpen;
+        _proposeOpen = false;
     }
 
     function setBaseURI(string memory newBaseURI) external onlyOwner {
@@ -127,14 +127,14 @@ contract LoanReceipt is ERC721A, Ownable {
         _;
     }
 
-    function purposeProxyManager(address newProxy) external onlyOwner {
+    function proposeProxyManager(address newProxy) external onlyOwner {
         require(newProxy != address(0), "200:ZERO_ADDRESS");
-        _purposeproxy = newProxy;
+        _proposeproxy = newProxy;
     }
 
     function setProxyManager() external onlyOwner {
-        _proxy = _purposeproxy;
-        _purposeproxy = address(0);
+        _proxy = _proposeproxy;
+        _proposeproxy = address(0);
     }
 
     function _startTokenId() internal view virtual override returns (uint256) {

@@ -51,7 +51,7 @@ contract LoanManager is Ownable {
     mapping(address => mapping(uint256 => bool)) private _nonceUsedForUser;
 
     address public _proxy;
-    address private _purposeproxy; 
+    address private _proposeproxy; 
 
     constructor() Ownable(msg.sender) {}
 
@@ -181,14 +181,14 @@ contract LoanManager is Ownable {
         _;
     }
 
-    function purposeProxyManager(address newProxy) external onlyOwner {
+    function proposeProxyManager(address newProxy) external onlyOwner {
         require(newProxy != address(0), "200:ZERO_ADDRESS");
-        _purposeproxy = newProxy;
+        _proposeproxy = newProxy;
     }
 
     function setProxyManager() external onlyOwner {
-        _proxy = _purposeproxy;
-        _purposeproxy = address(0);
+        _proxy = _proposeproxy;
+        _proposeproxy = address(0);
     }
     
     function renounceOwnership() public view override onlyOwner {

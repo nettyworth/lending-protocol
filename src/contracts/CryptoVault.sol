@@ -14,7 +14,7 @@ contract CryptoVault is ERC721Holder, Ownable {
     mapping(address => mapping(uint256 => address)) private _assets; // Mapping to keep track of deposited ERC721 tokens
     using SafeERC20 for IERC20;
     address public _proxy; // Address of the proxy contract used for access control
-    address private _purposeproxy;
+    address private _proposeproxy;
 
     // Event emitted when a user deposits an ERC721 token into the vault
     event nftDepositToEscrow(
@@ -167,14 +167,14 @@ contract CryptoVault is ERC721Holder, Ownable {
     }
 
     // Function to set the proxy manager address
-    function purposeProxyManager(address newProxy) external onlyOwner {
+    function proposeProxyManager(address newProxy) external onlyOwner {
         require(newProxy != address(0), "200:ZERO_ADDRESS");
-        _purposeproxy = newProxy;
+        _proposeproxy = newProxy;
     }
 
     function setProxyManager() external onlyOwner {
-        _proxy = _purposeproxy;
-        _purposeproxy = address(0);
+        _proxy = _proposeproxy;
+        _proposeproxy = address(0);
     } 
 
     function renounceOwnership() public view override onlyOwner {

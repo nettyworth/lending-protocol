@@ -22,7 +22,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     address public receiptContract;
     address public whiteListContract;
     uint256 public adminFeeInBasisPoints = 400;
-    uint256 private purposeAdminFeeInBasisPoints;
+    uint256 private proposeAdminFeeInBasisPoints;
 
     uint256 public constant BPS = 10000;
     address public adminWallet;
@@ -58,7 +58,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
 
     constructor() Ownable(msg.sender){}
 
-    function purposeAdminWallet(address _adminWallet) public onlyOwner {
+    function proposeAdminWallet(address _adminWallet) public onlyOwner {
         require(_adminWallet != address(0), "Invalid Address");
         _updateAdminWallet = _adminWallet;
     } 
@@ -68,17 +68,17 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         emit UpdatedAdminWallet(msg.sender,adminWallet);
     }
 
-    function purposeUpdateAdminFee(uint256 _newAdminFee) public onlyOwner {
+    function proposeUpdateAdminFee(uint256 _newAdminFee) public onlyOwner {
         require(
             _newAdminFee <= 1000, // 1000 in BPS = 10%
             "By definition, basis points cannot exceed 1000 "
         );
-        purposeAdminFeeInBasisPoints = _newAdminFee;
+        proposeAdminFeeInBasisPoints = _newAdminFee;
     }
     function updateAdminFee() public onlyOwner {
         uint256 oldAdminFee = adminFeeInBasisPoints;
-        adminFeeInBasisPoints = purposeAdminFeeInBasisPoints;
-        purposeAdminFeeInBasisPoints = 0;
+        adminFeeInBasisPoints = proposeAdminFeeInBasisPoints;
+        proposeAdminFeeInBasisPoints = 0;
         emit UpdatedAdminFee(oldAdminFee,adminFeeInBasisPoints);
     }
 
@@ -93,7 +93,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         setLoanManager(_loanManager);
         setReceiptContract(_receiptContract);
         setWhiteListContract(_iwhiteListContract);
-        purposeAdminWallet(_adminWallet);
+        proposeAdminWallet(_adminWallet);
         setAdminWallet();
     }
 
