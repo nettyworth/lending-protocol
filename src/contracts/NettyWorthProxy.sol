@@ -75,6 +75,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         );
         proposeAdminFeeInBasisPoints = _newAdminFee;
     }
+    
     function updateAdminFee() public onlyOwner {
         uint256 oldAdminFee = adminFeeInBasisPoints;
         adminFeeInBasisPoints = proposeAdminFeeInBasisPoints;
