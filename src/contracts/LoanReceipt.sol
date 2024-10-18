@@ -18,7 +18,7 @@ contract LoanReceipt is ERC721A, Ownable {
 
     using Strings for uint256;
     bool public open;
-    bool private _purposeOpen; // Audit fix # 11
+    bool private _purposeOpen; 
 
     string public baseURI;
     mapping(uint256 => string) private _tokenURIs;
@@ -26,7 +26,7 @@ contract LoanReceipt is ERC721A, Ownable {
     mapping (address => mapping(uint256 => LenderReceipt )) private _lenderReceipt;
 
     address public _proxy;
-    address private _purposeproxy; // Audit fix # 11
+    address private _purposeproxy;
 
 
     constructor(
@@ -82,12 +82,12 @@ contract LoanReceipt is ERC721A, Ownable {
 
     function purposeSetOpen(bool _open) external onlyOwner {
         _purposeOpen = _open;
-    }// Audit fix # 11
+    }
 
     function SetOpen() external onlyOwner {
         open = _purposeOpen;
         _purposeOpen = false;
-    }// Audit fix # 11
+    }
 
     function setBaseURI(string memory newBaseURI) external onlyOwner {
         baseURI = newBaseURI;
@@ -130,12 +130,12 @@ contract LoanReceipt is ERC721A, Ownable {
     function purposeProxyManager(address newProxy) external onlyOwner {
         require(newProxy != address(0), "200:ZERO_ADDRESS");
         _purposeproxy = newProxy;
-    }// Audit fix # 11
+    }
 
     function setProxyManager() external onlyOwner {
         _proxy = _purposeproxy;
         _purposeproxy = address(0);
-    }// Audit fix # 11
+    }
 
     function _startTokenId() internal view virtual override returns (uint256) {
         return 1;
@@ -144,7 +144,7 @@ contract LoanReceipt is ERC721A, Ownable {
     function tokenExist(uint256 id) external view returns (bool) {
         return _exists(id);
     }
-    // audit fix 12
+
     function renounceOwnership() public view override onlyOwner {
     }
 }

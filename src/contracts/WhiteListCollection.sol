@@ -23,9 +23,9 @@ contract WhiteListCollection is Ownable{
 
     function whiteListCollection(address[] memory _collectionAddresses) external onlyOwner {
         uint256 whitelistSize =  _collectionAddresses.length;
-        totalWhitelistCollection += whitelistSize; // audit fix # 7 
+        totalWhitelistCollection += whitelistSize;
         require(whitelistSize != 0, "Not able to call this with empty CollectionAddresses");
-        if(whitelistSize == 1){ // audit fix 7
+        if(whitelistSize == 1){ 
             _whiteListCollection[_collectionAddresses[0]] = true;
         }
         else{
@@ -38,10 +38,10 @@ contract WhiteListCollection is Ownable{
 
     function blackListCollection(address[] memory _collectionAddresses) external onlyOwner {
         uint256 whitelistSize =  _collectionAddresses.length;
-        totalWhitelistCollection -= whitelistSize; //audit fix # 7
+        totalWhitelistCollection -= whitelistSize;
         require(whitelistSize != 0, "Not able to call this with empty CollectionAddresses");
 
-        if(whitelistSize == 1){ //audit fix # 7 
+        if(whitelistSize == 1){
             _whiteListCollection[_collectionAddresses[0]] = false;
         }
         else{
@@ -54,11 +54,11 @@ contract WhiteListCollection is Ownable{
 
     function whiteListErc20Token(address[] memory _Erc20Addresses) external onlyOwner {
         uint256 whitelistSize =  _Erc20Addresses.length;
-        totalWhitelistErc20Token += whitelistSize; //audit fix # 7
+        totalWhitelistErc20Token += whitelistSize;
 
         require(whitelistSize != 0, "Not able to call this with empty CollectionAddresses");
 
-        if(whitelistSize == 1){ //audit fix # 7
+        if(whitelistSize == 1){
             _whiteListErc20Token[_Erc20Addresses[0]] = true;
         }
         else{
@@ -70,12 +70,11 @@ contract WhiteListCollection is Ownable{
     }
 
     function blackListErc20Token(address[] memory _Erc20Addresses) external onlyOwner {
-
         uint256 whitelistSize =  _Erc20Addresses.length;
-        totalWhitelistErc20Token -= whitelistSize; //audit fix # 7
+        totalWhitelistErc20Token -= whitelistSize;
         require(whitelistSize != 0, "Not able to call this with empty CollectionAddresses");
 
-        if(whitelistSize == 1){ //audit fix # 7
+        if(whitelistSize == 1){
             _whiteListErc20Token[_Erc20Addresses[0]] = false;
         }
         else{
@@ -86,7 +85,6 @@ contract WhiteListCollection is Ownable{
         }
     }
     
-    // audit fix 12
     function renounceOwnership() public view override onlyOwner {
     }
 

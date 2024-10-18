@@ -21,7 +21,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     address public loanManager;
     address public receiptContract;
     address public whiteListContract;
-    // address public _Owner;
     uint256 public adminFeeInBasisPoints = 400;
     uint256 private purposeAdminFeeInBasisPoints;
 
@@ -33,8 +32,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     ILoanManager _iloanManager;
     ReceiptInterface _ireceipts;
     IwhiteListCollection _iwhiteListCollection;
-
-    // mapping(address => mapping(uint256 => bool)) private _nonceUsedForUser; // audit fix # 10
 
     event LoanRepaid(
         uint256 indexed loanId,
@@ -57,35 +54,25 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     );
 
     event UpdatedAdminFee(uint256 oldAdminFee, uint256 newAdminFee);
-
     event UpdatedAdminWallet(address oldAdminWallet, address newAdminWallet);
 
     constructor() Ownable(msg.sender){}
-
-
-
-    // modifier _onlyOwner() {
-    //     require(msg.sender == _Owner, "Not the owner");
-    //     _;
-    // }
 
     function purposeAdminWallet(address _adminWallet) public onlyOwner {
         require(_adminWallet != address(0), "Invalid Address");
         _updateAdminWallet = _adminWallet;
     } 
     function setAdminWallet() public onlyOwner {
-        // address oldAdminWallet = adminWallet;
         adminWallet = _updateAdminWallet;
         _updateAdminWallet =  address(0);
         emit UpdatedAdminWallet(msg.sender,adminWallet);
     }
 
-    // audit # 11 
     function purposeUpdateAdminFee(uint256 _newAdminFee) public onlyOwner {
         require(
             _newAdminFee <= 1000, // 1000 in BPS = 10%
             "By definition, basis points cannot exceed 1000 "
-        ); // audit fix # 5 to be asked
+        );
         purposeAdminFeeInBasisPoints = _newAdminFee;
     }
     function updateAdminFee() public onlyOwner {
@@ -137,7 +124,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
 
 
     function acceptLoanRequest(
-        // bytes calldata acceptRequestSignature,
+        bytes calldata acceptRequestSignature,
         SignatureUtils.LoanRequest calldata loanRequest
     )
         external
@@ -148,13 +135,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loanRequest.nftContractAddress,
             loanRequest.erc20TokenAddress,
             loanRequest.loanDuration);
-        // require(
-        //     SignatureUtils._validateRequestLoanSignature(
-        //         acceptRequestSignature,
-        //         loanRequest
-        //     ),
-        //     "Invalid borrower signature"
-        // );
+        require(
+            SignatureUtils._validateRequestLoanSignature(
+                acceptRequestSignature,
+                loanRequest
+            ),
+            "Invalid borrower signature"
+        );
         (receiptIdBorrower, receiptIdLender) = _acceptOffer(
             loanRequest.nftContractAddress,
             loanRequest.tokenId,
@@ -171,7 +158,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     }
 
     function acceptLoanOffer(
-        // bytes calldata acceptOfferSignature,
+        bytes calldata acceptOfferSignature,
         SignatureUtils.LoanOffer calldata loanOffer
     )
         external
@@ -183,13 +170,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loanOffer.nftContractAddress,
             loanOffer.erc20TokenAddress,
             loanOffer.loanDuration);
-        // require(
-        //     SignatureUtils._validateSignatureApprovalOffer(
-        //         acceptOfferSignature,
-        //         loanOffer
-        //     ),
-        //     "Invalid lender signature"
-        // );
+        require(
+            SignatureUtils._validateSignatureApprovalOffer(
+                acceptOfferSignature,
+                loanOffer
+            ),
+            "Invalid lender signature"
+        );
         (receiptIdBorrower, receiptIdLender) = _acceptOffer(
             loanOffer.nftContractAddress,
             loanOffer.tokenId,
@@ -206,7 +193,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     }
 
     function acceptLoanCollectionOffer(
-        // bytes calldata acceptOfferSignature,
+        bytes calldata acceptOfferSignature,
         SignatureUtils.LoanCollectionOffer calldata loanCollectionOffer,
         uint256 tokenId
     )
@@ -224,13 +211,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loanCollectionOffer.erc20TokenAddress,
             loanCollectionOffer.loanDuration
         );
-        // require(
-        //     SignatureUtils._validateLoanCollectionOfferSignature(
-        //         acceptOfferSignature,
-        //         loanCollectionOffer
-        //     ),
-        //     "Invalid lender signature"
-        // );
+        require(
+            SignatureUtils._validateLoanCollectionOfferSignature(
+                acceptOfferSignature,
+                loanCollectionOffer
+            ),
+            "Invalid lender signature"
+        );
         (receiptIdBorrower, receiptIdLender) = _acceptOffer(
             loanCollectionOffer.collectionAddress,
             tokenId,
@@ -322,7 +309,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         require(loan.currencyERC20 == erc20Token, "Currency Invalid");
         (uint256 rePaymentAmount, uint256 interestAmount) = _iloanManager
             .getPayoffAmount(_loanId);
-        // uint256 interestAmount = rePaymentAmount - loan.loanAmount;
         uint256 computeAdminFee = _computeAdminFee(
             interestAmount,
             adminFeeInBasisPoints
@@ -367,7 +353,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     ) external nonReentrant returns (bool) {
         ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
         require(
-            block.timestamp > loan.loanDuration, // audit fix # 1
+            block.timestamp > loan.loanDuration,
             "User is not default yet::"
         );
         require(!loan.isPaid, "Loan Paid");
@@ -428,7 +414,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         uint256 _borrowerReceiptId
     ) internal view {
           require(
-            block.timestamp < loan.loanDuration, // audit fix # 2
+            block.timestamp < loan.loanDuration,
             "Loan repayment period has expired"
         );
         require(loan.isApproved, "Loan offer not approved");
@@ -475,15 +461,8 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loanDuration > block.timestamp,
             "Loan duration must b greater than current timestamp"
         );
-        // audit fix # 10
-        // require(
-        //     !_nonceUsedForUser[lender][nonce] &&
-        //         !_nonceUsedForUser[borrower][nonce],
-        //     "Offer nonce invalid"
-        // );
-        // _nonceUsedForUser[lender][nonce] = true;
-        // _nonceUsedForUser[borrower][nonce] = true;
     }
+    
     function renounceOwnership() public view override onlyOwner {
     }
 }

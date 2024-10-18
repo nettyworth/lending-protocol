@@ -48,10 +48,10 @@ contract LoanManager is Ownable {
 
     // Loan ID -> Loan
     mapping(uint256 => Loan) private _loans;
-    mapping(address => mapping(uint256 => bool)) private _nonceUsedForUser; // Audit fix # 10
+    mapping(address => mapping(uint256 => bool)) private _nonceUsedForUser;
 
     address public _proxy;
-    address private _purposeproxy;// Audit fix # 11
+    address private _purposeproxy; 
 
     constructor() Ownable(msg.sender) {}
 
@@ -78,10 +78,10 @@ contract LoanManager is Ownable {
             !_nonceUsedForUser[_lender][_nonce] &&
                 !_nonceUsedForUser[_borrower][_nonce],
             "Offer nonce invalid"
-        ); // audit fix # 10
+        );
 
-        _nonceUsedForUser[_lender][_nonce] = true; // audit fix # 10
-        _nonceUsedForUser[_borrower][_nonce] = true; // audit fix # 10
+        _nonceUsedForUser[_lender][_nonce] = true; 
+        _nonceUsedForUser[_borrower][_nonce] = true;
 
      
         (, uint256 _loanId) = getLoan(_nftContract, _tokenId, _borrower, _nonce);
@@ -122,7 +122,6 @@ contract LoanManager is Ownable {
         );
     }
 
-
     function updateIsPaid(uint256 loanId, bool state) external onlyProxyManager{
         _loans[loanId].isPaid = state;
     }
@@ -143,7 +142,7 @@ contract LoanManager is Ownable {
     ) public view returns (Loan memory loan, uint256 loanId) {
         loanId = uint256(
                 keccak256(abi.encode(_borrower, _contract, _tokenId, _nonce))
-            ); //audit fix 4  // audit fix # 6 abi.encode(arg);
+            ); 
         loan = _loans[loanId];
     return (loan , loanId);
     }
@@ -160,13 +159,12 @@ contract LoanManager is Ownable {
         require(loan.loanDuration > 0, "Loan duration must be greater than zero");
 
         uint256 loanDurationinSeconds = loan.loanDuration - loan.loanInitialTime;
-
-        uint256 scalingFactor = 1e18; // aduit fix 08
         
+        uint256 scalingFactor = 1e18;
         uint256 interestAmount = (loan.loanAmount * loan.aprBasisPoints * loanDurationinSeconds * scalingFactor)
         / (BPS * SECONDS_IN_YEAR);
 
-        interestAmount = interestAmount / scalingFactor; // aduit fix 08
+        interestAmount = interestAmount / scalingFactor;
         uint256 repaymentAmount = loan.loanAmount + interestAmount;
 
         return (repaymentAmount, interestAmount);
@@ -186,14 +184,13 @@ contract LoanManager is Ownable {
     function purposeProxyManager(address newProxy) external onlyOwner {
         require(newProxy != address(0), "200:ZERO_ADDRESS");
         _purposeproxy = newProxy;
-    }// Audit fix # 11
+    }
 
     function setProxyManager() external onlyOwner {
         _proxy = _purposeproxy;
         _purposeproxy = address(0);
-    }// Audit fix # 11
-
-      // audit fix 12
+    }
+    
     function renounceOwnership() public view override onlyOwner {
     }
 }
