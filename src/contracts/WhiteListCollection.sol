@@ -29,7 +29,7 @@ contract WhiteListCollection is Ownable{
             _whiteListCollection[_collectionAddresses[0]] = true;
         }
         else{
-            for(uint256 index; index < whitelistSize; index ++ ){
+            for(uint256 index; index < whitelistSize; ){
             _whiteListCollection[_collectionAddresses[index]] = true;
             unchecked { index++; }
             }
@@ -45,7 +45,7 @@ contract WhiteListCollection is Ownable{
             _whiteListCollection[_collectionAddresses[0]] = false;
         }
         else{
-            for(uint256 index; index < whitelistSize; index ++ ){
+            for(uint256 index; index < whitelistSize; ){
             _whiteListCollection[_collectionAddresses[index]] = false;
             unchecked { index++; }
             }
@@ -62,7 +62,7 @@ contract WhiteListCollection is Ownable{
             _whiteListErc20Token[_Erc20Addresses[0]] = true;
         }
         else{
-            for(uint256 index; index < whitelistSize; index ++ ){
+            for(uint256 index; index < whitelistSize; ){
             _whiteListErc20Token[_Erc20Addresses[index]] = true;
             unchecked { index++; }
             }
@@ -78,7 +78,7 @@ contract WhiteListCollection is Ownable{
             _whiteListErc20Token[_Erc20Addresses[0]] = false;
         }
         else{
-            for(uint256 index; index < whitelistSize; index ++ ){
+            for(uint256 index; index < whitelistSize; ){
             _whiteListErc20Token[_Erc20Addresses[index]] = false;
             unchecked { index++; }
             }
