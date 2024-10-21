@@ -415,7 +415,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         uint256 _borrowerReceiptId
     ) internal view {
           require(
-            block.timestamp < loan.loanDuration,
+            block.timestamp <= loan.loanDuration,
             "Loan repayment period has expired"
         );
         require(loan.isApproved, "Loan offer not approved");
