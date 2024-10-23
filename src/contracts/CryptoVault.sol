@@ -11,9 +11,10 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 // CryptoVault contract that serves as a vault for ERC721 tokens
 contract CryptoVault is ERC721Holder, Ownable {
 
-    mapping(address => mapping(uint256 => address)) private assets; // Mapping to keep track of deposited ERC721 tokens
+    mapping(address => mapping(uint256 => address)) private _assets; // Mapping to keep track of deposited ERC721 tokens
     using SafeERC20 for IERC20;
     address public _proxy; // Address of the proxy contract used for access control
+    address private _proposeproxy;
 
     // Event emitted when a user deposits an ERC721 token into the vault
     event nftDepositToEscrow(
@@ -49,7 +50,7 @@ contract CryptoVault is ERC721Holder, Ownable {
         );
         require(nft.getApproved(tokenId)!= address(0) || nft.isApprovedForAll(borrower,address(this)),"Insufficent NFT Allowance/Wrong address allowance");
         require(erc20Token.allowance(lender,address(this)) >= loanAmount,"Insufficent Allowance");
-        assets[nftContract][tokenId] = borrower;
+        _assets[nftContract][tokenId] = borrower;
         nft.safeTransferFrom(borrower, address(this), tokenId);
         erc20Token.safeTransferFrom(lender, borrower, loanAmount);
         emit nftDepositToEscrow(borrower, nftContract, tokenId);
@@ -71,10 +72,10 @@ contract CryptoVault is ERC721Holder, Ownable {
         IERC721 token = IERC721(nftContract);
 
         require(
-            assets[nftContract][tokenId] != address(0),
+            _assets[nftContract][tokenId] != address(0),
             "This token is not stored in the vault"
         );
-        require(assets[nftContract][tokenId]== borrower,
+        require(_assets[nftContract][tokenId]== borrower,
         "Borrower is not the owner ");
         require(erc20Token != IERC20(address(0)), "Invalid ERC20 token address");
         require(erc20Token.allowance(borrower,address(this)) >= rePaymentAmount,"Insufficent Allowance");
@@ -89,7 +90,7 @@ contract CryptoVault is ERC721Holder, Ownable {
 
         require(rePaymentAmount >= computeAdminFee, "Admin fee exceeds repayment");
         
-        assets[nftContract][tokenId] = address(0);
+        _assets[nftContract][tokenId] = address(0);
         erc20Token.safeTransferFrom(borrower, adminWallet, computeAdminFee);
         erc20Token.safeTransferFrom(borrower, lender, rePaymentAmount);
         token.safeTransferFrom(address(this),borrower, tokenId);
@@ -107,17 +108,17 @@ contract CryptoVault is ERC721Holder, Ownable {
         IERC721 token = IERC721(nftContract);
 
         require(
-            assets[nftContract][tokenId] != address(0),
+            _assets[nftContract][tokenId] != address(0),
             "This token is not stored in the vault"
         );
-        require(assets[nftContract][tokenId]== borrower,
+        require(_assets[nftContract][tokenId]== borrower,
         "borrower is not the owner"); 
         require(
             token.ownerOf(tokenId) == address(this),
             "The vault does not own this token"
         );
 
-        assets[nftContract][tokenId] = address(0);
+        _assets[nftContract][tokenId] = address(0);
         token.safeTransferFrom(address(this), borrower, tokenId);
         emit nftWithdrawalFromEscrow(borrower, nftContract, tokenId);
     }
@@ -133,28 +134,27 @@ contract CryptoVault is ERC721Holder, Ownable {
         IERC721 token = IERC721(nftContract);
 
         require(
-            assets[nftContract][tokenId] != address(0),
+            _assets[nftContract][tokenId] != address(0),
             "This token is not stored in the vault"
         );
-        require(assets[nftContract][tokenId]== borrower,
+        require(_assets[nftContract][tokenId]== borrower,
         "borrower is not the owner "); // added
         require(
             token.ownerOf(tokenId) == address(this),
             "The vault does not own this token"
         );
 
-        assets[nftContract][tokenId] = address(0);
+        _assets[nftContract][tokenId] = address(0);
         token.safeTransferFrom(address(this), lender, tokenId);
         emit nftWithdrawalFromEscrow(lender, nftContract, tokenId);
     }
-
 
     // Function to check if an ERC721 token is stored in the vault
     function AssetStoredOwner(
         address tokenAddress,
         uint256 tokenId
     ) external view returns (address) {
-        return assets[tokenAddress][tokenId];
+        return _assets[tokenAddress][tokenId];
     }
 
     // Modifier to restrict certain functions to the proxy manager (orchestrator)
@@ -167,8 +167,16 @@ contract CryptoVault is ERC721Holder, Ownable {
     }
 
     // Function to set the proxy manager address
-    function setProxyManager(address newProxy) external onlyOwner {
-        require(newProxy != address(0), "ZERO_ADDRESS");
-        _proxy = newProxy;
+    function proposeProxyManager(address newProxy) external onlyOwner {
+        require(newProxy != address(0), "200:ZERO_ADDRESS");
+        _proposeproxy = newProxy;
+    }
+
+    function setProxyManager() external onlyOwner {
+        _proxy = _proposeproxy;
+        _proposeproxy = address(0);
+    } 
+
+    function renounceOwnership() public view override onlyOwner {
     }
 }
