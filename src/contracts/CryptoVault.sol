@@ -173,7 +173,6 @@ contract CryptoVault is ERC721Holder, Ownable {
     }
 
     function setProxyManager() external onlyOwner {
-        require(_proposeproxy != address(0), "200:ZERO_ADDRESS");
         _proxy = _proposeproxy;
         _proposeproxy = address(0);
     } 
