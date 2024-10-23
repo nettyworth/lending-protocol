@@ -64,9 +64,12 @@ async function main() {
     console.log('NettyWorthProxy initialized');
 
     // Set proxy manager for other contracts
-    await cryptoVault.setProxyManager(await nettyWorthProxy.getAddress());
-    await loanManager.setProxyManager(await nettyWorthProxy.getAddress());
-    await loanReceipt.setProxyManager(await nettyWorthProxy.getAddress());
+    await cryptoVault.proposeProxyManager(await nettyWorthProxy.getAddress());
+    await cryptoVault.setProxyManager();
+    await loanManager.proposeProxyManager(await nettyWorthProxy.getAddress());
+    await loanManager.setProxyManager();
+    await loanReceipt.proposeProxyManager(await nettyWorthProxy.getAddress());
+    await loanReceipt.setProxyManager();
     console.log('Proxy manager set for all contracts');
 
     // Deploy TestToken (for testing purposes)
@@ -92,86 +95,86 @@ async function main() {
       await nettyWorthToken.getAddress()
     );
 
-    // Verify contracts on Etherscan (only for public networks)
-    if (network.name !== 'hardhat' && network.name !== 'localhost') {
-      console.log('Waiting for block confirmations...');
-      // Wait for 5 blocks to be mined
-      await ethers.provider.waitForTransaction(
-        await cryptoVault.getAddress(),
-        5
-      );
-      await ethers.provider.waitForTransaction(
-        await loanManager.getAddress(),
-        5
-      );
-      await ethers.provider.waitForTransaction(
-        await loanReceipt.getAddress(),
-        5
-      );
-      await ethers.provider.waitForTransaction(
-        await whiteListCollection.getAddress(),
-        5
-      );
-      await ethers.provider.waitForTransaction(
-        await nettyWorthProxy.getAddress(),
-        5
-      );
-      await ethers.provider.waitForTransaction(
-        await nftExample.getAddress(),
-        5
-      );
-      await ethers.provider.waitForTransaction(
-        await nettyWorthToken.getAddress(),
-        5
-      );
+    // // Verify contracts on Etherscan (only for public networks)
+    // if (network.name !== 'hardhat' && network.name !== 'localhost') {
+    //   console.log('Waiting for block confirmations...');
+    //   // Wait for 5 blocks to be mined
+    //   await ethers.provider.waitForTransaction(
+    //     await cryptoVault.getAddress(),
+    //     5
+    //   );
+    //   await ethers.provider.waitForTransaction(
+    //     await loanManager.getAddress(),
+    //     5
+    //   );
+    //   await ethers.provider.waitForTransaction(
+    //     await loanReceipt.getAddress(),
+    //     5
+    //   );
+    //   await ethers.provider.waitForTransaction(
+    //     await whiteListCollection.getAddress(),
+    //     5
+    //   );
+    //   await ethers.provider.waitForTransaction(
+    //     await nettyWorthProxy.getAddress(),
+    //     5
+    //   );
+    //   await ethers.provider.waitForTransaction(
+    //     await nftExample.getAddress(),
+    //     5
+    //   );
+    //   await ethers.provider.waitForTransaction(
+    //     await nettyWorthToken.getAddress(),
+    //     5
+    //   );
 
-      console.log('Verifying contracts on Etherscan...');
+    //   console.log('Verifying contracts on Etherscan...');
 
-      // await hre.run("verify:verify", {
-      //   address: await cryptoVault.getAddress(),
-      //   contract: "contracts/CryptoVault.sol:CryptoVault",
-      // });
+    // await hre.run("verify:verify", {
+    //   address: await cryptoVault.getAddress(),
+    //   contract: "contracts/CryptoVault.sol:CryptoVault",
+    // });
 
-      // await hre.run("verify:verify", {
-      //   address: await loanManager.getAddress(),
-      //   contract: "contracts/LoanManager.sol:LoanManager",
-      // });
+    // await hre.run("verify:verify", {
+    //   address: await loanManager.getAddress(),
+    //   contract: "contracts/LoanManager.sol:LoanManager",
+    // });
 
-      // await hre.run("verify:verify", {
-      //   address: await loanReceipt.getAddress(),
-      //   contract: "contracts/LoanReceipt.sol:LoanReceipt",
-      //   constructorArguments: ["NettyWorth Loan Receipt", "NWLR"],
-      // });
+    // await hre.run("verify:verify", {
+    //   address: await loanReceipt.getAddress(),
+    //   contract: "contracts/LoanReceipt.sol:LoanReceipt",
+    //   constructorArguments: ["NettyWorth Loan Receipt", "NWLR"],
+    // });
 
-      // await hre.run("verify:verify", {
-      //   address: await nettyWorthProxy.getAddress(),
-      //   contract: "contracts/WhiteListCollection.sol:WhiteListCollection",
-      // });
+    // await hre.run("verify:verify", {
+    //   address: await nettyWorthProxy.getAddress(),
+    //   contract: "contracts/WhiteListCollection.sol:WhiteListCollection",
+    // });
 
-      // await hre.run("verify:verify", {
-      //   address: await nettyWorthProxy.getAddress(),
-      //   contract: "contracts/NettyWorthProxy.sol:NettyWorthProxy",
-      // });
+    // await hre.run("verify:verify", {
+    //   address: await nettyWorthProxy.getAddress(),
+    //   contract: "contracts/NettyWorthProxy.sol:NettyWorthProxy",
+    // });
 
-      // await hre.run("verify:verify", {
-      //   address: await nftExample.getAddress(),
-      //   contract: "contracts/Examples/NFTExample.sol:NFTExample",
-      //   constructorArguments: [
-      //     "TestNettyWorth",
-      //     "TestNettyWorth NFT",
-      //     "TNFT",
-      //     1000,
-      //   ],
-      // });
+    // await hre.run("verify:verify", {
+    //   address: await nftExample.getAddress(),
+    //   contract: "contracts/Examples/NFTExample.sol:NFTExample",
+    //   constructorArguments: [
+    //     "TestNettyWorth",
+    //     "TestNettyWorth NFT",
+    //     "TNFT",
+    //     1000,
+    //   ],
+    // });
 
-      // await hre.run("verify:verify", {
-      //   address: await nettyWorthToken.getAddress(),
-      //   contract: "contracts/Examples/ERC20Example.sol:NettyWorthToken",
-      //   constructorArguments: [parseEther("10000")],
-      // });
+    // await hre.run("verify:verify", {
+    //   address: await nettyWorthToken.getAddress(),
+    //   contract: "contracts/Examples/ERC20Example.sol:NettyWorthToken",
+    //   constructorArguments: [parseEther("10000")],
+    // });
 
-      console.log('Contracts verified on Etherscan');
-    }
+    //   console.log('Contracts verified on Etherscan');
+    // }
 
     console.log('Deployment completed successfully!');
   } catch (error) {

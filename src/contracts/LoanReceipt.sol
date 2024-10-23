@@ -81,10 +81,12 @@ contract LoanReceipt is ERC721A, Ownable {
     }
 
     function proposeSetOpen(bool _open) external onlyOwner {
+        require(_open != false, "Receipt open already false.");
         _proposeOpen = _open;
     }
 
-    function SetOpen() external onlyOwner {
+    function setOpen() external onlyOwner {
+        require(_proposeOpen != false, "!Proposed");
         open = _proposeOpen;
         _proposeOpen = false;
     }
@@ -133,6 +135,7 @@ contract LoanReceipt is ERC721A, Ownable {
     }
 
     function setProxyManager() external onlyOwner {
+        require(_proposeproxy != address(0), "200:ZERO_ADDRESS");
         _proxy = _proposeproxy;
         _proposeproxy = address(0);
     }
