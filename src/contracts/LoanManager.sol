@@ -44,7 +44,8 @@ contract LoanManager is Ownable {
     ReceiptInterface _ireceipts;
 
     uint256 constant SECONDS_IN_YEAR = 31536000;
-    uint256 public constant BPS = 10000;
+    uint256 public constant BPS = 10000; //100%
+    uint256 public constant MAX_APR = 50000; // 500% 
 
     // Loan ID -> Loan
     mapping(uint256 => Loan) private _loans;
@@ -71,7 +72,7 @@ contract LoanManager is Ownable {
         require(_tokenId > 0, "Token ID must be greater than 0");
         require(_borrower != address(0), "Borrower address is required");
         require(_loanAmount > 0, "Loan amount must be greater than 0");
-        require(_aprBasisPoints > 0 && _aprBasisPoints <= BPS, "APR cannot be negative OR exceed 100%");
+        require(_aprBasisPoints > 0 && _aprBasisPoints <= MAX_APR, "APR cannot be negative OR exceed 500%");
         require(_loanDuration > 0, "Loan duration must be greater than 0");
         require(_lender != address(0), "Lender address is required");
         require(
@@ -155,7 +156,7 @@ contract LoanManager is Ownable {
         Loan memory loan = _loans[loanId];
         require(!loan.isPaid, "Loan is Paid");
         require(loan.loanAmount > 0, "Principal must be greater than zero");
-        require(loan.aprBasisPoints > 0 && loan.aprBasisPoints <= BPS, "Invalid APR");
+        require(loan.aprBasisPoints > 0 && loan.aprBasisPoints <= MAX_APR, "Invalid APR");
         require(loan.loanDuration > 0, "Loan duration must be greater than zero");
 
         uint256 loanDurationinSeconds = loan.loanDuration - loan.loanInitialTime;

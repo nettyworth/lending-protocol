@@ -3,17 +3,16 @@ pragma solidity ^0.8.24;
 
 interface ReceiptInterface {
 
-    struct BorrowerReceipt {
-        uint256 loanIndex;
-        uint256 amount;
-        uint256 timestamp;
+    struct Receipt {
+        address holder;
+        uint256 receiptId;
     }
 
-    struct LenderReceipt {
-        uint256 loanIndex;
-        uint256 amount;
-        uint256 timestamp;
-    }
+    // struct LenderReceipt {
+    //     uint256 loanIndex;
+    //     uint256 amount;
+    //     uint256 timestamp;
+    // }
 
     function open() external view returns (bool);
 
@@ -23,11 +22,14 @@ interface ReceiptInterface {
 
     function tokenExist(uint256) external view returns (bool);
 
-    function generateLenderReceipt(address nftContractAddress, uint256 tokenId,address lender) external returns (uint256);
+    function generateReceipt(
+        address nftContractAddress,
+        uint256 tokenId,
+        address holder
+    ) external returns (uint256);
 
-    function generateBorrowerReceipt(address nftContractAddress, uint256 tokenId, address borrower) external returns (uint256);
+    // function generateBorrowerReceipt(address nftContractAddress, uint256 tokenId, address borrower) external returns (uint256);
 
-    function getLenderReceiptId(address nftContractAddress, uint256 tokenId)external view returns(uint256 lenderReceiptId, address lenderAddress);
+    function getReceiptId(address nftContractAddress, uint256 tokenId)external view returns(uint256 lenderReceiptId, address lenderAddress);
 
-    function getBorrowerReceiptId(address nftContractAddress, uint256 tokenId)external view returns(uint256 borrowerReceiptId, address borrowerAddress);
 }
