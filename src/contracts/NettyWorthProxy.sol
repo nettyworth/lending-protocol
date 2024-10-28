@@ -22,7 +22,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     address public lenderReceiptContract; 
     address public borrowerReceiptContract;
     address public whiteListContract;
-    uint256 public adminFeeInBasisPoints = 400; // initial admin fee 5%.
+    uint256 public adminFeeInBasisPoints = 400; // initial admin fee 4%.
     uint256 private proposeAdminFeeInBasisPoints;
 
     uint256 public constant BPS = 10000; // 10000 in basis points = 100%.
