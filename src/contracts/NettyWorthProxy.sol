@@ -38,7 +38,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     event LoanRepaid(
         uint256 indexed loanId,
         address indexed nftContract,
-        uint256 indexed tokenId,
+        uint256[] tokenIds,
         address borrower,
         address lender,
         uint256 repayment,
@@ -49,7 +49,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     event LoanForClosed(
         uint256 indexed loanId,
         address indexed nftContract,
-        uint256 indexed tokenId,
+        uint256[] tokenIds,
         address borrower,
         address lender,
         bool isDefault
@@ -153,15 +153,26 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             ),
             "Invalid borrower signature"
         );
-        (receiptIdBorrower, receiptIdLender) = _acceptOffer(
+
+        ILoanManager.LoanData memory loandata = ILoanManager.LoanData(
             loanRequest.nftContractAddress,
-            loanRequest.tokenId,
+            loanRequest.tokenIds,
             loanRequest.borrower,
-            msg.sender, //lender,
+            msg.sender,
             loanRequest.loanAmount,
             loanRequest.aprBasisPoints,
             loanRequest.loanDuration,
-            loanRequest.erc20TokenAddress,
+            loanRequest.erc20TokenAddress);
+        (receiptIdBorrower, receiptIdLender) = _acceptOffer(
+            // loanRequest.nftContractAddress,
+            // loanRequest.tokenIds,
+            // loanRequest.borrower,
+            // msg.sender, //lender,
+            // loanRequest.loanAmount,
+            // loanRequest.aprBasisPoints,
+            // loanRequest.loanDuration,
+            // loanRequest.erc20TokenAddress,
+            loandata,
             loanRequest.nonce
         );
 
@@ -188,15 +199,25 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             ),
             "Invalid lender signature"
         );
-        (receiptIdBorrower, receiptIdLender) = _acceptOffer(
+        ILoanManager.LoanData memory loandata = ILoanManager.LoanData(
             loanOffer.nftContractAddress,
-            loanOffer.tokenId,
+            loanOffer.tokenIds,
             loanOffer.borrower,
             loanOffer.lender,
             loanOffer.loanAmount,
             loanOffer.aprBasisPoints,
             loanOffer.loanDuration,
-            loanOffer.erc20TokenAddress,
+            loanOffer.erc20TokenAddress);
+        (receiptIdBorrower, receiptIdLender) = _acceptOffer(
+            // loanOffer.nftContractAddress,
+            // loanOffer.tokenIds,
+            // loanOffer.borrower,
+            // loanOffer.lender,
+            // loanOffer.loanAmount,
+            // loanOffer.aprBasisPoints,
+            // loanOffer.loanDuration,
+            // loanOffer.erc20TokenAddress,
+            loandata,
             loanOffer.nonce
         );
 
@@ -206,17 +227,17 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     function acceptLoanCollectionOffer(
         bytes calldata acceptOfferSignature,
         SignatureUtils.LoanCollectionOffer calldata loanCollectionOffer,
-        uint256 tokenId
+        uint256[] calldata tokenIds
     )
         external
         nonReentrant
         returns (uint256 receiptIdBorrower, uint256 receiptIdLender)
     {
-        IERC721 nft = IERC721(loanCollectionOffer.collectionAddress);
-        require(
-            nft.ownerOf(tokenId) == msg.sender,
-            "Current caller is not the owner of NFT"
-        );
+        // IERC721 nft = IERC721(loanCollectionOffer.collectionAddress);
+        // require(
+        //     nft.ownerOf(tokenId) == msg.sender,
+        //     "Current caller is not the owner of NFT"
+        // );
         _sanityCheckAcceptOffer(
             loanCollectionOffer.collectionAddress,
             loanCollectionOffer.erc20TokenAddress,
@@ -229,15 +250,20 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             ),
             "Invalid lender signature"
         );
-        (receiptIdBorrower, receiptIdLender) = _acceptOffer(
-            loanCollectionOffer.collectionAddress,
-            tokenId,
-            msg.sender,
-            loanCollectionOffer.lender,
-            loanCollectionOffer.loanAmount,
+        ILoanManager.LoanData memory loandata = ILoanManager.LoanData(loanCollectionOffer.collectionAddress,tokenIds,msg.sender,loanCollectionOffer.lender,loanCollectionOffer.loanAmount,
             loanCollectionOffer.aprBasisPoints,
             loanCollectionOffer.loanDuration,
-            loanCollectionOffer.erc20TokenAddress,
+            loanCollectionOffer.erc20TokenAddress);
+        (receiptIdBorrower, receiptIdLender) = _acceptOffer(
+            // loanCollectionOffer.collectionAddress,
+            // tokenIds,
+            // msg.sender,
+            // loanCollectionOffer.lender,
+            // loanCollectionOffer.loanAmount,
+            // loanCollectionOffer.aprBasisPoints,
+            // loanCollectionOffer.loanDuration,
+            // loanCollectionOffer.erc20TokenAddress,
+            loandata,
             loanCollectionOffer.nonce
         );
 
@@ -245,50 +271,38 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     }
 
     function _acceptOffer(
-        address collectionAddress,
-        uint256 tokenId,
-        address borrower,
-        address lender,
-        uint256 loanAmount,
-        uint256 aprBasisPoints,
-        uint256 loanDuration,
-        address erc20TokenAddress,
+       ILoanManager.LoanData memory loandata,
         uint256 nonce
     ) internal returns (uint256 _receiptIdBorrower, uint256 _receiptIdLender) {
         (ILoanManager.Loan memory loan, uint256 _loanId) = _iloanManager
-            .getLoan(collectionAddress, tokenId, borrower, nonce);
+            .getLoan(loandata.nftContract, loandata.tokenIds, loandata.borrower, nonce);
+   
         require(!loan.isPaid, "Loan offer is closed");
         require(!loan.isApproved, "Loan offer is already approved");
         _iloanManager.createLoan(
-            collectionAddress,
-            tokenId,
-            borrower,
-            lender,
-            loanAmount,
-            aprBasisPoints,
-            loanDuration,
-            erc20TokenAddress,
-            nonce
+          loandata,
+          nonce
         );
         _iloanManager.updateIsApproved(_loanId, true);
         _deposit(
-            collectionAddress,
-            tokenId,
-            erc20TokenAddress,
-            lender,
-            borrower,
-            loanAmount
+            loandata.nftContract,
+            _loanId,
+            loandata.tokenIds,
+            loandata.currencyERC20,
+            loandata.lender,
+            loandata.borrower,
+            loandata.loanAmount
         );
 
         _receiptIdBorrower = _ireceiptBorrower.generateReceipt(
-            collectionAddress,
-            tokenId,
-            borrower
+            loandata.nftContract,
+            loandata.tokenIds,
+            loandata.borrower
         );
         _receiptIdLender = _ireceiptLender.generateReceipt(
-            collectionAddress,
-            tokenId,
-            lender
+            loandata.nftContract,
+            loandata.tokenIds,
+            loandata.borrower
         );
 
         return (_receiptIdBorrower, _receiptIdLender);
@@ -296,7 +310,8 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
 
     function _deposit(
         address collectionAddress,
-        uint256 tokenId,
+        uint256 loanid,
+        uint256[] memory tokenIds,
         address erc20TokenAddress,
         address lender,
         address borrower,
@@ -304,7 +319,8 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     ) internal {
         _icryptoVault.depositNftToEscrowAndERC20ToBorrower(
             collectionAddress,
-            tokenId,
+            loanid,
+            tokenIds,
             erc20TokenAddress,
             lender,
             borrower,
@@ -317,6 +333,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         address erc20Token
     ) external nonReentrant returns (bool) {
         ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
+        // ILoanManager.LoanData memory loandata = ILoanManager.LoanData(loan.nftContract, loan.tokenIds, loan.borrower, loan.lender,loan.currencyERC20,loanAmount ,loan.currencyERC20);
         require(loan.currencyERC20 == erc20Token, "Currency Invalid");
         (uint256 rePaymentAmount, uint256 interestAmount) = _iloanManager
             .getPayoffAmount(_loanId);
@@ -324,15 +341,19 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             interestAmount,
             adminFeeInBasisPoints
         );
-        (uint256 _borrowerReceiptId, address unusedBorrowerAddress) = _ireceiptBorrower
-            .getReceiptId(loan.nftContract, loan.tokenId);
-        (uint256 _lenderReceiptId, address unusedLenderAddress) = _ireceiptLender
-            .getReceiptId(loan.nftContract, loan.tokenId);
+        // (uint256 _borrowerReceiptId, address unusedBorrowerAddress) = _ireceiptBorrower
+        //     .getReceiptId(loan.nftContract, loan.tokenIds);
+        // (uint256 _lenderReceiptId, address unusedLenderAddress) = _ireceiptLender
+        //     .getReceiptId(loan.nftContract, loan.tokenIds);
+
+        uint256 _borrowerReceiptId = _getBorrowerReceiptId(loan);
+        uint256 _lenderReceiptId = _getLenderReceiptId(loan);
         _sanityCheckPayBack(loan, _lenderReceiptId, _borrowerReceiptId);
 
         _icryptoVault.withdrawNftFromEscrowAndERC20ToLender(
             loan.nftContract,
-            loan.tokenId,
+            _loanId,
+            loan.tokenIds,
             loan.borrower,
             loan.lender,
             rePaymentAmount,
@@ -348,7 +369,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         emit LoanRepaid(
             _loanId,
             loan.nftContract,
-            loan.tokenId,
+            loan.tokenIds,
             loan.borrower,
             loan.lender,
             rePaymentAmount,
@@ -358,6 +379,21 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
 
         return true;
     }
+
+
+
+    // Helper function to retrieve borrower receipt ID
+    function _getBorrowerReceiptId(ILoanManager.Loan memory loan) internal view returns (uint256) {
+        (uint256 _borrowerReceiptId, address unusedBorrowerAddress) = _ireceiptBorrower.getReceiptId(loan.nftContract, loan.tokenIds);
+        return _borrowerReceiptId;
+    }
+
+    // Helper function to retrieve lender receipt ID
+    function _getLenderReceiptId(ILoanManager.Loan memory loan) internal view returns (uint256) {
+        (uint256 _lenderReceiptId, address unusedLenderAddress) = _ireceiptLender.getReceiptId(loan.nftContract, loan.tokenIds);
+        return _lenderReceiptId;
+    }
+
 
     function forCloseLoan(
         uint256 _loanId
@@ -369,10 +405,12 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         );
         require(!loan.isPaid, "Loan Paid");
         require(!loan.isDefault, "Already Claimed");
-        (uint256 _borrowerReceiptId, address unusedBorrowerAddress) = _ireceiptBorrower
-            .getReceiptId(loan.nftContract, loan.tokenId);
-        (uint256 _lenderReceiptId, address unusedlenderAddress) = _ireceiptLender
-            .getReceiptId(loan.nftContract, loan.tokenId);
+        // (uint256 _borrowerReceiptId, address unusedBorrowerAddress) = _ireceiptBorrower
+        //     .getReceiptId(loan.nftContract, loan.tokenIds);
+        // (uint256 _lenderReceiptId, address unusedlenderAddress) = _ireceiptLender
+        //     .getReceiptId(loan.nftContract, loan.tokenIds);
+        uint256 _borrowerReceiptId = _getBorrowerReceiptId(loan);
+        uint256 _lenderReceiptId = _getLenderReceiptId(loan);
         require(
             _ireceiptLender.tokenExist(_lenderReceiptId),
             "Receipt does not exist"
@@ -392,7 +430,8 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         _iloanManager.updateIsDefault(_loanId, true);
         _icryptoVault.withdrawNftFromEscrow(
             loan.nftContract,
-            loan.tokenId,
+            _loanId,
+            loan.tokenIds,
             loan.borrower,
             msg.sender
         );
@@ -403,7 +442,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         emit LoanForClosed(
             _loanId,
             loan.nftContract,
-            loan.tokenId,
+            loan.tokenIds,
             loan.borrower,
             loan.lender,
             loan.isDefault

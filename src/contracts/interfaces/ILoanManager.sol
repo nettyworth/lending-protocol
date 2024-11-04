@@ -7,7 +7,7 @@ interface ILoanManager {
 
     struct Loan {
         address nftContract;
-        uint256 tokenId;
+        uint256[] tokenIds;
         address borrower;
         address lender;
         uint256 loanAmount;
@@ -20,23 +20,39 @@ interface ILoanManager {
         bool isApproved;
     }
 
+    struct LoanData {
+        address nftContract;
+        uint256[] tokenIds;
+        address borrower;
+        address lender;
+        uint256 loanAmount;
+        uint256 aprBasisPoints;
+        uint256 loanDuration;
+        address currencyERC20;
+    }
     function createLoan(
-        address _contract,
-        uint256 _tokenId,
-        address _borrower,
-        address _lender,
-        uint256 _loanAmount,
-        uint256 __aprBasisPoints,
-        uint256 _loanDuration,
-        address _erc20Token,
+        LoanData calldata loanData,
         uint256 _nonce
     ) external;
+
+
+    // function createLoan(
+    //     address _nftContract,
+    //     uint256[] calldata _tokenIds,
+    //     address _borrower,
+    //     address _lender,
+    //     uint256 _loanAmount,
+    //     uint256 _aprBasisPoints,
+    //     uint256 _loanDuration,
+    //     address _currencyERC20,
+    //     uint256 _nonce
+    // ) external;
 
     function updateLoan(Loan memory loan, uint256 loanId) external returns(bool);
 
     function getLoan(
         address _contract,
-        uint256 _tokenId,
+        uint256[] calldata _tokenIds,
         address _borrower,
         uint256 _nonce
     ) external view returns (Loan memory loan, uint256 loanId);

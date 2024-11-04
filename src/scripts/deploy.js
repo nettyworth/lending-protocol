@@ -6,14 +6,18 @@ require("dotenv").config();
 
 console.log(process.env.LENDER_PRIVATE_KEY);
 
-const lender = new ethers.Wallet(process.env.LENDER_PRIVATE_KEY);
-const borrower = new ethers.Wallet(process.env.BORROWER_PRIVATE_KEY);
-const provider = new ethers.JsonRpcProvider(process.env.QUICKNODE_SEPOLIA_URL);
-const lenderSigner = lender.connect(provider);
-const borrowerSigner = borrower.connect(provider);
+// const providers = async () => {
+  const lender = new ethers.Wallet(process.env.LENDER_PRIVATE_KEY);
+  const borrower = new ethers.Wallet(process.env.BORROWER_PRIVATE_KEY);
+  // const provider = new ethers.JsonRpcProvider(process.env.QUICKNODE_SEPOLIA_URL);
+  const lenderSigner = lender.connect(process.env.QUICKNODE_SEPOLIA_URL);
+  const borrowerSigner = borrower.connect(process.env.QUICKNODE_SEPOLIA_URL);
 
-console.log(lenderSigner);
-console.log(borrowerSigner);
+  console.log( lenderSigner.provider);
+  console.log( borrowerSigner);
+// };
+
+// providers();
 
 async function main() {
   try {
