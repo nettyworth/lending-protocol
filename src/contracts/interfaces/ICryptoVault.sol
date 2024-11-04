@@ -4,7 +4,8 @@ pragma solidity ^0.8.24;
 interface ICryptoVault {
     function depositNftToEscrowAndERC20ToBorrower(
         address nftContract,
-        uint256 tokenId,
+        uint256 loanId,
+        uint256[] calldata tokenIds,
         address currencyERC20,
         address lender,
         address borrower,
@@ -13,7 +14,8 @@ interface ICryptoVault {
 
     function withdrawNftFromEscrowAndERC20ToLender(
         address nftContract,
-        uint256 tokenId,
+        uint256 loanId,
+        uint256[] calldata tokenIds,
         address borrower,
         address lender,
         uint256 rePaymentAmount,
@@ -23,8 +25,9 @@ interface ICryptoVault {
         ) external;
     
     function withdrawNftFromEscrow(
-      address nftContract,
-        uint256 tokenId,
+        address nftContract,
+        uint256 loanId,
+        uint256[] calldata tokenIds,
         address borrower,
         address lender
     ) external;

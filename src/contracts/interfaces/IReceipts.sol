@@ -24,12 +24,12 @@ interface ReceiptInterface {
 
     function generateReceipt(
         address nftContractAddress,
-        uint256 tokenId,
+        uint256[] calldata tokenIds,
         address holder
     ) external returns (uint256);
 
     // function generateBorrowerReceipt(address nftContractAddress, uint256 tokenId, address borrower) external returns (uint256);
 
-    function getReceiptId(address nftContractAddress, uint256 tokenId)external view returns(uint256 lenderReceiptId, address lenderAddress);
+    function getReceiptId(address nftContractAddress, uint256[] calldata tokenIds)external view returns(uint256 lenderReceiptId, address lenderAddress);
 
 }

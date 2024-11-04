@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
  
 library SignatureUtils {    
     struct LoanRequest {
-        uint256 tokenId;           
+        uint256[] tokenIds;           
         address nftContractAddress;
         address erc20TokenAddress;
         address borrower;
@@ -14,7 +14,7 @@ library SignatureUtils {
     }
 
     struct LoanOffer {
-        uint256 tokenId;           
+        uint256[] tokenIds;           
         address nftContractAddress;
         address erc20TokenAddress;
         address lender;
@@ -66,7 +66,7 @@ library SignatureUtils {
         // Pack the 
                 bytes32 freshHash = keccak256(
             abi.encode(
-                loanRequest.tokenId,
+                loanRequest.tokenIds,
                 loanRequest.nftContractAddress,
                 loanRequest.erc20TokenAddress,
                 loanRequest.borrower,
@@ -94,7 +94,7 @@ library SignatureUtils {
     return _verifyHashSignature(loanOffer.lender, keccak256(
             abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(
             abi.encode(
-                loanOffer.tokenId,
+                loanOffer.tokenIds,
                 loanOffer.nftContractAddress,
                 loanOffer.erc20TokenAddress,
                 loanOffer.lender,

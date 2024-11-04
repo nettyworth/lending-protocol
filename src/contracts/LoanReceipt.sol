@@ -17,7 +17,7 @@ contract LoanReceipt is ERC721A, Ownable {
 
     string public baseURI;
     mapping(uint256 => string) private _tokenURIs;
-    mapping (address => mapping(uint256 => Receipt )) private _Receipt;
+    mapping (address => mapping(bytes32 => Receipt )) private _receipt;
 
     address public _proxy;
     address private _proposeproxy;
@@ -27,9 +27,10 @@ contract LoanReceipt is ERC721A, Ownable {
         string memory _symbol
     ) ERC721A(_name, _symbol) Ownable(msg.sender) {}
 
-    function getReceiptId(address nftContractAddress, uint256 tokenId)external view returns(uint256 holderReceiptId, address holderAddress){
-        holderReceiptId = _Receipt[nftContractAddress][tokenId].receiptId;
-        holderAddress = _Receipt[nftContractAddress][tokenId].holder;
+    function getReceiptId(address nftContractAddress, uint256[] calldata tokenIds)external view returns(uint256 holderReceiptId, address holderAddress){
+        bytes32 _tokenIds = _bytesconvertion(tokenIds);
+        holderReceiptId = _receipt[nftContractAddress][_tokenIds].receiptId;
+        holderAddress = _receipt[nftContractAddress][_tokenIds].holder;
         return  (holderReceiptId, holderAddress );
     }
 
@@ -37,15 +38,21 @@ contract LoanReceipt is ERC721A, Ownable {
         _safeMint(to, 1);
     }
 
+    function _bytesconvertion(uint256[] calldata tokenIds) internal pure returns(bytes32 ){
+       return keccak256(abi.encode(tokenIds));
+    }
+
+
     function generateReceipt(
         address nftContractAddress,
-        uint256 tokenId,
+        uint256[] calldata tokenIds,
         address holder
     ) external onlyProxyManager returns (uint256) {
         require(open, "Contract closed");
         _mintReceipt(holder);
+        bytes32 _tokenIds= _bytesconvertion(tokenIds);
          uint256 nftId = _nextTokenId() - 1;
-        _Receipt[nftContractAddress][tokenId] = Receipt(holder,nftId);
+        _receipt[nftContractAddress][_tokenIds] = Receipt(holder, nftId);
 
         return nftId;
     }
