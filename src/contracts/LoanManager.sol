@@ -66,31 +66,15 @@ contract LoanManager is Ownable {
 
     function createLoan(
     LoanData calldata loanData, 
-    uint256 _nonce 
+    uint256 nonce 
     ) external onlyProxyManager {
 
-        // require(_nftContract != address(0), "NFT contract address is required");
-        // require(_tokenIds.length > 0 && _tokenIds.length <=10 ,"Token IDs required"); 
-        // require(_borrower != address(0), "Borrower address is required");
-        // require(_loanAmount > 0, "Loan amount must be greater than 0");
-        // require(_aprBasisPoints > 0 && _aprBasisPoints <= MAX_APR, "APR cannot be negative OR exceed 500%");
-        // require(_loanDuration > 0, "Loan duration must be greater than 0");
-        // require(_lender != address(0), "Lender address is required");
-        // require(
-        //     !_nonceUsedForUser[_lender][_nonce] &&
-        //         !_nonceUsedForUser[_borrower][_nonce],
-        //     "Offer nonce invalid"
-        // );
-
-        // _nonceUsedForUser[_lender][_nonce] = true; 
-        // _nonceUsedForUser[_borrower][_nonce] = true;
-
-        validateLoanCreation(
+        _validateLoanCreation(
             loanData,
-            _nonce
+            nonce
         );
      
-        (, uint256 _loanId) = getLoan(loanData.nftContract, loanData.tokenIds, loanData.borrower, _nonce);
+        (, uint256 _loanId) = getLoan(loanData.nftContract, loanData.tokenIds, loanData.borrower, nonce);
         // Create a new loan
         require(
             _loans[_loanId].nftContract == address(0),
@@ -121,13 +105,13 @@ contract LoanManager is Ownable {
         );
     }
 
-    function validateLoanCreation(
+    function _validateLoanCreation(
         LoanData calldata loanData,
         uint256 _nonce
     ) internal {
 
         require(loanData.nftContract != address(0), "NFT contract address required");
-        require(loanData.tokenIds.length > 0 && loanData.tokenIds.length <= 10, "Token IDs required");
+        require(loanData.tokenIds.length > 0 && loanData.tokenIds.length <= NFT_MAX_LIMIT, "Token IDs required");
         require(loanData.borrower != address(0), "Borrower address required");
         require(loanData.loanAmount > 0, "Loan amount must be greater than 0");
         require(loanData.aprBasisPoints > 0 && loanData.aprBasisPoints <= MAX_APR, "Invalid APR");
@@ -206,7 +190,6 @@ contract LoanManager is Ownable {
         );
         _;
     }
-
 
     function proposeProxyManager(address newProxy) external onlyOwner {
         require(newProxy != address(0), "200:ZERO_ADDRESS");

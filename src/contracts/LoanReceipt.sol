@@ -17,7 +17,7 @@ contract LoanReceipt is ERC721A, Ownable {
 
     string public baseURI;
     mapping(uint256 => string) private _tokenURIs;
-    mapping (address => mapping(bytes32 => Receipt )) private _Receipt;
+    mapping (address => mapping(bytes32 => Receipt )) private _receipt;
 
     address public _proxy;
     address private _proposeproxy;
@@ -28,9 +28,9 @@ contract LoanReceipt is ERC721A, Ownable {
     ) ERC721A(_name, _symbol) Ownable(msg.sender) {}
 
     function getReceiptId(address nftContractAddress, uint256[] calldata tokenIds)external view returns(uint256 holderReceiptId, address holderAddress){
-        bytes32 _tokenIds= _bytesconvertion(tokenIds);
-        holderReceiptId = _Receipt[nftContractAddress][_tokenIds].receiptId;
-        holderAddress = _Receipt[nftContractAddress][_tokenIds].holder;
+        bytes32 _tokenIds = _bytesconvertion(tokenIds);
+        holderReceiptId = _receipt[nftContractAddress][_tokenIds].receiptId;
+        holderAddress = _receipt[nftContractAddress][_tokenIds].holder;
         return  (holderReceiptId, holderAddress );
     }
 
@@ -52,7 +52,7 @@ contract LoanReceipt is ERC721A, Ownable {
         _mintReceipt(holder);
         bytes32 _tokenIds= _bytesconvertion(tokenIds);
          uint256 nftId = _nextTokenId() - 1;
-        _Receipt[nftContractAddress][_tokenIds] = Receipt(holder,nftId);
+        _receipt[nftContractAddress][_tokenIds] = Receipt(holder, nftId);
 
         return nftId;
     }

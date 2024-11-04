@@ -11,10 +11,8 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 // CryptoVault contract that serves as a vault for ERC721 tokens
 contract CryptoVault is ERC721Holder, Ownable {
 
-    mapping(address => mapping(uint256 => mapping (address => bytes32))) private _assetsHash; // Mapping to keep track of deposited ERC721 tokens
-    mapping(address => mapping(uint256 => mapping (address => uint256[]))) private _assets; // Mapping to keep track of deposited ERC721 tokens
-
-    // mapping(address => mapping(address => uint256[])) private _assets; // Mapping to keep track of deposited ERC721 tokens
+    mapping(address => mapping(uint256 => mapping (address => bytes32))) private _assetsHash; // Mapping to keep track of deposited ERC721 token ID's via Keccak hash
+    mapping(address => mapping(uint256 => mapping (address => uint256[]))) private _assets; // Mapping to keep track of deposited ERC721 token ID's
 
     using SafeERC20 for IERC20;
     address public _proxy; // Address of the proxy contract used for access control
@@ -34,10 +32,7 @@ contract CryptoVault is ERC721Holder, Ownable {
         uint256[] tokenIds
     );
 
-
-
     constructor() Ownable(msg.sender){}
-
 
     function safeBatchTransfer(
         IERC721 erc721Contract,
@@ -47,17 +42,28 @@ contract CryptoVault is ERC721Holder, Ownable {
     ) public {
 
         uint256 length = tokenIds.length;
+        _checkOwner(erc721Contract,from,tokenIds);
 
         for (uint256 i; i < length; ) {
             uint256 tokenId = tokenIds[i];
-            address owner = erc721Contract.ownerOf(tokenId);
-            require(from == owner,"Invalid Owner");
             erc721Contract.safeTransferFrom(from, to, tokenId);
             unchecked {
                 i++;
             }
         }
        
+    }
+
+    function _checkOwner(IERC721 erc721Contract, address owner ,uint256[] calldata tokenIds) internal view{
+         uint256 length = tokenIds.length;
+            for (uint256 i; i < length; ) {
+            uint256 tokenId = tokenIds[i];
+            address _owner = erc721Contract.ownerOf(tokenId);
+            require(owner == _owner,"Invalid Owner of Token ID");
+            unchecked {
+                i++;
+            }
+        }
     }
 
     function depositNftToEscrowAndERC20ToBorrower(
@@ -73,14 +79,10 @@ contract CryptoVault is ERC721Holder, Ownable {
 
         IERC721 nft = IERC721(nftContract);
         IERC20 erc20Token = IERC20(currencyERC20);
-        // require(
-        //     nft.ownerOf(tokenId) == borrower,
-        //     "You are not the owner of this token"
-        // );
-        // require(nft.getApproved(tokenId)!= address(0) || nft.isApprovedForAll(borrower,address(this)),"Insufficent NFT Allowance/Wrong address allowance");
-        require(nft.isApprovedForAll(borrower,address(this)),"Insufficent NFT Allowance/Wrong address allowance");
 
+        require(nft.isApprovedForAll(borrower,address(this)),"Insufficent NFT Allowance/Wrong address allowance");
         require(erc20Token.allowance(lender,address(this)) >= loanAmount,"Insufficent Allowance");
+
         _assets[nftContract][loanId][borrower]= tokenIds;
         bytes32 _tokenIds = _bytesconvertion(tokenIds);
         _assetsHash[nftContract][loanId][borrower] = _tokenIds;
@@ -120,11 +122,6 @@ contract CryptoVault is ERC721Holder, Ownable {
         require(erc20Token.allowance(borrower,address(this)) >= rePaymentAmount,"Insufficent Allowance");
         require(erc20Token.balanceOf(borrower) >= rePaymentAmount ,"Insufficent balance to payloan");
      
-        // require(
-        //     token.ownerOf(tokenIds) == address(this),
-        //     "The vault does not own this token"
-        // );
-
         rePaymentAmount -= computeAdminFee;
 
         require(rePaymentAmount >= computeAdminFee, "Admin fee exceeds repayment");
@@ -155,16 +152,10 @@ contract CryptoVault is ERC721Holder, Ownable {
         );
         require(_assetsHash[nftContract][loanId][borrower]== _tokenIds,
         "Invalid NFT ID's ");
-        // require(
-        //     token.ownerOf(tokenId) == address(this),
-        //     "The vault does not own this token"
-        // );
+
         delete _assetsHash[nftContract][loanId][borrower];
         delete _assets[nftContract][loanId][borrower];
 
-
-        // _assets[nftContract][tokenId] = address(0);
-        // token.safeTransferFrom(address(this), borrower, tokenIds);
         safeBatchTransfer(token,address(this),borrower, tokenIds);
         emit nftWithdrawalFromEscrow(borrower, nftContract, tokenIds);
     }
@@ -189,23 +180,11 @@ contract CryptoVault is ERC721Holder, Ownable {
         require(_assetsHash[nftContract][loanId][borrower]== _tokenIds,
         "Invalid NFT ID's ");
 
-        // require(
-        //     _assets[nftContract][tokenId] != address(0),
-        //     "This token is not stored in the vault"
-        // );
-        // require(_assets[nftContract][tokenId]== borrower,
-        // "borrower is not the owner "); // added
-        // require(
-        //     token.ownerOf(tokenId) == address(this),
-        //     "The vault does not own this token"
-        // );
         delete _assetsHash[nftContract][loanId][borrower];
         delete _assets[nftContract][loanId][borrower];
 
         safeBatchTransfer(token,address(this),lender, tokenIds);
 
-        // _assets[nftContract][tokenIds] = address(0);
-        // token.safeTransferFrom(address(this), lender, tokenId);
         emit nftWithdrawalFromEscrow(lender, nftContract, tokenIds);
     }
 
