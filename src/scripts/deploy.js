@@ -1,3 +1,5 @@
+// scripts/deploy.js
+
 const { parseEther } = require('ethers');
 const { ethers } = require('hardhat');
 require('dotenv').config();
