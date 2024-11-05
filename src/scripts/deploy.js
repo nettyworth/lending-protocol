@@ -1,27 +1,11 @@
-// scripts/deploy.js
-
 const { parseEther } = require('ethers');
 const { ethers } = require('hardhat');
 require('dotenv').config();
-
-// console.log(process.env.LENDER_PRIVATE_KEY);
-
-// const lender = new ethers.Wallet(process.env.LENDER_PRIVATE_KEY);
-// const borrower = new ethers.Wallet(process.env.BORROWER_PRIVATE_KEY);
-// const provider = new ethers.JsonRpcProvider(process.env.QUICKNODE_SEPOLIA_URL);
-// const lenderSigner = lender.connect(provider);
-// const borrowerSigner = borrower.connect(provider);
-
-// console.log(lenderSigner);
-// console.log(borrowerSigner);
 
 async function main() {
   try {
     const [deployer] = await ethers.getSigners();
     console.log('Deploying contracts with the account:', deployer.address);
-
-    // const lender = ethers.Wallet(process.env.LENDER_PRIVATE_KEY);
-    // const borrower = ethers.Wallet(process.env.BORROWER_PRIVATE_KEY);
 
     // Log the current network
     const network = await ethers.provider.getNetwork();
@@ -61,6 +45,7 @@ async function main() {
       await loanReceiptBorrower.getAddress()
     );
 
+    // Deploy WhiteListCollection
     const WhiteListCollection = await ethers.getContractFactory(
       'WhiteListCollection'
     );
@@ -92,7 +77,6 @@ async function main() {
     console.log('NettyWorthProxy initialized');
 
     // Set proxy manager for other contracts
-
     await cryptoVault.proposeProxyManager(await nettyWorthProxy.getAddress());
     await cryptoVault.setProxyManager();
     await loanManager.proposeProxyManager(await nettyWorthProxy.getAddress());
@@ -107,11 +91,13 @@ async function main() {
     await loanReceiptBorrower.setProxyManager();
     console.log('Proxy manager set for all contracts');
 
+    // Set Open in lender and borrower receipts contracts.
     await loanReceiptLender.proposeSetOpen(true);
     await loanReceiptLender.setOpen();
     await loanReceiptBorrower.proposeSetOpen(true);
     await loanReceiptBorrower.setOpen();
-    // Deploy TestToken (for testing purposes)
+
+    // Deploy TestToken NFT (for testing purposes)
     const NFTExample = await ethers.getContractFactory('NFTExample');
     const nftExample = await NFTExample.deploy(
       'TestNettyWorth',
@@ -125,6 +111,7 @@ async function main() {
       await nftExample.getAddress()
     );
 
+    // Transfer some NFTs to borrower for testing
     await nftExample.airdrop('0xa611531661B5649688605a16ca7a245980F69A99', 100);
 
     // Deploy ERC20 token (for testing purposes)
@@ -138,26 +125,21 @@ async function main() {
     const tokenAddress = await nettyWorthToken.getAddress();
     const nftAddress = await nftExample.getAddress();
 
-    //************************************/
+    // Transfer some ERC20 to lender for testing
     await nettyWorthToken.transfer(
       '0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061',
       ethers.parseUnits('100000000', 18)
     );
 
+    // Transfer some ERC20 to borrower for testing
     await nettyWorthToken.transfer(
       '0xa611531661B5649688605a16ca7a245980F69A99',
       ethers.parseUnits('100000000', 18)
     );
 
+    // Whiteslist nft collection & erc20
     await whiteListCollection.whiteListErc20Token([tokenAddress.toString()]);
     await whiteListCollection.whiteListCollection([nftAddress.toString()]);
-
-    // await nettyWorthToken
-    //   .connect('')
-    //   .approve(await cryptoVault.getAddress(), parseEther('10000'));
-    // await nftExample
-    //   .connect('0xa611531661B5649688605a16ca7a245980F69A99')
-    //   .setApprovalForAll(await cryptoVault.getAddress(), true);
 
     // //************************************ */
     // // Verify contracts on Etherscan (only for public networks)
