@@ -1,145 +1,167 @@
-const { parseEther } = require('ethers');
-const { ethers } = require('hardhat');
-require('dotenv').config();
+const { parseEther } = require("ethers");
+const { ethers } = require("hardhat");
+require("dotenv").config();
 
 async function main() {
   try {
     const [deployer] = await ethers.getSigners();
-    console.log('Deploying contracts with the account:', deployer.address);
+    console.log("Deploying contracts with the account:", deployer.address);
 
     // Log the current network
     const network = await ethers.provider.getNetwork();
-    console.log('Deploying to network:', network.name);
+    console.log("Deploying to network:", network.name);
 
     // Deploy CryptoVault
-    const CryptoVault = await ethers.getContractFactory('CryptoVault');
+    const CryptoVault = await ethers.getContractFactory("CryptoVault");
     const cryptoVault = await CryptoVault.deploy();
     await cryptoVault.waitForDeployment();
-    console.log('CryptoVault deployed to:', await cryptoVault.getAddress());
+    const cryptoVaultAddress = await cryptoVault.getAddress();
+    console.log("CryptoVault deployed to:", cryptoVaultAddress);
 
     // Deploy LoanManager
-    const LoanManager = await ethers.getContractFactory('LoanManager');
+    const LoanManager = await ethers.getContractFactory("LoanManager");
     const loanManager = await LoanManager.deploy();
     await loanManager.waitForDeployment();
-    console.log('LoanManager deployed to:', await loanManager.getAddress());
+    const loanManagerAddress = await loanManager.getAddress();
+
+    console.log("LoanManager deployed to:", loanManagerAddress);
 
     // Deploy LoanReceipt
-    const LoanReceipt = await ethers.getContractFactory('LoanReceipt');
+    const LoanReceipt = await ethers.getContractFactory("LoanReceipt");
     const loanReceiptLender = await LoanReceipt.deploy(
-      'NettyWorth Promissory Note',
-      'PNNW'
+      "NettyWorth Promissory Note",
+      "PNNW",
     );
     await loanReceiptLender.waitForDeployment();
+    const loanReceiptLenderAddress = await loanReceiptLender.getAddress();
+
     console.log(
-      'NettyWorth Promissory Note deployed to:',
-      await loanReceiptLender.getAddress()
+      "NettyWorth Promissory Note deployed to:",
+      loanReceiptLenderAddress,
     );
 
     const loanReceiptBorrower = await LoanReceipt.deploy(
-      'NettyWorth Obligation Receipt',
-      'ORNW'
+      "NettyWorth Obligation Receipt",
+      "ORNW",
     );
     await loanReceiptBorrower.waitForDeployment();
+    const loanReceiptBorrowerAddress = await loanReceiptBorrower.getAddress();
     console.log(
-      'NettyWorth Obligation Receipt deployed to:',
-      await loanReceiptBorrower.getAddress()
+      "NettyWorth Obligation Receipt deployed to:",
+      loanReceiptBorrowerAddress,
     );
 
     // Deploy WhiteListCollection
     const WhiteListCollection = await ethers.getContractFactory(
-      'WhiteListCollection'
+      "WhiteListCollection",
     );
     const whiteListCollection = await WhiteListCollection.deploy();
     await whiteListCollection.waitForDeployment();
-    console.log(
-      'whiteListCollection deployed to:',
-      await whiteListCollection.getAddress()
-    );
+    const whiteListCollectionAddress = await whiteListCollection.getAddress();
+    console.log("whiteListCollection deployed to:", whiteListCollectionAddress);
 
     // Deploy NettyWorthProxy
-    const NettyWorthProxy = await ethers.getContractFactory('NettyWorthProxy');
+    const NettyWorthProxy = await ethers.getContractFactory("NettyWorthProxy");
     const nettyWorthProxy = await NettyWorthProxy.deploy();
     await nettyWorthProxy.waitForDeployment();
-    console.log(
-      'NettyWorthProxy deployed to:',
-      await nettyWorthProxy.getAddress()
-    );
+    const nettyWorthProxyAddress = await nettyWorthProxy.getAddress();
+
+    console.log("NettyWorthProxy deployed to:", nettyWorthProxyAddress);
 
     // Initialize NettyWorthProxy
     await nettyWorthProxy.initialize(
-      await cryptoVault.getAddress(),
-      await loanManager.getAddress(),
-      await loanReceiptLender.getAddress(),
-      await loanReceiptBorrower.getAddress(),
-      await whiteListCollection.getAddress(),
-      deployer
+      cryptoVaultAddress,
+      loanManagerAddress,
+      loanReceiptLenderAddress,
+      loanReceiptBorrowerAddress,
+      whiteListCollectionAddress,
+      deployer,
     );
-    console.log('NettyWorthProxy initialized');
+    console.log("NettyWorthProxy initialized");
 
     // Set proxy manager for other contracts
-    await cryptoVault.proposeProxyManager(await nettyWorthProxy.getAddress());
+    const cryptoVaulttx = await cryptoVault.proposeProxyManager(
+      nettyWorthProxyAddress,
+    );
+    await cryptoVaulttx.wait();
     await cryptoVault.setProxyManager();
-    await loanManager.proposeProxyManager(await nettyWorthProxy.getAddress());
+
+    const loanManagertx = await loanManager.proposeProxyManager(
+      nettyWorthProxyAddress,
+    );
+    await loanManagertx.wait();
     await loanManager.setProxyManager();
-    await loanReceiptLender.proposeProxyManager(
-      await nettyWorthProxy.getAddress()
+
+    const loanReceiptLendertx = await loanReceiptLender.proposeProxyManager(
+      nettyWorthProxyAddress,
     );
+    await loanReceiptLendertx.wait();
     await loanReceiptLender.setProxyManager();
-    await loanReceiptBorrower.proposeProxyManager(
-      await nettyWorthProxy.getAddress()
+
+    const loanReceiptBorrowertx = await loanReceiptBorrower.proposeProxyManager(
+      nettyWorthProxyAddress,
     );
+    await loanReceiptBorrowertx.wait();
+
     await loanReceiptBorrower.setProxyManager();
-    console.log('Proxy manager set for all contracts');
+    console.log("Proxy manager set for all contracts");
 
     // Set Open in lender and borrower receipts contracts.
-    await loanReceiptLender.proposeSetOpen(true);
+    const proposedLoanReceiptLender = await loanReceiptLender.proposeSetOpen(
+      true,
+    );
+    await proposedLoanReceiptLender.wait();
     await loanReceiptLender.setOpen();
-    await loanReceiptBorrower.proposeSetOpen(true);
+
+    const proposedloanReceiptBorrower =
+      await loanReceiptBorrower.proposeSetOpen(true);
+
+    await proposedloanReceiptBorrower.wait();
     await loanReceiptBorrower.setOpen();
 
     // Deploy TestToken NFT (for testing purposes)
-    const NFTExample = await ethers.getContractFactory('NFTExample');
+    const NFTExample = await ethers.getContractFactory("NFTExample");
     const nftExample = await NFTExample.deploy(
-      'TestNettyWorth',
-      'TestNettyWorth NFT',
-      'TNFT',
-      1000
+      "TestNettyWorth",
+      "TestNettyWorth NFT",
+      "TNFT",
+      1000,
     );
     await nftExample.waitForDeployment();
-    console.log(
-      'TestNettyWorth NFT Contract deployed to:',
-      await nftExample.getAddress()
-    );
+    const nftExampleAddress = await nftExample.getAddress();
+
+    console.log("TestNettyWorth NFT Contract deployed to:", nftExampleAddress);
 
     // Transfer some NFTs to borrower for testing
-    await nftExample.airdrop('0xa611531661B5649688605a16ca7a245980F69A99', 100);
+    await nftExample.airdrop("0xa611531661B5649688605a16ca7a245980F69A99", 100);
 
     // Deploy ERC20 token (for testing purposes)
-    const NettyWorthToken = await ethers.getContractFactory('NettyWorthToken');
-    const nettyWorthToken = await NettyWorthToken.deploy(parseEther('10000')); // 1 million initial supply
+    const NettyWorthToken = await ethers.getContractFactory("NettyWorthToken");
+    const nettyWorthToken = await NettyWorthToken.deploy(parseEther("10000")); // 1 million initial supply
     await nettyWorthToken.waitForDeployment();
-    console.log(
-      'MyToken (ERC20) deployed to:',
-      await nettyWorthToken.getAddress()
-    );
-    const tokenAddress = await nettyWorthToken.getAddress();
-    const nftAddress = await nftExample.getAddress();
+    const nettyWorthTokenAddress = await nettyWorthToken.getAddress();
+
+    console.log("MyToken (ERC20) deployed to:", nettyWorthTokenAddress);
 
     // Transfer some ERC20 to lender for testing
     await nettyWorthToken.transfer(
-      '0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061',
-      ethers.parseUnits('100000000', 18)
+      "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
+      ethers.parseUnits("100000000", 18),
     );
 
     // Transfer some ERC20 to borrower for testing
     await nettyWorthToken.transfer(
-      '0xa611531661B5649688605a16ca7a245980F69A99',
-      ethers.parseUnits('100000000', 18)
+      "0xa611531661B5649688605a16ca7a245980F69A99",
+      ethers.parseUnits("100000000", 18),
     );
 
     // Whiteslist nft collection & erc20
-    await whiteListCollection.whiteListErc20Token([tokenAddress.toString()]);
-    await whiteListCollection.whiteListCollection([nftAddress.toString()]);
+    await whiteListCollection.whiteListErc20Token([
+      nettyWorthTokenAddress.toString(),
+    ]);
+    await whiteListCollection.whiteListCollection([
+      nftExampleAddress.toString(),
+    ]);
 
     // //************************************ */
     // // Verify contracts on Etherscan (only for public networks)
@@ -223,9 +245,9 @@ async function main() {
     //   console.log('Contracts verified on Etherscan');
     // }
 
-    console.log('Deployment completed successfully!');
+    console.log("Deployment completed successfully!");
   } catch (error) {
-    console.error('Error during deployment:', error);
+    console.error("Error during deployment:", error);
     process.exit(1);
   }
 }
