@@ -80,13 +80,13 @@ contract CryptoVault is ERC721Holder, Ownable {
         IERC721 nft = IERC721(nftContract);
         IERC20 erc20Token = IERC20(currencyERC20);
 
-        require(nft.isApprovedForAll(borrower,address(this)),"Insufficent NFT Allowance/Wrong address allowance");
-        require(erc20Token.allowance(lender,address(this)) >= loanAmount,"Insufficent Allowance");
+        require(nft.isApprovedForAll(borrower, address(this)), "Insufficent NFT Allowance/Wrong address allowance");
+        require(erc20Token.allowance(lender, address(this)) >= loanAmount, "Insufficent Allowance");
 
-        _assets[nftContract][loanId][borrower]= tokenIds;
+        _assets[nftContract][loanId][lender]= tokenIds; //borrower -> lender
         bytes32 _tokenIds = _bytesconvertion(tokenIds);
-        _assetsHash[nftContract][loanId][borrower] = _tokenIds;
-        safeBatchTransfer(nft,borrower, address(this), tokenIds);
+        _assetsHash[nftContract][loanId][lender] = _tokenIds; //borrower -> lender
+        safeBatchTransfer(nft, borrower, address(this), tokenIds);
         erc20Token.safeTransferFrom(lender, borrower, loanAmount);
         emit nftDepositToEscrow(borrower, nftContract, tokenIds);
     }
@@ -113,24 +113,24 @@ contract CryptoVault is ERC721Holder, Ownable {
         bytes32 _tokenIds = _bytesconvertion(tokenIds);
 
         require(
-             _assetsHash[nftContract][loanId][borrower] != 0,
+            _assetsHash[nftContract][loanId][lender] != 0,  //borrower -> lender
             "This token's are not stored in the vault"
         );
-        require(_assetsHash[nftContract][loanId][borrower]== _tokenIds,
+        require(_assetsHash[nftContract][loanId][lender]== _tokenIds,  //borrower -> lender
         "Invalid NFT ID's ");
         require(erc20Token != IERC20(address(0)), "Invalid ERC20 token address");
-        require(erc20Token.allowance(borrower,address(this)) >= rePaymentAmount,"Insufficent Allowance");
+        require(erc20Token.allowance(borrower, address(this)) >= rePaymentAmount,"Insufficent Allowance");
         require(erc20Token.balanceOf(borrower) >= rePaymentAmount ,"Insufficent balance to payloan");
      
         rePaymentAmount -= computeAdminFee;
 
         require(rePaymentAmount >= computeAdminFee, "Admin fee exceeds repayment");
         
-        delete _assetsHash[nftContract][loanId][borrower];
-        delete _assets[nftContract][loanId][borrower];
+        delete _assetsHash[nftContract][loanId][lender];  //borrower -> lender
+        delete _assets[nftContract][loanId][lender];  //borrower -> lender
         erc20Token.safeTransferFrom(borrower, adminWallet, computeAdminFee);
         erc20Token.safeTransferFrom(borrower, lender, rePaymentAmount);
-        safeBatchTransfer(token,address(this),borrower, tokenIds);
+        safeBatchTransfer(token, address(this), borrower, tokenIds);
 
         emit nftWithdrawalFromEscrow(borrower, nftContract, tokenIds);
     }
@@ -140,32 +140,6 @@ contract CryptoVault is ERC721Holder, Ownable {
         address nftContract,
         uint256 loanId,
         uint256[] calldata tokenIds,
-        address borrower
-    ) external onlyProxyManager {
-
-        IERC721 token = IERC721(nftContract);
-        bytes32 _tokenIds = _bytesconvertion(tokenIds);
-
-        require(
-             _assetsHash[nftContract][loanId][borrower] != 0,
-            "This token is not stored in the vault"
-        );
-        require(_assetsHash[nftContract][loanId][borrower]== _tokenIds,
-        "Invalid NFT ID's ");
-
-        delete _assetsHash[nftContract][loanId][borrower];
-        delete _assets[nftContract][loanId][borrower];
-
-        safeBatchTransfer(token,address(this),borrower, tokenIds);
-        emit nftWithdrawalFromEscrow(borrower, nftContract, tokenIds);
-    }
-
-    // Function to withdraw an ERC721 token from the vault
-    function withdrawNftFromEscrow(
-        address nftContract,
-        uint256 loanId,
-        uint256[] calldata tokenIds,
-        address borrower,
         address lender
     ) external onlyProxyManager {
 
@@ -174,14 +148,14 @@ contract CryptoVault is ERC721Holder, Ownable {
 
 
         require(
-            _assetsHash[nftContract][loanId][borrower] != 0,
+            _assetsHash[nftContract][loanId][lender] != 0,
             "This token is not stored in the vault"
-        );
-        require(_assetsHash[nftContract][loanId][borrower]== _tokenIds,
-        "Invalid NFT ID's ");
+        ); //borrower -> lender
+        require(_assetsHash[nftContract][loanId][lender]== _tokenIds,
+        "Invalid NFT ID's "); //borrower -> lender
 
-        delete _assetsHash[nftContract][loanId][borrower];
-        delete _assets[nftContract][loanId][borrower];
+        delete _assetsHash[nftContract][loanId][lender]; //borrower -> lender
+        delete _assets[nftContract][loanId][lender];  //borrower -> lender
 
         safeBatchTransfer(token,address(this),lender, tokenIds);
 

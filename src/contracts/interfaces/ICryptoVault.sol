@@ -28,7 +28,6 @@ interface ICryptoVault {
         address nftContract,
         uint256 loanId,
         uint256[] calldata tokenIds,
-        address borrower,
         address lender
     ) external;
 

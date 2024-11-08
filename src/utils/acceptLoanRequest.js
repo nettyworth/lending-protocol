@@ -16,7 +16,7 @@ const acceptLoanRequest = async function (
   loanAmount,
   aprBasisPoints,
   loanDuration,
-  nonce
+  nonce,
 ) {
   const encoded = abiCoder.encode(
     [
@@ -38,7 +38,7 @@ const acceptLoanRequest = async function (
       aprBasisPoints,
       loanDuration,
       nonce,
-    ]
+    ],
   );
   return await sign(encoded);
 };
@@ -58,7 +58,7 @@ const main = async () => {
     10000000000000000000n, //loanAmount,
     500, // 5% aprBasisPoints,
     1727907073, //loanDuration,
-    22222 //nonce
+    22222, //nonce
   );
 
   console.log("getacceptLoanRequest", getacceptLoanRequest);
@@ -92,4 +92,15 @@ module.exports = {
   500,
   1729253200,
   3)
+];
+
+[
+  [1, 2],
+  "0x9dAf7c849c20Be671315E77CB689811bD5EDefe6",
+  "0xc4753C8802178e524cdB766D7E47cFc566e34443",
+  "0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db",
+  100000000000,
+  500,
+  1731080588,
+  123,
 ];

@@ -15,6 +15,8 @@ interface ILoanManager {
         uint256 loanDuration;
         address currencyERC20;
         uint256 loanInitialTime;
+        uint256 lenderReceiptId;
+        uint256 borrowerReceiptId;
         bool isPaid;
         bool isDefault;
         bool isApproved;
@@ -32,21 +34,10 @@ interface ILoanManager {
     }
     function createLoan(
         LoanData calldata loanData,
+        uint256 lenderReceiptId,
+        uint256 borrowerReceiptId,
         uint256 _nonce
     ) external;
-
-
-    // function createLoan(
-    //     address _nftContract,
-    //     uint256[] calldata _tokenIds,
-    //     address _borrower,
-    //     address _lender,
-    //     uint256 _loanAmount,
-    //     uint256 _aprBasisPoints,
-    //     uint256 _loanDuration,
-    //     address _currencyERC20,
-    //     uint256 _nonce
-    // ) external;
 
     function updateLoan(Loan memory loan, uint256 loanId) external returns(bool);
 
@@ -67,4 +58,7 @@ interface ILoanManager {
     
     function getLoanById(uint256 loanId) external view returns (Loan memory loan); 
 
+    function updateBorrower(uint256 loanId, address newBorrower) external;
+    
+    function getCurrentBorrower(uint256 loanId) external view returns (address currentBorrower);
 }

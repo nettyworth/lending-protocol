@@ -19,6 +19,8 @@ contract LoanReceipt is ERC721A, Ownable {
     mapping(uint256 => string) private _tokenURIs;
     mapping (address => mapping(bytes32 => Receipt )) private _receipt;
 
+    event ReceiptTransferred(address indexed currentBorrower, address newBorrower, uint256 receiptId);
+
     address public _proxy;
     address private _proposeproxy;
 
@@ -34,14 +36,24 @@ contract LoanReceipt is ERC721A, Ownable {
         return  (holderReceiptId, holderAddress );
     }
 
+    function _updateHolderAddress(address _nftContractAddress, uint256[] calldata _tokenIds, address _newHolderAddress) internal {
+        bytes32 tokenIds = _bytesconvertion(_tokenIds);
+        _receipt[_nftContractAddress][tokenIds].holder = _newHolderAddress; 
+    }
+
     function _mintReceipt(address to) internal  {
         _safeMint(to, 1);
+    }
+
+    function transferReceipt(address nftContractAddress, uint256[] calldata tokenIds, address currentBorrower, address newBorrower, uint256 receiptId) external onlyProxyManager {
+        safeTransferFrom(currentBorrower, newBorrower, receiptId);
+        _updateHolderAddress(nftContractAddress, tokenIds, newBorrower);
+        emit ReceiptTransferred(currentBorrower, newBorrower, receiptId);
     }
 
     function _bytesconvertion(uint256[] calldata tokenIds) internal pure returns(bytes32 ){
        return keccak256(abi.encode(tokenIds));
     }
-
 
     function generateReceipt(
         address nftContractAddress,

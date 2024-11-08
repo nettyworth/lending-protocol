@@ -88,9 +88,7 @@ library SignatureUtils {
         bytes calldata signature,
         LoanOffer calldata loanOffer
     ) internal pure returns (bool) {
- 
-        // Verify if the fresh hash is signed with the provided signature
-
+    // Verify if the fresh hash is signed with the provided signature
     return _verifyHashSignature(loanOffer.lender, keccak256(
             abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(
             abi.encode(

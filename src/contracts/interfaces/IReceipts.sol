@@ -8,12 +8,6 @@ interface ReceiptInterface {
         uint256 receiptId;
     }
 
-    // struct LenderReceipt {
-    //     uint256 loanIndex;
-    //     uint256 amount;
-    //     uint256 timestamp;
-    // }
-
     function open() external view returns (bool);
 
     function burnReceipt(uint256 tokenId) external;
@@ -28,8 +22,7 @@ interface ReceiptInterface {
         address holder
     ) external returns (uint256);
 
-    // function generateBorrowerReceipt(address nftContractAddress, uint256 tokenId, address borrower) external returns (uint256);
+    function transferReceipt(address nftContractAddress, uint256[] calldata tokenIds, address currentBorrower, address newBorrower, uint256 receiptId) external;
 
     function getReceiptId(address nftContractAddress, uint256[] calldata tokenIds)external view returns(uint256 lenderReceiptId, address lenderAddress);
-
 }
