@@ -133,7 +133,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     }
 
     function acceptLoanRequest(
-        // bytes calldata acceptRequestSignature,
+        bytes calldata acceptRequestSignature,
         SignatureUtils.LoanRequest calldata loanRequest
     )
         external
@@ -144,13 +144,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loanRequest.nftContractAddress,
             loanRequest.erc20TokenAddress,
             loanRequest.loanDuration);
-        // require(
-        //     SignatureUtils._validateRequestLoanSignature(
-        //         acceptRequestSignature,
-        //         loanRequest
-        //     ),
-        //     "Invalid borrower signature"
-        // );
+        require(
+            SignatureUtils._validateRequestLoanSignature(
+                acceptRequestSignature,
+                loanRequest
+            ),
+            "Invalid borrower signature"
+        );
         require(msg.sender != loanRequest.borrower, "Unauthorized sender");
         ILoanManager.LoanData memory loandata = ILoanManager.LoanData(
             loanRequest.nftContractAddress,
@@ -170,7 +170,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     }
 
     function acceptLoanOffer(
-        // bytes calldata acceptOfferSignature,
+        bytes calldata acceptOfferSignature,
         SignatureUtils.LoanOffer calldata loanOffer
     )
         external
@@ -182,13 +182,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loanOffer.nftContractAddress,
             loanOffer.erc20TokenAddress,
             loanOffer.loanDuration);
-        // require(
-        //     SignatureUtils._validateSignatureApprovalOffer(
-        //         acceptOfferSignature,
-        //         loanOffer
-        //     ),
-        //     "Invalid lender signature"
-        // );
+        require(
+            SignatureUtils._validateSignatureApprovalOffer(
+                acceptOfferSignature,
+                loanOffer
+            ),
+            "Invalid lender signature"
+        );
         ILoanManager.LoanData memory loandata = ILoanManager.LoanData(
             loanOffer.nftContractAddress,
             loanOffer.tokenIds,
@@ -207,7 +207,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     }
 
     function acceptLoanCollectionOffer(
-        // bytes calldata acceptOfferSignature,
+        bytes calldata acceptOfferSignature,
         SignatureUtils.LoanCollectionOffer calldata loanCollectionOffer,
         uint256[] calldata tokenIds
     )
@@ -220,13 +220,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loanCollectionOffer.erc20TokenAddress,
             loanCollectionOffer.loanDuration
         );
-        // require(
-        //     SignatureUtils._validateLoanCollectionOfferSignature(
-        //         acceptOfferSignature,
-        //         loanCollectionOffer
-        //     ),
-        //     "Invalid lender signature"
-        // );
+        require(
+            SignatureUtils._validateLoanCollectionOfferSignature(
+                acceptOfferSignature,
+                loanCollectionOffer
+            ),
+            "Invalid lender signature"
+        );
         ILoanManager.LoanData memory loandata = ILoanManager.LoanData(loanCollectionOffer.collectionAddress,
             tokenIds,
             msg.sender,
