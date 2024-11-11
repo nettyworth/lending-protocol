@@ -45,10 +45,10 @@ contract LoanReceipt is ERC721A, Ownable {
         _safeMint(to, 1);
     }
 
-    function transferReceipt(address nftContractAddress, uint256[] calldata tokenIds, address currentBorrower, address newBorrower, uint256 receiptId) external onlyProxyManager {
-        safeTransferFrom(currentBorrower, newBorrower, receiptId);
-        _updateHolderAddress(nftContractAddress, tokenIds, newBorrower);
-        emit ReceiptTransferred(currentBorrower, newBorrower, receiptId);
+    function transferReceipt(address nftContractAddress, uint256[] calldata tokenIds, address currentHolder, address newHolder, uint256 receiptId) external onlyProxyManager {
+        safeTransferFrom(currentHolder, newHolder, receiptId);
+        _updateHolderAddress(nftContractAddress, tokenIds, newHolder);
+        emit ReceiptTransferred(currentHolder, newHolder, receiptId);
     }
 
     function _bytesconvertion(uint256[] calldata tokenIds) internal pure returns(bytes32 ){

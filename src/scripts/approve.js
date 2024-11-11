@@ -20,7 +20,7 @@ const nftContract = new ethers.Contract(NFT_ADDRESS, nftAbi, provider);
 
 const {
   abi: erc0Abi,
-} = require('../contracts/examples/artifacts/ERC20Example.json');
+} = require('../contracts/examples/artifacts/NettyWorthToken.json');
 const erc20Contract = new ethers.Contract(ERC20_ADDRESS, erc0Abi, provider);
 
 async function approveTokens() {

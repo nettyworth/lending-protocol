@@ -48,6 +48,10 @@ contract LoanManager is Ownable {
         uint256 indexed loanId,
         address newBorrower
     );
+    event LenderUpdated(
+        uint256 indexed loanId,
+        address newLender
+    );
     using SafeERC20 for IERC20;
     ICryptoVault _icryptoVault;
     ReceiptInterface _ireceipts;
@@ -63,6 +67,8 @@ contract LoanManager is Ownable {
     mapping(address => mapping(uint256 => bool)) private _nonceUsedForUser;
     // Loan ID -> Borrower
     mapping(uint256 => address) private _currentBorrower;
+    mapping(uint256 => address) private _currentLender;
+
 
     address public _proxy;
     address private _proposeproxy; 
@@ -106,6 +112,7 @@ contract LoanManager is Ownable {
         });
 
         _currentBorrower[_loanId] = loanData.borrower;
+        _currentLender[_loanId] = loanData.lender;
 
         emit LoanCreated(_loanId,
             loanData,
@@ -116,6 +123,9 @@ contract LoanManager is Ownable {
         );
         emit BorrowerUpdated(_loanId,
         loanData.borrower
+        );
+        emit LenderUpdated(_loanId,
+        loanData.lender
         );
 
     return _loanId;
@@ -144,8 +154,17 @@ contract LoanManager is Ownable {
         emit BorrowerUpdated(loanId, newBorrower);
     }
 
+    function updateLender(uint256 loanId, address newLender) external onlyProxyManager{
+        _currentLender[loanId] = newLender;
+        emit LenderUpdated(loanId, newLender);
+    }
+
     function getCurrentBorrower(uint256 loanId) external view returns (address currentBorrower){
         return  currentBorrower = _currentBorrower[loanId];
+    }
+
+    function getCurrentLender(uint256 loanId) external view returns (address currentLender){
+        return  currentLender = _currentLender[loanId];
     }
 
     function updateIsPaid(uint256 loanId, bool state) external onlyProxyManager{

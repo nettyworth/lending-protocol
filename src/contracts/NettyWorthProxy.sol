@@ -170,7 +170,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     }
 
     function acceptLoanOffer(
-        bytes calldata acceptOfferSignature,
+        // bytes calldata acceptOfferSignature,
         SignatureUtils.LoanOffer calldata loanOffer
     )
         external
@@ -182,13 +182,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loanOffer.nftContractAddress,
             loanOffer.erc20TokenAddress,
             loanOffer.loanDuration);
-        require(
-            SignatureUtils._validateSignatureApprovalOffer(
-                acceptOfferSignature,
-                loanOffer
-            ),
-            "Invalid lender signature"
-        );
+        // require(
+        //     SignatureUtils._validateSignatureApprovalOffer(
+        //         acceptOfferSignature,
+        //         loanOffer
+        //     ),
+        //     "Invalid lender signature"
+        // );
         ILoanManager.LoanData memory loandata = ILoanManager.LoanData(
             loanOffer.nftContractAddress,
             loanOffer.tokenIds,
@@ -207,7 +207,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     }
 
     function acceptLoanCollectionOffer(
-        bytes calldata acceptOfferSignature,
+        // bytes calldata acceptOfferSignature,
         SignatureUtils.LoanCollectionOffer calldata loanCollectionOffer,
         uint256[] calldata tokenIds
     )
@@ -220,13 +220,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loanCollectionOffer.erc20TokenAddress,
             loanCollectionOffer.loanDuration
         );
-        require(
-            SignatureUtils._validateLoanCollectionOfferSignature(
-                acceptOfferSignature,
-                loanCollectionOffer
-            ),
-            "Invalid lender signature"
-        );
+        // require(
+        //     SignatureUtils._validateLoanCollectionOfferSignature(
+        //         acceptOfferSignature,
+        //         loanCollectionOffer
+        //     ),
+        //     "Invalid lender signature"
+        // );
         ILoanManager.LoanData memory loandata = ILoanManager.LoanData(loanCollectionOffer.collectionAddress,
             tokenIds,
             msg.sender,
@@ -312,13 +312,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         require(loan.currencyERC20 == erc20Token, "Currency Invalid");
         (uint256 rePaymentAmount, uint256 interestAmount) = _iloanManager.getPayoffAmount(_loanId);
         uint256 computeAdminFee = _computeAdminFee(interestAmount, adminFeeInBasisPoints);
-        address currentBorrower = _sanityCheckPayBack(loan, _loanId);
+        (address currentBorrower, address currentLender) = _sanityCheckPayBack(loan, _loanId);
         _icryptoVault.withdrawNftFromEscrowAndERC20ToLender(
             loan.nftContract,
             _loanId,
             loan.tokenIds,
             currentBorrower,
-            loan.lender,
+            currentLender,
             rePaymentAmount,
             computeAdminFee,
             loan.currencyERC20,
@@ -334,7 +334,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loan.nftContract,
             loan.tokenIds,
             currentBorrower,
-            loan.lender,
+            currentLender,
             rePaymentAmount,
             loan.currencyERC20,
             loan.isPaid
@@ -378,7 +378,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         address lender = _ireceiptLender.ownerOf(_lenderReceiptId);
         address borrower = _ireceiptBorrower.ownerOf(_borrowerReceiptId);
         require(
-            loan.lender == lender && lender == msg.sender,
+             lender == msg.sender,
             "You are not the lender"
         );
 
@@ -387,7 +387,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loan.nftContract,
             _loanId,
             loan.tokenIds,
-            msg.sender
+            lender
         );
 
         _ireceiptLender.burnReceipt(_lenderReceiptId);
@@ -402,6 +402,19 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loan.isDefault
         );
 
+    return true;
+    }
+
+    function transferPromissoryReceipt(uint256 _loanId, uint256 _lenderReceiptId, address _transferTo) external nonReentrant returns(bool){
+        require(_transferTo != address(0), "Null _transferTo address");
+        ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
+        require(loan.lenderReceiptId == _lenderReceiptId, "Invalid receipt id");
+        require(_ireceiptLender.tokenExist(_lenderReceiptId), "Receipt does not exist");
+        address lender = _ireceiptLender.ownerOf(_lenderReceiptId);
+        require(lender == msg.sender,"caller is not borrower");
+        _ireceiptLender.transferReceipt(loan.nftContract, loan.tokenIds, msg.sender, _transferTo, _lenderReceiptId);
+        _iloanManager.updateLender(_loanId, _transferTo);
+    
     return true;
     }
 
@@ -442,7 +455,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     function _sanityCheckPayBack(
         ILoanManager.Loan memory loan,
         uint256 _loanId
-    ) internal view returns (address _borrower){
+    ) internal view returns (address _borrower, address _lender){
           require(
             block.timestamp <= loan.loanDuration,
             "Loan repayment period has expired"
@@ -462,10 +475,12 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         address lender = _ireceiptLender.ownerOf(loan.lenderReceiptId);
         address borrower = _ireceiptBorrower.ownerOf(loan.borrowerReceiptId);
         address currentBorrower = _iloanManager.getCurrentBorrower(_loanId);
+        address currentLender = _iloanManager.getCurrentLender(_loanId);
+
         require(currentBorrower == msg.sender && currentBorrower == borrower, "caller is not borrower");
-        require(loan.lender == lender, "Invalid Lender");
+        require(currentLender == lender, "Invalid Lender");
         
-    return currentBorrower;
+    return (currentBorrower,currentLender);
     }
 
     function _sanityCheckAcceptOffer(
