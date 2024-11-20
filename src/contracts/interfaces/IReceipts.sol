@@ -22,7 +22,7 @@ interface ReceiptInterface {
         address holder
     ) external returns (uint256);
 
-     function transferReceipt(address nftContractAddress, uint256[] calldata tokenIds, address currentHolder, address newHolder, uint256 receiptId) external;
+     function transferReceipt(address currentHolder, address newHolder, uint256 receiptId) external;
 
     function getReceiptId(address nftContractAddress, uint256[] calldata tokenIds)external view returns(uint256 lenderReceiptId, address lenderAddress);
 }

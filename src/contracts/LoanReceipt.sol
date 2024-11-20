@@ -29,25 +29,25 @@ contract LoanReceipt is ERC721A, Ownable {
         string memory _symbol
     ) ERC721A(_name, _symbol) Ownable(msg.sender) {}
 
-    function getReceiptId(address nftContractAddress, uint256[] calldata tokenIds)external view returns(uint256 holderReceiptId, address holderAddress){
-        bytes32 _tokenIds = _bytesconvertion(tokenIds);
-        holderReceiptId = _receipt[nftContractAddress][_tokenIds].receiptId;
-        holderAddress = _receipt[nftContractAddress][_tokenIds].holder;
-        return  (holderReceiptId, holderAddress );
-    }
+    // function getReceiptId(address nftContractAddress, uint256[] calldata tokenIds)external view returns(uint256 holderReceiptId, address holderAddress){
+    //     bytes32 _tokenIds = _bytesconvertion(tokenIds);
+    //     holderReceiptId = _receipt[nftContractAddress][_tokenIds].receiptId;
+    //     holderAddress = _receipt[nftContractAddress][_tokenIds].holder;
+    //     return  (holderReceiptId, holderAddress );
+    // }
 
-    function _updateHolderAddress(address _nftContractAddress, uint256[] calldata _tokenIds, address _newHolderAddress) internal {
-        bytes32 tokenIds = _bytesconvertion(_tokenIds);
-        _receipt[_nftContractAddress][tokenIds].holder = _newHolderAddress; 
-    }
+    // function _updateHolderAddress(address _nftContractAddress, uint256[] calldata _tokenIds, address _newHolderAddress) internal {
+    //     bytes32 tokenIds = _bytesconvertion(_tokenIds);
+    //     _receipt[_nftContractAddress][tokenIds].holder = _newHolderAddress; 
+    // }
 
     function _mintReceipt(address to) internal  {
         _safeMint(to, 1);
     }
 
-    function transferReceipt(address nftContractAddress, uint256[] calldata tokenIds, address currentHolder, address newHolder, uint256 receiptId) external onlyProxyManager {
+    function transferReceipt(address currentHolder, address newHolder, uint256 receiptId) external onlyProxyManager {
         safeTransferFrom(currentHolder, newHolder, receiptId);
-        _updateHolderAddress(nftContractAddress, tokenIds, newHolder);
+        // _updateHolderAddress(nftContractAddress, tokenIds, newHolder);
         emit ReceiptTransferred(currentHolder, newHolder, receiptId);
     }
 
