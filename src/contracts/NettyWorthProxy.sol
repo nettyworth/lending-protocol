@@ -170,7 +170,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     }
 
     function acceptLoanOffer(
-        // bytes calldata acceptOfferSignature,
+        bytes calldata acceptOfferSignature,
         SignatureUtils.LoanOffer calldata loanOffer
     )
         external
@@ -182,13 +182,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loanOffer.nftContractAddress,
             loanOffer.erc20TokenAddress,
             loanOffer.loanDuration);
-        // require(
-        //     SignatureUtils._validateSignatureApprovalOffer(
-        //         acceptOfferSignature,
-        //         loanOffer
-        //     ),
-        //     "Invalid lender signature"
-        // );
+        require(
+            SignatureUtils._validateSignatureApprovalOffer(
+                acceptOfferSignature,
+                loanOffer
+            ),
+            "Invalid lender signature"
+        );
         ILoanManager.LoanData memory loandata = ILoanManager.LoanData(
             loanOffer.nftContractAddress,
             loanOffer.tokenIds,
