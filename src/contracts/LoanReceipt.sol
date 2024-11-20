@@ -6,10 +6,10 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "./utils/ERC721A.sol";
 
 contract LoanReceipt is ERC721A, Ownable {
-    struct Receipt {
-        address holder;
-        uint256 receiptId;
-    }
+    // struct Receipt {
+    //     address holder;
+    //     uint256 receiptId;
+    // }
 
     using Strings for uint256;
     bool public open;
@@ -17,7 +17,9 @@ contract LoanReceipt is ERC721A, Ownable {
 
     string public baseURI;
     mapping(uint256 => string) private _tokenURIs;
-    mapping (address => mapping(bytes32 => Receipt )) private _receipt;
+    // mapping (address => mapping(bytes32 => Receipt )) private _receipt;
+    mapping (uint256 => uint256 ) private _receipt;
+
 
     event ReceiptTransferred(address indexed currentBorrower, address newBorrower, uint256 receiptId);
 
@@ -51,22 +53,31 @@ contract LoanReceipt is ERC721A, Ownable {
         emit ReceiptTransferred(currentHolder, newHolder, receiptId);
     }
 
-    function _bytesconvertion(uint256[] calldata tokenIds) internal pure returns(bytes32 ){
-       return keccak256(abi.encode(tokenIds));
-    }
+    // function _bytesconvertion(uint256[] calldata tokenIds) internal pure returns(bytes32 ){
+    //    return keccak256(abi.encode(tokenIds));
+    // }
 
     function generateReceipt(
-        address nftContractAddress,
-        uint256[] calldata tokenIds,
+        // address nftContractAddress,
+        // uint256[] calldata tokenIds,
+        uint256 loanId,
         address holder
     ) external onlyProxyManager returns (uint256) {
         require(open, "Contract closed");
         _mintReceipt(holder);
-        bytes32 _tokenIds= _bytesconvertion(tokenIds);
+        // bytes32 _tokenIds= _bytesconvertion(tokenIds);
          uint256 nftId = _nextTokenId() - 1;
-        _receipt[nftContractAddress][_tokenIds] = Receipt(holder, nftId);
+         _receipt[loanId] =  nftId;
+        // _receipt[nftContractAddress][_tokenIds] = Receipt(holder, nftId);
 
         return nftId;
+    }
+
+    function getReceiptId(uint256 loanId) external view returns(uint256 holderReceiptId, address holderAddress){
+        holderReceiptId= _receipt[loanId];
+        holderAddress =  ownerOf(holderReceiptId);
+
+        return (holderReceiptId,holderAddress);
     }
 
     function burnReceipt(uint256 _tokenId) external onlyProxyManager {

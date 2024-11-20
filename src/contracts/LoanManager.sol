@@ -47,8 +47,8 @@ contract LoanManager is Ownable {
     event BorrowerUpdated(uint256 indexed loanId, address newBorrower);
     event LenderUpdated(uint256 indexed loanId, address newLender);
     using SafeERC20 for IERC20;
-    ICryptoVault _icryptoVault;
-    ReceiptInterface _ireceipts;
+    // ICryptoVault _icryptoVault;
+    // ReceiptInterface _ireceipts;
 
     uint256 public NFT_MAX_LIMIT = 10;
     uint256 private _propose_NFT_LIMIT;
@@ -59,6 +59,7 @@ contract LoanManager is Ownable {
     // Loan ID -> Loan
     mapping(uint256 => Loan) private _loans;
     mapping(address => mapping(uint256 => bool)) private _nonceUsedForUser;
+    mapping(uint256 => uint256) private _loanId;
     // Loan ID -> Borrower
     mapping(uint256 => address) private _currentBorrower;
     mapping(uint256 => address) private _currentLender;
@@ -76,7 +77,7 @@ contract LoanManager is Ownable {
     ) external onlyProxyManager returns (uint256 loanId) {
         _validateLoanCreation(loanData, nonce);
 
-        (, uint256 _loanId) = getLoan(
+        (, uint256 loanID) = getLoan(
             loanData.nftContract,
             loanData.tokenIds,
             loanData.borrower,
@@ -84,11 +85,11 @@ contract LoanManager is Ownable {
         );
         // Create a new loan
         require(
-            _loans[_loanId].nftContract == address(0),
+            _loans[loanID].nftContract == address(0),
             "Loan already created"
         );
 
-        _loans[_loanId] = Loan({
+        _loans[loanID] = Loan({
             nftContract: loanData.nftContract,
             tokenIds: loanData.tokenIds,
             borrower: loanData.borrower,
@@ -105,21 +106,21 @@ contract LoanManager is Ownable {
             isApproved: false
         });
 
-        _currentBorrower[_loanId] = loanData.borrower;
-        _currentLender[_loanId] = loanData.lender;
+        // _currentBorrower[_loanId] = loanData.borrower;
+        // _currentLender[_loanId] = loanData.lender;
 
         emit LoanCreated(
-            _loanId,
+            loanID,
             loanData,
             block.timestamp,
             false,
             false,
             false
         );
-        emit BorrowerUpdated(_loanId, loanData.borrower);
-        emit LenderUpdated(_loanId, loanData.lender);
+        emit BorrowerUpdated(loanID, loanData.borrower);
+        emit LenderUpdated(loanID, loanData.lender);
 
-        return _loanId;
+        return loanID;
     }
 
     function _validateLoanCreation(
@@ -156,33 +157,33 @@ contract LoanManager is Ownable {
         _nonceUsedForUser[loanData.borrower][_nonce] = true;
     }
 
-    function updateBorrower(
-        uint256 loanId,
-        address newBorrower
-    ) external onlyProxyManager {
-        _currentBorrower[loanId] = newBorrower;
-        emit BorrowerUpdated(loanId, newBorrower);
-    }
+    // function updateBorrower(
+    //     uint256 loanId,
+    //     address newBorrower
+    // ) external onlyProxyManager {
+    //     _currentBorrower[loanId] = newBorrower;
+    //     emit BorrowerUpdated(loanId, newBorrower);
+    // }
 
-    function updateLender(
-        uint256 loanId,
-        address newLender
-    ) external onlyProxyManager {
-        _currentLender[loanId] = newLender;
-        emit LenderUpdated(loanId, newLender);
-    }
+    // function updateLender(
+    //     uint256 loanId,
+    //     address newLender
+    // ) external onlyProxyManager {
+    //     _currentLender[loanId] = newLender;
+    //     emit LenderUpdated(loanId, newLender);
+    // }
 
-    function getCurrentBorrower(
-        uint256 loanId
-    ) external view returns (address currentBorrower) {
-        return currentBorrower = _currentBorrower[loanId];
-    }
+    // function getCurrentBorrower(
+    //     uint256 loanId
+    // ) external view returns (address currentBorrower) {
+    //     return currentBorrower = _currentBorrower[loanId];
+    // }
 
-    function getCurrentLender(
-        uint256 loanId
-    ) external view returns (address currentLender) {
-        return currentLender = _currentLender[loanId];
-    }
+    // function getCurrentLender(
+    //     uint256 loanId
+    // ) external view returns (address currentLender) {
+    //     return currentLender = _currentLender[loanId];
+    // }
 
     function updateIsPaid(
         uint256 loanId,
@@ -203,6 +204,17 @@ contract LoanManager is Ownable {
         bool state
     ) external onlyProxyManager {
         _loans[loanId].isApproved = state;
+    }
+
+    function setLoanId(uint256 loanReceiptID, uint256 loanId) external onlyProxyManager{
+        _loanId[loanReceiptID] = loanId;
+    }
+
+    //you can pass either lender receipt ID or Borrower receiptID both are same for each loan
+    function getLoanId(uint256 loanReceiptID) external view returns(uint256 loanID){
+        loanID = _loanId[loanReceiptID];
+        require(loanID != 0, "Loan not exist!");
+        return loanID;
     }
 
     function getLoan(
