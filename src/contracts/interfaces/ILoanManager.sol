@@ -61,12 +61,4 @@ interface ILoanManager {
     function getLoanById(uint256 loanId) external view returns (Loan memory loan); 
 
     function getLoanId(uint256 loanReceiptID) external view returns(uint256 loanID);
-
-    // function updateBorrower(uint256 loanId, address newBorrower) external;
-
-    // function updateLender(uint256 loanId, address newLender) external;
-    
-    // function getCurrentBorrower(uint256 loanId) external view returns (address currentBorrower);
-
-    // function getCurrentLender(uint256 loanId) external view returns (address currentLender);
 }

@@ -6,23 +6,13 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "./utils/ERC721A.sol";
 
 contract LoanReceipt is ERC721A, Ownable {
-    // struct Receipt {
-    //     address holder;
-    //     uint256 receiptId;
-    // }
-
     using Strings for uint256;
     bool public open;
     bool private _proposeOpen; 
-
     string public baseURI;
     mapping(uint256 => string) private _tokenURIs;
-    // mapping (address => mapping(bytes32 => Receipt )) private _receipt;
     mapping (uint256 => uint256 ) private _receipt;
-
-
     event ReceiptTransferred(address indexed currentBorrower, address newBorrower, uint256 receiptId);
-
     address public _proxy;
     address private _proposeproxy;
 
@@ -31,46 +21,21 @@ contract LoanReceipt is ERC721A, Ownable {
         string memory _symbol
     ) ERC721A(_name, _symbol) Ownable(msg.sender) {}
 
-    // function getReceiptId(address nftContractAddress, uint256[] calldata tokenIds)external view returns(uint256 holderReceiptId, address holderAddress){
-    //     bytes32 _tokenIds = _bytesconvertion(tokenIds);
-    //     holderReceiptId = _receipt[nftContractAddress][_tokenIds].receiptId;
-    //     holderAddress = _receipt[nftContractAddress][_tokenIds].holder;
-    //     return  (holderReceiptId, holderAddress );
-    // }
-
-    // function _updateHolderAddress(address _nftContractAddress, uint256[] calldata _tokenIds, address _newHolderAddress) internal {
-    //     bytes32 tokenIds = _bytesconvertion(_tokenIds);
-    //     _receipt[_nftContractAddress][tokenIds].holder = _newHolderAddress; 
-    // }
-
     function _mintReceipt(address to) internal  {
         _safeMint(to, 1);
     }
 
     function transferReceipt(address currentHolder, address newHolder, uint256 receiptId) external onlyProxyManager {
         safeTransferFrom(currentHolder, newHolder, receiptId);
-        // _updateHolderAddress(nftContractAddress, tokenIds, newHolder);
         emit ReceiptTransferred(currentHolder, newHolder, receiptId);
     }
 
-    // function _bytesconvertion(uint256[] calldata tokenIds) internal pure returns(bytes32 ){
-    //    return keccak256(abi.encode(tokenIds));
-    // }
-
-    function generateReceipt(
-        // address nftContractAddress,
-        // uint256[] calldata tokenIds,
-        uint256 loanId,
-        address holder
-    ) external onlyProxyManager returns (uint256) {
+    function generateReceipt(uint256 loanId, address holder) external onlyProxyManager returns (uint256){
         require(open, "Contract closed");
         _mintReceipt(holder);
-        // bytes32 _tokenIds= _bytesconvertion(tokenIds);
-         uint256 nftId = _nextTokenId() - 1;
+        uint256 nftId = _nextTokenId() - 1;
          _receipt[loanId] =  nftId;
-        // _receipt[nftContractAddress][_tokenIds] = Receipt(holder, nftId);
-
-        return nftId;
+    return nftId;
     }
 
     function getReceiptId(uint256 loanId) external view returns(uint256 holderReceiptId, address holderAddress){

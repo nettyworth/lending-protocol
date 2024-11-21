@@ -343,21 +343,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     return true;
     }
 
-    // // Helper function to retrieve borrower receipt ID
-    // function _getBorrowerReceiptId(ILoanManager.Loan memory loan) internal view returns (uint256, address) {
-    //     (uint256 _borrowerReceiptId, address borrowerAddress) = _ireceiptBorrower.getReceiptId(loan.nftContract, loan.tokenIds);
-    //     return (_borrowerReceiptId, borrowerAddress);
-    // }
-
-    // // Helper function to retrieve lender receipt ID
-    // function _getLenderReceiptId(ILoanManager.Loan memory loan) internal view returns (uint256, address) {
-    //     (uint256 _lenderReceiptId, address lenderAddress) = _ireceiptLender.getReceiptId(loan.nftContract, loan.tokenIds);
-    //     return (_lenderReceiptId, lenderAddress);
-    // }
-
-    function forCloseLoan(
-        uint256 _loanId
-    ) external nonReentrant returns (bool) {
+    function forCloseLoan(uint256 _loanId) external nonReentrant returns (bool){
         ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
         require(
             block.timestamp > loan.loanDuration,
@@ -409,13 +395,11 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     function transferPromissoryReceipt(uint256 _loanId, address _transferTo) external nonReentrant returns(bool){
         require(_transferTo != address(0), "Null _transferTo address");
         ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
-         uint256 _lenderReceiptId = loan.lenderReceiptId ;
-        // require(loan.lenderReceiptId == _lenderReceiptId, "Invalid receipt id");
+        uint256 _lenderReceiptId = loan.lenderReceiptId ;
         require(_ireceiptLender.tokenExist(_lenderReceiptId), "Receipt does not exist");
         address lender = _ireceiptLender.ownerOf(_lenderReceiptId);
         require(lender == msg.sender,"caller is not lender");
         _ireceiptLender.transferReceipt(msg.sender, _transferTo, _lenderReceiptId);
-        // _iloanManager.updateLender(_loanId, _transferTo);
     
     return true;
     }
@@ -425,31 +409,13 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         require(_transferTo != address(0), "Null _transferTo address");
         ILoanManager.Loan memory loan = _iloanManager.getLoanById(_loanId);
         uint256 _borrowerReceiptId = loan.borrowerReceiptId;
-        // require(loan.borrowerReceiptId == _borrowerReceiptId, "Invalid receipt id");
         require(_ireceiptBorrower.tokenExist(_borrowerReceiptId), "Receipt does not exist");
         address borrower = _ireceiptBorrower.ownerOf(_borrowerReceiptId);
         require(borrower == msg.sender,"caller is not borrower");
         _ireceiptBorrower.transferReceipt(msg.sender, _transferTo, _borrowerReceiptId);
-        // _iloanManager.updateBorrower(_loanId, _transferTo);
     
     return true;
     }
-
-    // function getLenderReceiptId(uint256 loanId) external view returns(uint256 holderReceiptId, address holderAddress){
-    //     ILoanManager.Loan memory loan = _iloanManager.getLoanById(loanId);
-    //     holderReceiptId = loan.lenderReceiptId;
-    //     holderAddress = _ireceiptLender.ownerOf(holderReceiptId);
-    //     // (holderReceiptId, holderAddress) = _ireceiptLender.getReceiptId(loan.nftContract, loan.tokenIds);
-    // return (holderReceiptId, holderAddress);
-    // }
-
-    // function getBorrowerReceiptId(uint256 loanId) external view returns(uint256 holderReceiptId, address holderAddress){
-    //     ILoanManager.Loan memory loan = _iloanManager.getLoanById(loanId);
-    //     holderReceiptId = loan.borrowerReceiptId;
-    //     holderAddress = _ireceiptBorrower.ownerOf(holderReceiptId);
-    //     //  (holderReceiptId, holderAddress) = _ireceiptBorrower.getReceiptId(loan.nftContract, loan.tokenIds);
-    // return (holderReceiptId, holderAddress);
-    // } 
 
     function getLenderReceiptId(uint256 loanId) external view returns(uint256 holderReceiptId, address holderAddress){
         require(loanId != 0, "200:ZERO_LoanID");
@@ -477,10 +443,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         return (_interest * (_adminFee)) / BPS;
     }
 
-    function _sanityCheckPayBack(
-        ILoanManager.Loan memory loan
-        // uint256 _loanId
-    ) internal view returns (address _borrower, address _lender){
+    function _sanityCheckPayBack(ILoanManager.Loan memory loan) internal view returns (address _borrower, address _lender){
           require(
             block.timestamp <= loan.loanDuration,
             "Loan repayment period has expired"
@@ -499,12 +462,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         );
         address lender = _ireceiptLender.ownerOf(loan.lenderReceiptId);
         address borrower = _ireceiptBorrower.ownerOf(loan.borrowerReceiptId);
-        // address currentBorrower = _iloanManager.getCurrentBorrower(_loanId);
-        // address currentLender = _iloanManager.getCurrentLender(_loanId);
-
-        require(borrower == msg.sender, "caller is not borrower");
-        // require(currentLender == lender, "Invalid Lender");
-        
+        require(borrower == msg.sender, "caller is not borrower");        
     return (borrower,lender);
     }
 
