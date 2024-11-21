@@ -76,8 +76,7 @@ contract LoanReceipt is ERC721A, Ownable {
     function getReceiptId(uint256 loanId) external view returns(uint256 holderReceiptId, address holderAddress){
         holderReceiptId= _receipt[loanId];
         holderAddress =  ownerOf(holderReceiptId);
-
-        return (holderReceiptId,holderAddress);
+    return (holderReceiptId, holderAddress);
     }
 
     function burnReceipt(uint256 _tokenId) external onlyProxyManager {

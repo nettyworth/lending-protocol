@@ -44,8 +44,8 @@ contract LoanManager is Ownable {
         bool isClosed,
         bool isApproved
     );
-    event BorrowerUpdated(uint256 indexed loanId, address newBorrower);
-    event LenderUpdated(uint256 indexed loanId, address newLender);
+    // event BorrowerUpdated(uint256 indexed loanId, address newBorrower);
+    // event LenderUpdated(uint256 indexed loanId, address newLender);
     using SafeERC20 for IERC20;
     // ICryptoVault _icryptoVault;
     // ReceiptInterface _ireceipts;
@@ -61,8 +61,8 @@ contract LoanManager is Ownable {
     mapping(address => mapping(uint256 => bool)) private _nonceUsedForUser;
     mapping(uint256 => uint256) private _loanId;
     // Loan ID -> Borrower
-    mapping(uint256 => address) private _currentBorrower;
-    mapping(uint256 => address) private _currentLender;
+    // mapping(uint256 => address) private _currentBorrower;
+    // mapping(uint256 => address) private _currentLender;
 
     address public _proxy;
     address private _proposeproxy;
@@ -117,8 +117,8 @@ contract LoanManager is Ownable {
             false,
             false
         );
-        emit BorrowerUpdated(loanID, loanData.borrower);
-        emit LenderUpdated(loanID, loanData.lender);
+        // emit BorrowerUpdated(loanID, loanData.borrower);
+        // emit LenderUpdated(loanID, loanData.lender);
 
         return loanID;
     }
@@ -251,9 +251,7 @@ contract LoanManager is Ownable {
             "Loan duration must be greater than zero"
         );
 
-        uint256 loanDurationinSeconds = loan.loanDuration -
-            loan.loanInitialTime;
-
+        uint256 loanDurationinSeconds = loan.loanDuration - loan.loanInitialTime;
         uint256 scalingFactor = 1e18;
         uint256 interestAmount = (loan.loanAmount *
             loan.aprBasisPoints *
