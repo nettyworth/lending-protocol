@@ -34,16 +34,9 @@ contract CryptoVault is ERC721Holder, Ownable {
 
     constructor() Ownable(msg.sender){}
 
-    function safeBatchTransfer(
-        IERC721 erc721Contract,
-        address from,
-        address to,
-        uint256[] calldata tokenIds
-    ) public {
-
+    function _safeBatchTransfer(IERC721 erc721Contract, address from, address to, uint256[] calldata tokenIds) internal{
         uint256 length = tokenIds.length;
         _checkOwner(erc721Contract,from,tokenIds);
-
         for (uint256 i; i < length; ) {
             uint256 tokenId = tokenIds[i];
             erc721Contract.safeTransferFrom(from, to, tokenId);
@@ -51,7 +44,6 @@ contract CryptoVault is ERC721Holder, Ownable {
                 i++;
             }
         }
-       
     }
 
     function _checkOwner(IERC721 erc721Contract, address owner ,uint256[] calldata tokenIds) internal view{
@@ -86,7 +78,7 @@ contract CryptoVault is ERC721Holder, Ownable {
         _assets[nftContract][loanId]= tokenIds; 
         bytes32 _tokenIds = _bytesconvertion(tokenIds);
         _assetsHash[nftContract][loanId] = _tokenIds; 
-        safeBatchTransfer(nft, borrower, address(this), tokenIds);
+        _safeBatchTransfer(nft, borrower, address(this), tokenIds);
         erc20Token.safeTransferFrom(lender, borrower, loanAmount);
         emit nftDepositToEscrow(borrower, nftContract, tokenIds);
     }
@@ -130,7 +122,7 @@ contract CryptoVault is ERC721Holder, Ownable {
         delete _assets[nftContract][loanId];  
         erc20Token.safeTransferFrom(borrower, adminWallet, computeAdminFee);
         erc20Token.safeTransferFrom(borrower, lender, rePaymentAmount);
-        safeBatchTransfer(token, address(this), borrower, tokenIds);
+        _safeBatchTransfer(token, address(this), borrower, tokenIds);
 
         emit nftWithdrawalFromEscrow(borrower, nftContract, tokenIds);
     }
@@ -157,7 +149,7 @@ contract CryptoVault is ERC721Holder, Ownable {
         delete _assetsHash[nftContract][loanId]; 
         delete _assets[nftContract][loanId];  
 
-        safeBatchTransfer(token,address(this),lender, tokenIds);
+        _safeBatchTransfer(token,address(this),lender, tokenIds);
 
         emit nftWithdrawalFromEscrow(lender, nftContract, tokenIds);
     }
