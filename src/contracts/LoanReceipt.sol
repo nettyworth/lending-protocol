@@ -8,7 +8,7 @@ import "./utils/ERC721A.sol";
 contract LoanReceipt is ERC721A, Ownable {
     using Strings for uint256;
     bool public open;
-    bool private _proposeOpen; 
+    bool private _proposedState; 
     string public baseURI;
     mapping(uint256 => string) private _tokenURIs;
     mapping (uint256 => uint256 ) private _receipt;
@@ -48,15 +48,15 @@ contract LoanReceipt is ERC721A, Ownable {
         _burn(_tokenId);
     }
 
-    function proposeSetOpen(bool _open) external onlyOwner {
-        require(_open != false, "Receipt open already false.");
-        _proposeOpen = _open;
+    function proposeSetState(bool newState) external onlyOwner {
+        require(open != newState, "State already set to the desired value.");
+        _proposedState = newState;
     }
 
-    function setOpen() external onlyOwner {
-        require(_proposeOpen != false, "!Proposed");
-        open = _proposeOpen;
-        _proposeOpen = false;
+    function applyProposedState() external onlyOwner {
+        require(open != _proposedState, "Proposed state matches current state.");
+        open = _proposedState;
+        _proposedState = open;
     }
 
     function setBaseURI(string memory newBaseURI) external onlyOwner {
