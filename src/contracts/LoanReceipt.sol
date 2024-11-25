@@ -12,7 +12,6 @@ contract LoanReceipt is ERC721A, Ownable {
     string public baseURI;
     mapping(uint256 => string) private _tokenURIs;
     mapping (uint256 => uint256 ) private _receipt;
-    event ReceiptTransferred(address indexed currentBorrower, address newBorrower, uint256 receiptId);
     address public _proxy;
     address private _proposeproxy;
 
@@ -23,11 +22,6 @@ contract LoanReceipt is ERC721A, Ownable {
 
     function _mintReceipt(address to) internal  {
         _safeMint(to, 1);
-    }
-
-    function transferReceipt(address currentHolder, address newHolder, uint256 receiptId) external onlyProxyManager {
-        safeTransferFrom(currentHolder, newHolder, receiptId);
-        emit ReceiptTransferred(currentHolder, newHolder, receiptId);
     }
 
     function generateReceipt(uint256 loanId, address holder) external onlyProxyManager returns (uint256){

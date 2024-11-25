@@ -12,7 +12,5 @@ interface ReceiptInterface {
 
     function generateReceipt(uint256 loanId, address holder) external returns (uint256);
 
-    function transferReceipt(address currentHolder, address newHolder, uint256 receiptId) external;
-
     function getReceiptId(uint256 loanId) external view returns(uint256 holderReceiptId, address holderAddress);
 }
