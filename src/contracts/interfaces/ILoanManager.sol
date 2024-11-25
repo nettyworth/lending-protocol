@@ -7,7 +7,7 @@ interface ILoanManager {
 
     struct Loan {
         address nftContract;
-        uint256 tokenId;
+        uint256[] tokenIds;
         address borrower;
         address lender;
         uint256 loanAmount;
@@ -15,20 +15,27 @@ interface ILoanManager {
         uint256 loanDuration;
         address currencyERC20;
         uint256 loanInitialTime;
+        uint256 lenderReceiptId;
+        uint256 borrowerReceiptId;
         bool isPaid;
         bool isDefault;
         bool isApproved;
     }
 
+    struct LoanData {
+        address nftContract;
+        uint256[] tokenIds;
+        address borrower;
+        address lender;
+        uint256 loanAmount;
+        uint256 aprBasisPoints;
+        uint256 loanDuration;
+        address currencyERC20;
+    }
     function createLoan(
-        address _contract,
-        uint256 _tokenId,
-        address _borrower,
-        address _lender,
-        uint256 _loanAmount,
-        uint256 __aprBasisPoints,
-        uint256 _loanDuration,
-        address _erc20Token,
+        LoanData calldata loanData,
+        uint256 lenderReceiptId,
+        uint256 borrowerReceiptId,
         uint256 _nonce
     ) external;
 
@@ -36,7 +43,7 @@ interface ILoanManager {
 
     function getLoan(
         address _contract,
-        uint256 _tokenId,
+        uint256[] calldata _tokenIds,
         address _borrower,
         uint256 _nonce
     ) external view returns (Loan memory loan, uint256 loanId);
@@ -46,9 +53,12 @@ interface ILoanManager {
     function updateIsDefault(uint256 loanId, bool state) external;
 
     function updateIsApproved(uint256 loanId, bool state) external;
+    
+    function setLoanId(uint256 loanReceiptID, uint256 loanId) external;
 
     function getPayoffAmount(uint256 loanId) external view returns(uint256, uint256);
     
     function getLoanById(uint256 loanId) external view returns (Loan memory loan); 
 
+    function getLoanId(uint256 loanReceiptID) external view returns(uint256 loanID);
 }

@@ -16,7 +16,7 @@ const acceptLoanRequest = async function (
   loanAmount,
   aprBasisPoints,
   loanDuration,
-  nonce
+  nonce,
 ) {
   const encoded = abiCoder.encode(
     [
@@ -38,7 +38,7 @@ const acceptLoanRequest = async function (
       aprBasisPoints,
       loanDuration,
       nonce,
-    ]
+    ],
   );
   return await sign(encoded);
 };
@@ -58,7 +58,7 @@ const main = async () => {
     10000000000000000000n, //loanAmount,
     500, // 5% aprBasisPoints,
     1727907073, //loanDuration,
-    22222 //nonce
+    22222, //nonce
   );
 
   console.log("getacceptLoanRequest", getacceptLoanRequest);
@@ -74,14 +74,14 @@ module.exports = {
 
 // tuple  pass in request loan offer
 [
-  3,
-  "0xddaAd340b0f1Ef65169Ae5E41A8b10776a75482d",
-  "0x0fC5025C764cE34df352757e82f7B5c4Df39A836",
+  [4, 5, 6],
+  "0x5664AD716D3986e5D9CbaEe472aE52d747E52ecA",
+  "0x870f80823772b3Ef098844A852dDfBeec1061776",
   "0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2",
-  10000000000000000000,
+  100000000000,
   500,
-  1729253900,
-  3
+  1730729972,
+  21,
 ][
   (3,
   "0xddaAd340b0f1Ef65169Ae5E41A8b10776a75482d",
@@ -92,4 +92,15 @@ module.exports = {
   500,
   1729253200,
   3)
+];
+
+[
+  [1, 2],
+  "0x9dAf7c849c20Be671315E77CB689811bD5EDefe6",
+  "0xc4753C8802178e524cdB766D7E47cFc566e34443",
+  "0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db",
+  100000000000,
+  500,
+  1731080588,
+  123,
 ];

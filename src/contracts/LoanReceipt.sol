@@ -6,87 +6,51 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "./utils/ERC721A.sol";
 
 contract LoanReceipt is ERC721A, Ownable {
-    struct BorrowerReceipt {
-        address borrower;
-        uint256 receiptId;
-    }
-
-    struct LenderReceipt {
-        address lender;
-        uint256 receiptId;
-    }
-
     using Strings for uint256;
     bool public open;
-    bool private _proposeOpen; 
-
+    bool private _proposedState; 
     string public baseURI;
     mapping(uint256 => string) private _tokenURIs;
-    mapping (address => mapping(uint256 => BorrowerReceipt )) private _borrowerReceipt;
-    mapping (address => mapping(uint256 => LenderReceipt )) private _lenderReceipt;
-
+    mapping (uint256 => uint256 ) private _receipt;
     address public _proxy;
     address private _proposeproxy;
-
 
     constructor(
         string memory _name,
         string memory _symbol
     ) ERC721A(_name, _symbol) Ownable(msg.sender) {}
 
-    function getBorrowerReceiptId(address nftContractAddress, uint256 tokenId)external view returns(uint256 borrowerReceiptId, address borrowerAddress){
-        borrowerReceiptId = _borrowerReceipt[nftContractAddress][tokenId].receiptId;
-        borrowerAddress = _borrowerReceipt[nftContractAddress][tokenId].borrower;
-        return  (borrowerReceiptId, borrowerAddress );
-    }
-
-    function getLenderReceiptId(address nftContractAddress, uint256 tokenId)external view returns(uint256 lenderReceiptId, address lenderAddress){
-        lenderReceiptId = _lenderReceipt[nftContractAddress][tokenId].receiptId;
-        lenderAddress = _lenderReceipt[nftContractAddress][tokenId].lender;
-        return  (lenderReceiptId, lenderAddress );
-    }
-
     function _mintReceipt(address to) internal  {
         _safeMint(to, 1);
     }
 
-    function generateLenderReceipt(
-        address nftContractAddress,
-        uint256 tokenId,
-        address lender
-    ) external onlyProxyManager returns (uint256) {
+    function generateReceipt(uint256 loanId, address holder) external onlyProxyManager returns (uint256){
         require(open, "Contract closed");
-        _mintReceipt(lender);
+        _mintReceipt(holder);
         uint256 nftId = _nextTokenId() - 1;
-        _lenderReceipt[nftContractAddress][tokenId] = LenderReceipt(lender, nftId);
-
-        return nftId;
+         _receipt[loanId] =  nftId;
+    return nftId;
     }
 
-    function generateBorrowerReceipt(
-        address nftContractAddress,
-        uint256 tokenId,
-        address borrower
-    ) external onlyProxyManager returns (uint256) {
-        require(open, "Contract closed");
-        _mintReceipt(borrower);
-         uint256 nftId = _nextTokenId() - 1;
-        _borrowerReceipt[nftContractAddress][tokenId] = BorrowerReceipt(borrower,nftId);
-
-        return nftId;
+    function getReceiptId(uint256 loanId) external view returns(uint256 holderReceiptId, address holderAddress){
+        holderReceiptId= _receipt[loanId];
+        holderAddress =  ownerOf(holderReceiptId);
+    return (holderReceiptId, holderAddress);
     }
 
     function burnReceipt(uint256 _tokenId) external onlyProxyManager {
         _burn(_tokenId);
     }
 
-    function proposeSetOpen(bool _open) external onlyOwner {
-        _proposeOpen = _open;
+    function proposeSetState(bool newState) external onlyOwner {
+        require(open != newState, "State already set to the desired value.");
+        _proposedState = newState;
     }
 
-    function SetOpen() external onlyOwner {
-        open = _proposeOpen;
-        _proposeOpen = false;
+    function applyProposedState() external onlyOwner {
+        require(open != _proposedState, "Proposed state matches current state.");
+        open = _proposedState;
+        _proposedState = open;
     }
 
     function setBaseURI(string memory newBaseURI) external onlyOwner {
@@ -133,6 +97,7 @@ contract LoanReceipt is ERC721A, Ownable {
     }
 
     function setProxyManager() external onlyOwner {
+        require(_proposeproxy != address(0), "200:ZERO_ADDRESS");
         _proxy = _proposeproxy;
         _proposeproxy = address(0);
     }
