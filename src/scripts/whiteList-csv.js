@@ -1,10 +1,10 @@
 const { ethers } = require("ethers");
 const fs = require("fs");
-const csv = require("csv-parse/sync"); 
+const csv = require("csv-parse/sync");
 require("dotenv").config();
 
 const {
-  WhiteListCollection_Address,
+  WHITELIST_COLLECTION_ADDRESS,
   ADMIN_PRIVATE_KEY,
   QUICKNODE_SEPOLIA_URL,
 } = process.env;
@@ -16,9 +16,9 @@ const {
 const provider = new ethers.JsonRpcProvider(QUICKNODE_SEPOLIA_URL);
 const admin = new ethers.Wallet(ADMIN_PRIVATE_KEY, provider);
 const whiteListCollection = new ethers.Contract(
-  WhiteListCollection_Address,
+  WHITELIST_COLLECTION_ADDRESS,
   WhiteListCollectionAbi,
-  admin
+  admin,
 );
 
 function readAddressesFromCSV(filePath) {
@@ -41,7 +41,7 @@ function readAddressesFromCSV(filePath) {
 async function WhiteList_ERC20(whiteListERC20Addresses) {
   try {
     const tx = await whiteListCollection.whiteListErc20Token(
-      whiteListERC20Addresses
+      whiteListERC20Addresses,
     );
     console.log("Transaction submitted:", tx.hash);
     const receipt = await tx.wait();
@@ -54,7 +54,7 @@ async function WhiteList_ERC20(whiteListERC20Addresses) {
 async function WhiteList_Collection(whiteListCollectionAddresses) {
   try {
     const tx = await whiteListCollection.whiteListCollection(
-      whiteListCollectionAddresses
+      whiteListCollectionAddresses,
     );
     console.log("Transaction submitted ::", tx.hash);
     const receipt = await tx.wait();
@@ -67,10 +67,10 @@ async function WhiteList_Collection(whiteListCollectionAddresses) {
 const main = async () => {
   // Read addresses from CSV files
   const erc20Addresses = readAddressesFromCSV(
-    "./src/scripts/erc20Addresses.csv"
+    "./src/scripts/erc20Addresses.csv",
   );
   const collectionAddresses = readAddressesFromCSV(
-    "./src/scripts/collectionAddresses.csv"
+    "./src/scripts/collectionAddresses.csv",
   );
 
   console.log("Starting whitelist process...");
