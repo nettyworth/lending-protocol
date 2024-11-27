@@ -34,7 +34,7 @@ module.exports = {
     // },
     // mainnet: {
     //   url: QUICKNODE_MAINNET_URL,
-    //   accounts: [ADMIN_PRIVATE_KEY]
+    //   accounts: [ADMIN_PRIVATE_KEY],
     // },
   },
   solidity: {
