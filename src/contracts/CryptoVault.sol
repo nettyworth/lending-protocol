@@ -138,7 +138,6 @@ contract CryptoVault is ERC721Holder, Ownable {
         IERC721 token = IERC721(nftContract);
         bytes32 _tokenIds = _bytesconvertion(tokenIds);
 
-
         require(
             _assetsHash[nftContract][loanId] != 0,
             "This token is not stored in the vault"
@@ -182,7 +181,7 @@ contract CryptoVault is ERC721Holder, Ownable {
         _proxy = _proposeproxy;
         _proposeproxy = address(0);
     } 
-
+ 
     function renounceOwnership() public view override onlyOwner {
     }
 }
