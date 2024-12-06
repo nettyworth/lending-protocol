@@ -33,6 +33,7 @@ const roundToDecimalPlaces = (value, decimals) => {
 async function fetchGasFees() {
   try {
     const gasFees = await getGasFees(1); // Mainnet chain ID is 1=ETH
+    console.log({ gasFees });
     const maxFeePerGasString = roundToDecimalPlaces(
       gasFees.medium.suggestedMaxFeePerGas,
       9,
@@ -52,5 +53,5 @@ async function fetchGasFees() {
     console.error("Failed to fetch and export gas fees:", error);
   }
 }
-
-export { fetchGasFees };
+fetchGasFees();
+// export { fetchGasFees };

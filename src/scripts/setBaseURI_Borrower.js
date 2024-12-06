@@ -5,7 +5,7 @@ require("dotenv").config();
 const {
   ADMIN_PRIVATE_KEY,
   QUICKNODE_SEPOLIA_URL,
-  LoanReceiptBorrower_Address,
+  LOAN_RECEIPT_BORROWER_CONTRACT_ADDRESS,
 } = process.env;
 
 const {
@@ -16,7 +16,7 @@ const provider = new ethers.JsonRpcProvider(QUICKNODE_SEPOLIA_URL);
 const admin = new ethers.Wallet(ADMIN_PRIVATE_KEY, provider);
 
 const LoanReceiptBorrower = new ethers.Contract(
-  LoanReceiptBorrower_Address,
+  LOAN_RECEIPT_BORROWER_CONTRACT_ADDRESS,
   LoanReceiptAbi,
   admin,
 );

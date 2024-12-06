@@ -2,8 +2,11 @@ const { ethers } = require("ethers");
 import { fetchGasFees } from "./gasFees.js";
 require("dotenv").config();
 
-const { ADMIN_PRIVATE_KEY, QUICKNODE_SEPOLIA_URL, LoanReceiptLender_Address } =
-  process.env;
+const {
+  ADMIN_PRIVATE_KEY,
+  QUICKNODE_SEPOLIA_URL,
+  LOAN_RECEIPT_LENDER_CONTRACT_ADDRESS,
+} = process.env;
 
 const {
   abi: LoanReceiptAbi,
@@ -13,7 +16,7 @@ const provider = new ethers.JsonRpcProvider(QUICKNODE_SEPOLIA_URL);
 const admin = new ethers.Wallet(ADMIN_PRIVATE_KEY, provider);
 
 const LoanReceiptLender = new ethers.Contract(
-  LoanReceiptLender_Address,
+  LOAN_RECEIPT_LENDER_CONTRACT_ADDRESS,
   LoanReceiptAbi,
   admin,
 );
