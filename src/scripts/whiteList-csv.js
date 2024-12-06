@@ -1,20 +1,20 @@
 const { ethers } = require("ethers");
 const fs = require("fs");
 const csv = require("csv-parse/sync");
-import { fetchGasFees } from "./gasFees.js";
+const { fetchGasFees } = require("./gasFee.js");
 require("dotenv").config();
 
 const {
   WHITELIST_COLLECTION_ADDRESS,
   ADMIN_PRIVATE_KEY,
-  QUICKNODE_SEPOLIA_URL,
+  QUICKNODE_MAINNET_URL,
 } = process.env;
 
 const {
   abi: WhiteListCollectionAbi,
 } = require("../artifacts/src/contracts/WhiteListCollection.sol/WhiteListCollection.json");
 
-const provider = new ethers.JsonRpcProvider(QUICKNODE_SEPOLIA_URL);
+const provider = new ethers.JsonRpcProvider(QUICKNODE_MAINNET_URL);
 const admin = new ethers.Wallet(ADMIN_PRIVATE_KEY, provider);
 const whiteListCollection = new ethers.Contract(
   WHITELIST_COLLECTION_ADDRESS,

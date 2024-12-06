@@ -1,5 +1,6 @@
 const { ethers } = require("ethers");
-import { fetchGasFees } from "./gasFees.js";
+const { fetchGasFees } = require("./gasFee.js");
+
 require("dotenv").config();
 
 const {

@@ -49,15 +49,9 @@ async function WhiteList_Collection(whiteListCollectionAddresses) {
 }
 
 const main = async () => {
-  const erc20Addresses = [
-    "0x1234567890abcdef1234567890abcdef12345678",
-    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-  ];
+  const erc20Addresses = [];
 
-  const collectionAddresses = [
-    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-    "0x1234567890abcdef1234567890abcdef12345678",
-  ];
+  const collectionAddresses = [];
 
   console.log("Starting whitelist process...");
   await WhiteList_Collection(collectionAddresses);

@@ -6,7 +6,6 @@ const {
   ADMIN_PRIVATE_KEY,
   QUICKNODE_SEPOLIA_URL,
   QUICKNODE_MAINNET_URL,
-  QUICKNODE_HOLESKY_URL,
   ETHERSCAN_API_KEY,
 } = process.env;
 
@@ -28,14 +27,10 @@ module.exports = {
       url: QUICKNODE_SEPOLIA_URL,
       accounts: [ADMIN_PRIVATE_KEY],
     },
-    // holesky: {
-    //   url: QUICKNODE_HOLESKY_URL,
-    //   accounts: [ADMIN_PRIVATE_KEY]
-    // },
-    // mainnet: {
-    //   url: QUICKNODE_MAINNET_URL,
-    //   accounts: [ADMIN_PRIVATE_KEY],
-    // },
+    mainnet: {
+      url: QUICKNODE_MAINNET_URL,
+      accounts: [ADMIN_PRIVATE_KEY],
+    },
   },
   solidity: {
     compilers: [{ version: "0.8.24", settings }],

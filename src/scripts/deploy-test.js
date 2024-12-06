@@ -30,30 +30,30 @@ async function main() {
     const LoanReceipt = await ethers.getContractFactory("LoanReceipt");
     const loanReceiptLender = await LoanReceipt.deploy(
       "NettyWorth Promissory Note",
-      "NWPN"
+      "NWPN",
     );
     await loanReceiptLender.waitForDeployment();
     const loanReceiptLenderAddress = await loanReceiptLender.getAddress();
 
     console.log(
       "NettyWorth Promissory Note deployed to:",
-      loanReceiptLenderAddress
+      loanReceiptLenderAddress,
     );
 
     const loanReceiptBorrower = await LoanReceipt.deploy(
       "NettyWorth Obligation Receipt",
-      "NWOR"
+      "NWOR",
     );
     await loanReceiptBorrower.waitForDeployment();
     const loanReceiptBorrowerAddress = await loanReceiptBorrower.getAddress();
     console.log(
       "NettyWorth Obligation Receipt deployed to:",
-      loanReceiptBorrowerAddress
+      loanReceiptBorrowerAddress,
     );
 
     // Deploy WhiteListCollection
     const WhiteListCollection = await ethers.getContractFactory(
-      "WhiteListCollection"
+      "WhiteListCollection",
     );
     const whiteListCollection = await WhiteListCollection.deploy();
     await whiteListCollection.waitForDeployment();
@@ -75,31 +75,31 @@ async function main() {
       loanReceiptLenderAddress,
       loanReceiptBorrowerAddress,
       whiteListCollectionAddress,
-      deployer
+      deployer,
     );
     console.log("NettyWorthProxy initialized");
 
     // Set proxy manager for other contracts
     const cryptoVaulttx = await cryptoVault.proposeProxyManager(
-      nettyWorthProxyAddress
+      nettyWorthProxyAddress,
     );
     await cryptoVaulttx.wait();
     await cryptoVault.setProxyManager();
 
     const loanManagertx = await loanManager.proposeProxyManager(
-      nettyWorthProxyAddress
+      nettyWorthProxyAddress,
     );
     await loanManagertx.wait();
     await loanManager.setProxyManager();
 
     const loanReceiptLendertx = await loanReceiptLender.proposeProxyManager(
-      nettyWorthProxyAddress
+      nettyWorthProxyAddress,
     );
     await loanReceiptLendertx.wait();
     await loanReceiptLender.setProxyManager();
 
     const loanReceiptBorrowertx = await loanReceiptBorrower.proposeProxyManager(
-      nettyWorthProxyAddress
+      nettyWorthProxyAddress,
     );
     await loanReceiptBorrowertx.wait();
 
@@ -108,7 +108,7 @@ async function main() {
 
     // Set Open in lender and borrower receipts contracts.
     const proposedLoanReceiptLender = await loanReceiptLender.proposeSetState(
-      true
+      true,
     );
     await proposedLoanReceiptLender.wait();
     await loanReceiptLender.applyProposedState();
@@ -125,7 +125,7 @@ async function main() {
       "TestNettyWorth",
       "TestNettyWorth NFT",
       "TNFT",
-      1000
+      1000,
     );
     await nftExample.waitForDeployment();
     const nftExampleAddress = await nftExample.getAddress();
@@ -146,13 +146,13 @@ async function main() {
     // Transfer some ERC20 to lender for testing
     await nettyWorthToken.transfer(
       "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
-      ethers.parseUnits("100000000", 18)
+      ethers.parseUnits("100000000", 18),
     );
 
     // Transfer some ERC20 to borrower for testing
     await nettyWorthToken.transfer(
       "0xa611531661B5649688605a16ca7a245980F69A99",
-      ethers.parseUnits("100000000", 18)
+      ethers.parseUnits("100000000", 18),
     );
 
     // Whiteslist nft collection & erc20
@@ -175,4 +175,3 @@ main()
     console.error(error);
     process.exit(1);
   });
-

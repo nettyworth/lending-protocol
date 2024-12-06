@@ -53,5 +53,4 @@ async function fetchGasFees() {
     console.error("Failed to fetch and export gas fees:", error);
   }
 }
-fetchGasFees();
-// export { fetchGasFees };
+module.exports = { fetchGasFees };
