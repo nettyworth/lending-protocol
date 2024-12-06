@@ -1,4 +1,5 @@
 const { ethers } = require("ethers");
+import { fetchGasFees } from "./gasFees.js";
 require("dotenv").config();
 
 const { ADMIN_PRIVATE_KEY, QUICKNODE_SEPOLIA_URL, LoanReceiptLender_Address } =
@@ -14,7 +15,7 @@ const admin = new ethers.Wallet(ADMIN_PRIVATE_KEY, provider);
 const LoanReceiptLender = new ethers.Contract(
   LoanReceiptLender_Address,
   LoanReceiptAbi,
-  admin
+  admin,
 );
 
 async function loanReceiptLender(baseURI) {
@@ -22,7 +23,22 @@ async function loanReceiptLender(baseURI) {
     throw new Error("baseURI must be a string");
   }
   try {
-    const tx = await LoanReceiptLender.setBaseURI(baseURI);
+    const { maxFeePerGasInGwei, maxPriorityFeePerGasInGwei } =
+      await fetchGasFees();
+    console.log("Max Fee Per Gas:", maxFeePerGasInGwei);
+    console.log("Max Priority Fee Per Gas:", maxPriorityFeePerGasInGwei);
+    const gasEstimate = await LoanReceiptLender.setBaseURI.estimateGas(
+      baseURI,
+      {
+        maxFeePerGas: maxFeePerGasInGwei,
+        maxPriorityFeePerGas: maxPriorityFeePerGasInGwei,
+      },
+    );
+    const tx = await LoanReceiptLender.setBaseURI(baseURI, {
+      gasLimit: gasEstimate.toString(),
+      maxFeePerGas: maxFeePerGasInGwei,
+      maxPriorityFeePerGas: maxPriorityFeePerGasInGwei,
+    });
     console.log("Transaction submitted:", tx.hash);
     const receipt = await tx.wait();
 

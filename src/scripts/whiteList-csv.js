@@ -1,6 +1,7 @@
 const { ethers } = require("ethers");
 const fs = require("fs");
 const csv = require("csv-parse/sync");
+import { fetchGasFees } from "./gasFees.js";
 require("dotenv").config();
 
 const {
@@ -40,8 +41,25 @@ function readAddressesFromCSV(filePath) {
 
 async function WhiteList_ERC20(whiteListERC20Addresses) {
   try {
+    const { maxFeePerGasInGwei, maxPriorityFeePerGasInGwei } =
+      await fetchGasFees();
+    console.log("Max Fee Per Gas:", maxFeePerGasInGwei);
+    console.log("Max Priority Fee Per Gas:", maxPriorityFeePerGasInGwei);
+    const gasEstimate =
+      await whiteListCollection.whiteListErc20Token.estimateGas(
+        whiteListERC20Addresses,
+        {
+          maxFeePerGas: maxFeePerGasInGwei,
+          maxPriorityFeePerGas: maxPriorityFeePerGasInGwei,
+        },
+      );
     const tx = await whiteListCollection.whiteListErc20Token(
       whiteListERC20Addresses,
+      {
+        gasLimit: gasEstimate.toString(),
+        maxFeePerGas: maxFeePerGasInGwei,
+        maxPriorityFeePerGas: maxPriorityFeePerGasInGwei,
+      },
     );
     console.log("Transaction submitted:", tx.hash);
     const receipt = await tx.wait();
@@ -53,8 +71,25 @@ async function WhiteList_ERC20(whiteListERC20Addresses) {
 
 async function WhiteList_Collection(whiteListCollectionAddresses) {
   try {
+    const { maxFeePerGasInGwei, maxPriorityFeePerGasInGwei } =
+      await fetchGasFees();
+    console.log("Max Fee Per Gas:", maxFeePerGasInGwei);
+    console.log("Max Priority Fee Per Gas:", maxPriorityFeePerGasInGwei);
+    const gasEstimate =
+      await whiteListCollection.whiteListCollection.estimateGas(
+        whiteListCollectionAddresses,
+        {
+          maxFeePerGas: maxFeePerGasInGwei,
+          maxPriorityFeePerGas: maxPriorityFeePerGasInGwei,
+        },
+      );
     const tx = await whiteListCollection.whiteListCollection(
       whiteListCollectionAddresses,
+      {
+        gasLimit: gasEstimate.toString(),
+        maxFeePerGas: maxFeePerGasInGwei,
+        maxPriorityFeePerGas: maxPriorityFeePerGasInGwei,
+      },
     );
     console.log("Transaction submitted ::", tx.hash);
     const receipt = await tx.wait();
