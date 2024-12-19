@@ -142,8 +142,9 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     {
         _sanityCheckAcceptOffer(
             loanRequest.nftContractAddress,
-            loanRequest.erc20TokenAddress,
-            loanRequest.loanDuration);
+            loanRequest.erc20TokenAddress
+            // loanRequest.loanDuration
+            );
         require(
             SignatureUtils._validateRequestLoanSignature(
                 acceptRequestSignature,
@@ -159,7 +160,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             msg.sender,
             loanRequest.loanAmount,
             loanRequest.aprBasisPoints,
-            loanRequest.loanDuration,
+            loanRequest.loanDuration + block.timestamp,
             loanRequest.erc20TokenAddress);
         (receiptIdBorrower, receiptIdLender) = _acceptOffer(
             loandata,
@@ -180,8 +181,9 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
         require(msg.sender == loanOffer.borrower, "Unauthorized sender");
         _sanityCheckAcceptOffer(
             loanOffer.nftContractAddress,
-            loanOffer.erc20TokenAddress,
-            loanOffer.loanDuration);
+            loanOffer.erc20TokenAddress
+            // loanOffer.loanDuration
+            );
         require(
             SignatureUtils._validateSignatureApprovalOffer(
                 acceptOfferSignature,
@@ -196,7 +198,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loanOffer.lender,
             loanOffer.loanAmount,
             loanOffer.aprBasisPoints,
-            loanOffer.loanDuration,
+            loanOffer.loanDuration + block.timestamp,
             loanOffer.erc20TokenAddress);
         (receiptIdBorrower, receiptIdLender) = _acceptOffer(
             loandata,
@@ -217,8 +219,8 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     {
         _sanityCheckAcceptOffer(
             loanCollectionOffer.collectionAddress,
-            loanCollectionOffer.erc20TokenAddress,
-            loanCollectionOffer.loanDuration
+            loanCollectionOffer.erc20TokenAddress
+            // loanCollectionOffer.loanDuration
         );
         require(
             SignatureUtils._validateLoanCollectionOfferSignature(
@@ -233,7 +235,7 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             loanCollectionOffer.lender,
             loanCollectionOffer.loanAmount,
             loanCollectionOffer.aprBasisPoints,
-            loanCollectionOffer.loanDuration,
+            loanCollectionOffer.loanDuration + block.timestamp,
             loanCollectionOffer.erc20TokenAddress);
         (receiptIdBorrower, receiptIdLender) = _acceptOffer(
             loandata,
@@ -442,8 +444,8 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
 
     function _sanityCheckAcceptOffer(
         address nftContractAddress,
-        address erc20Address,
-        uint256 loanDuration
+        address erc20Address
+        // uint256 loanDuration
     ) internal view {
         require(vault != address(0), "Vault address not set");
         require(
@@ -463,10 +465,10 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             borrowerReceiptContract != address(0),
             "Receipt Borrower contract address not set"
         );
-        require(
-            loanDuration > block.timestamp,
-            "Loan duration must b greater than current timestamp"
-        );
+        // require(
+        //     loanDuration > block.timestamp,
+        //     "Loan duration must b greater than current timestamp"
+        // );
     }
     
     function renounceOwnership() public view override onlyOwner {
