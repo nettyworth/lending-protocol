@@ -1,51 +1,67 @@
 const { ethers } = require("hardhat");
 require("dotenv").config();
-
+ 
 const {
   CryptoVault_Address,
   LoanManager_Address,
   LoanReceiptLender_Address,
   LoanReceiptBorrower_Address,
+  nettyWorthProxyAddress,
   WhiteListCollection_Address,
-  QUICKNODE_SEPOLIA_URL,
+  QUICKNODE_MAINNET_URL,
+  New_Admin_Multisig,
+  ADMIN_PRIVATE_KEY,
 } = process.env;
-
-const provider = new ethers.JsonRpcProvider(QUICKNODE_SEPOLIA_URL);
-
+ 
+const provider = new ethers.JsonRpcProvider(QUICKNODE_MAINNET_URL);
+const wallet = new ethers.Wallet(ADMIN_PRIVATE_KEY, provider);
+ 
 const {
   abi: cryptoVaultABI,
 } = require("../artifacts/src/contracts/CryptoVault.sol/CryptoVault.json");
 const CryptoVault = new ethers.Contract(
   CryptoVault_Address,
   cryptoVaultABI,
-  provider
+  wallet
 );
-
+// console.log(CryptoVault);
+ 
 const {
   abi: LoanManagerABI,
 } = require("../artifacts/src/contracts/LoanManager.sol/LoanManager.json");
 const LoanManager = new ethers.Contract(
   LoanManager_Address,
   LoanManagerABI,
-  provider
+  wallet
 );
-
+// console.log(LoanManager);
+ 
 const {
-  abi: LoanReceiptABI,
+  abi: LoanReceiptABILender,
 } = require("../artifacts/src/contracts/LoanReceipt.sol/LoanReceipt.json");
 const LoanReceiptLender = new ethers.Contract(
-  LoanManager_Address,
-  LoanReceiptABI,
-  provider
+  LoanReceiptLender_Address,
+  LoanReceiptABILender,
+  wallet
+);
+// console.log(LoanReceiptLender);
+ 
+const {
+  abi: LoanReceiptABIBorrower,
+} = require("../artifacts/src/contracts/LoanReceipt.sol/LoanReceipt.json");
+const LoanReceiptBorrower = new ethers.Contract(
+  LoanReceiptBorrower_Address,
+  LoanReceiptABIBorrower,
+  wallet
 );
 
 const {
-  abi: LoanReceiptABI,
-} = require("../artifacts/src/contracts/LoanReceipt.sol/LoanReceipt.json");
-const LoanReceiptBorrower = new ethers.Contract(
-  LoanManager_Address,
-  LoanReceiptABI,
-  provider
+  abi: NettProxyABI,
+} = require("../artifacts/src/contracts/NettyWorthProxy.sol/NettyWorthProxy.json");
+const NettyWorthProxyContract = new ethers.Contract(
+  nettyWorthProxyAddress,
+  NettProxyABI,
+  wallet
 );
 
 async function main() {
@@ -106,51 +122,79 @@ async function main() {
     // const whiteListCollectionAddress = await whiteListCollection.getAddress();
     // console.log("whiteListCollection deployed to:", whiteListCollectionAddress);
 
-    // Deploy NettyWorthProxy
-    const NettyWorthProxy = await ethers.getContractFactory("NettyWorthProxy");
-    const nettyWorthProxy = await NettyWorthProxy.deploy();
-    await nettyWorthProxy.waitForDeployment();
-    const nettyWorthProxyAddress = await nettyWorthProxy.getAddress();
+    // // Deploy NettyWorthProxy
+    // const NettyWorthProxy = await ethers.getContractFactory("NettyWorthProxy");
+    // const nettyWorthProxy = await NettyWorthProxy.deploy();
+    // await nettyWorthProxy.waitForDeployment();
+    // const nettyWorthProxyAddress = await nettyWorthProxy.getAddress();
 
-    console.log("NettyWorthProxy deployed to:", nettyWorthProxyAddress);
+    // console.log("NettyWorthProxy deployed to:", nettyWorthProxyAddress);
 
-    // Initialize NettyWorthProxy
-    await nettyWorthProxy.initialize(
-      CryptoVault_Address,
-      LoanManager_Address,
-      LoanReceiptLender_Address,
-      LoanReceiptBorrower_Address,
-      WhiteListCollection_Address,
-      deployer
-    );
-    console.log("NettyWorthProxy initialized");
+    // // Initialize NettyWorthProxy
+    // await nettyWorthProxy.initialize(
+    //   CryptoVault_Address,
+    //   LoanManager_Address,
+    //   LoanReceiptLender_Address,
+    //   LoanReceiptBorrower_Address,
+    //   WhiteListCollection_Address,
+    //   deployer
+    // );
+    // console.log("NettyWorthProxy initialized");
 
     // Set proxy manager for other contracts
-    const cryptoVaulttx = await CryptoVault.proposeProxyManager(
-      nettyWorthProxyAddress
-    );
-    await cryptoVaulttx.wait();
-    await CryptoVault.setProxyManager();
+    // const cryptoVaulttx = await CryptoVault.proposeProxyManager(
+    //   nettyWorthProxyAddress
+    // );
+    // await cryptoVaulttx.wait();
+    // await CryptoVault.setProxyManager();
 
-    const loanManagertx = await LoanManager.proposeProxyManager(
-      nettyWorthProxyAddress
-    );
-    await loanManagertx.wait();
+    // const loanManagertx = await LoanManager.proposeProxyManager(
+    //   nettyWorthProxyAddress
+    // );
+    // await loanManagertx.wait();
     await LoanManager.setProxyManager();
 
     const loanReceiptLendertx = await LoanReceiptLender.proposeProxyManager(
       nettyWorthProxyAddress
     );
-    await loanReceiptLendertx.wait();
+    await loanReceiptLendertx.wait(2);
     await LoanReceiptLender.setProxyManager();
 
     const loanReceiptBorrowertx = await LoanReceiptBorrower.proposeProxyManager(
       nettyWorthProxyAddress
     );
-    await loanReceiptBorrowertx.wait();
+    await loanReceiptBorrowertx.wait(2);
 
     await LoanReceiptBorrower.setProxyManager();
     console.log("Proxy manager set for all contracts");
+
+     // OwnerShip changed to MultiSigWallet
+     const cryptoVaulttx1 = await CryptoVault.transferOwnership(
+      New_Admin_Multisig
+    );
+    await cryptoVaulttx1.wait();
+
+    const loanManagertx1 = await LoanManager.transferOwnership(
+      New_Admin_Multisig
+    );
+    await loanManagertx1.wait();
+
+    const loanReceiptLendertx1 = await LoanReceiptLender.transferOwnership(
+      New_Admin_Multisig
+    );
+    await loanReceiptLendertx1.wait();
+
+    const loanReceiptBorrowertx1 = await LoanReceiptBorrower.transferOwnership(
+      New_Admin_Multisig
+    );
+    await loanReceiptBorrowertx1.wait();
+
+    const nettyWorthProxyContracttx1 = await NettyWorthProxyContract.transferOwnership(
+      New_Admin_Multisig
+    );
+    await nettyWorthProxyContracttx1.wait();
+    
+    console.log("MutliSig Ownership changed for all contracts");
 
     console.log("Deployment completed successfully!");
   } catch (error) {

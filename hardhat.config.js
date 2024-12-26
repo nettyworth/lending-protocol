@@ -23,10 +23,10 @@ module.exports = {
     localhost: {
       url: "http://127.0.0.1:8545",
     },
-    sepolia: {
-      url: QUICKNODE_SEPOLIA_URL,
-      accounts: [ADMIN_PRIVATE_KEY],
-    },
+    // sepolia: {
+    //   url: QUICKNODE_SEPOLIA_URL,
+    //   accounts: [ADMIN_PRIVATE_KEY],
+    // },
     mainnet: {
       url: QUICKNODE_MAINNET_URL,
       accounts: [ADMIN_PRIVATE_KEY],

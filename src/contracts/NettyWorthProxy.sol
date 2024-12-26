@@ -445,7 +445,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
     function _sanityCheckAcceptOffer(
         address nftContractAddress,
         address erc20Address
-        // uint256 loanDuration
     ) internal view {
         require(vault != address(0), "Vault address not set");
         require(
@@ -465,10 +464,6 @@ contract NettyWorthProxy is ReentrancyGuard, Initializable,Ownable {
             borrowerReceiptContract != address(0),
             "Receipt Borrower contract address not set"
         );
-        // require(
-        //     loanDuration > block.timestamp,
-        //     "Loan duration must b greater than current timestamp"
-        // );
     }
     
     function renounceOwnership() public view override onlyOwner {
