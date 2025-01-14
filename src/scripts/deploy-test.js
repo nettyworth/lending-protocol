@@ -30,30 +30,30 @@ async function main() {
     const LoanReceipt = await ethers.getContractFactory("LoanReceipt");
     const loanReceiptLender = await LoanReceipt.deploy(
       "NettyWorth Promissory Note",
-      "NWPN",
+      "NWPN"
     );
     await loanReceiptLender.waitForDeployment();
     const loanReceiptLenderAddress = await loanReceiptLender.getAddress();
 
     console.log(
       "NettyWorth Promissory Note deployed to:",
-      loanReceiptLenderAddress,
+      loanReceiptLenderAddress
     );
 
     const loanReceiptBorrower = await LoanReceipt.deploy(
       "NettyWorth Obligation Receipt",
-      "NWOR",
+      "NWOR"
     );
     await loanReceiptBorrower.waitForDeployment();
     const loanReceiptBorrowerAddress = await loanReceiptBorrower.getAddress();
     console.log(
       "NettyWorth Obligation Receipt deployed to:",
-      loanReceiptBorrowerAddress,
+      loanReceiptBorrowerAddress
     );
 
     // Deploy WhiteListCollection
     const WhiteListCollection = await ethers.getContractFactory(
-      "WhiteListCollection",
+      "WhiteListCollection"
     );
     const whiteListCollection = await WhiteListCollection.deploy();
     await whiteListCollection.waitForDeployment();
@@ -75,31 +75,31 @@ async function main() {
       loanReceiptLenderAddress,
       loanReceiptBorrowerAddress,
       whiteListCollectionAddress,
-      deployer,
+      deployer
     );
     console.log("NettyWorthProxy initialized");
 
     // Set proxy manager for other contracts
     const cryptoVaulttx = await cryptoVault.proposeProxyManager(
-      nettyWorthProxyAddress,
+      nettyWorthProxyAddress
     );
     await cryptoVaulttx.wait();
     await cryptoVault.setProxyManager();
 
     const loanManagertx = await loanManager.proposeProxyManager(
-      nettyWorthProxyAddress,
+      nettyWorthProxyAddress
     );
     await loanManagertx.wait();
     await loanManager.setProxyManager();
 
     const loanReceiptLendertx = await loanReceiptLender.proposeProxyManager(
-      nettyWorthProxyAddress,
+      nettyWorthProxyAddress
     );
     await loanReceiptLendertx.wait();
     await loanReceiptLender.setProxyManager();
 
     const loanReceiptBorrowertx = await loanReceiptBorrower.proposeProxyManager(
-      nettyWorthProxyAddress,
+      nettyWorthProxyAddress
     );
     await loanReceiptBorrowertx.wait();
 
@@ -107,17 +107,17 @@ async function main() {
     console.log("Proxy manager set for all contracts");
 
     // Set Open in lender and borrower receipts contracts.
-    const proposedLoanReceiptLender = await loanReceiptLender.proposeSetOpen(
-      true,
+    const proposedLoanReceiptLender = await loanReceiptLender.proposeSetState(
+      true
     );
     await proposedLoanReceiptLender.wait();
-    await loanReceiptLender.setOpen();
+    await loanReceiptLender.applyProposedState();
 
     const proposedloanReceiptBorrower =
-      await loanReceiptBorrower.proposeSetOpen(true);
+      await loanReceiptBorrower.proposeSetState(true);
 
     await proposedloanReceiptBorrower.wait();
-    await loanReceiptBorrower.setOpen();
+    await loanReceiptBorrower.applyProposedState();
 
     // Deploy TestToken NFT (for testing purposes)
     const NFTExample = await ethers.getContractFactory("NFTExample");
@@ -125,7 +125,7 @@ async function main() {
       "TestNettyWorth",
       "TestNettyWorth NFT",
       "TNFT",
-      1000,
+      1000
     );
     await nftExample.waitForDeployment();
     const nftExampleAddress = await nftExample.getAddress();
@@ -146,13 +146,13 @@ async function main() {
     // Transfer some ERC20 to lender for testing
     await nettyWorthToken.transfer(
       "0x2DC67345a60b5f2BA1d4f4bB661F6Ec31AF6B061",
-      ethers.parseUnits("100000000", 18),
+      ethers.parseUnits("100000000", 18)
     );
 
     // Transfer some ERC20 to borrower for testing
     await nettyWorthToken.transfer(
       "0xa611531661B5649688605a16ca7a245980F69A99",
-      ethers.parseUnits("100000000", 18),
+      ethers.parseUnits("100000000", 18)
     );
 
     // Whiteslist nft collection & erc20
@@ -162,88 +162,6 @@ async function main() {
     await whiteListCollection.whiteListCollection([
       nftExampleAddress.toString(),
     ]);
-
-    // //************************************ */
-    // // Verify contracts on Etherscan (only for public networks)
-    // if (network.name !== 'hardhat' && network.name !== 'localhost') {
-    //   console.log('Waiting for block confirmations...');
-    //   // Wait for 5 blocks to be mined
-    //   await ethers.provider.waitForTransaction(
-    //     await cryptoVault.getAddress(),
-    //     5
-    //   );
-    //   await ethers.provider.waitForTransaction(
-    //     await loanManager.getAddress(),
-    //     5
-    //   );
-    //   await ethers.provider.waitForTransaction(
-    //     await loanReceipt.getAddress(),
-    //     5
-    //   );
-    //   await ethers.provider.waitForTransaction(
-    //     await whiteListCollection.getAddress(),
-    //     5
-    //   );
-    //   await ethers.provider.waitForTransaction(
-    //     await nettyWorthProxy.getAddress(),
-    //     5
-    //   );
-    //   await ethers.provider.waitForTransaction(
-    //     await nftExample.getAddress(),
-    //     5
-    //   );
-    //   await ethers.provider.waitForTransaction(
-    //     await nettyWorthToken.getAddress(),
-    //     5
-    //   );
-
-    //   console.log('Verifying contracts on Etherscan...');
-
-    // await hre.run("verify:verify", {
-    //   address: await cryptoVault.getAddress(),
-    //   contract: "contracts/CryptoVault.sol:CryptoVault",
-    // });
-
-    // await hre.run("verify:verify", {
-    //   address: await loanManager.getAddress(),
-    //   contract: "contracts/LoanManager.sol:LoanManager",
-    // });
-
-    // await hre.run("verify:verify", {
-    //   address: await loanReceipt.getAddress(),
-    //   contract: "contracts/LoanReceipt.sol:LoanReceipt",
-    //   constructorArguments: ["NettyWorth Loan Receipt", "NWLR"],
-    // });
-
-    // await hre.run("verify:verify", {
-    //   address: await nettyWorthProxy.getAddress(),
-    //   contract: "contracts/WhiteListCollection.sol:WhiteListCollection",
-    // });
-
-    // await hre.run("verify:verify", {
-    //   address: await nettyWorthProxy.getAddress(),
-    //   contract: "contracts/NettyWorthProxy.sol:NettyWorthProxy",
-    // });
-
-    // await hre.run("verify:verify", {
-    //   address: await nftExample.getAddress(),
-    //   contract: "contracts/Examples/NFTExample.sol:NFTExample",
-    //   constructorArguments: [
-    //     "TestNettyWorth",
-    //     "TestNettyWorth NFT",
-    //     "TNFT",
-    //     1000,
-    //   ],
-    // });
-
-    // await hre.run("verify:verify", {
-    //   address: await nettyWorthToken.getAddress(),
-    //   contract: "contracts/Examples/ERC20Example.sol:NettyWorthToken",
-    //   constructorArguments: [parseEther("10000")],
-    // });
-
-    //   console.log('Contracts verified on Etherscan');
-    // }
 
     console.log("Deployment completed successfully!");
   } catch (error) {
@@ -258,13 +176,16 @@ main()
     process.exit(1);
   });
 
-//   CryptoVault deployed to: 0xa2AE2F8093d446D561701AAF4E592b1077E1786a
-// LoanManager deployed to: 0xdf0126E85FaC71129dC225462d023A80cc3dF258
-// NettyWorth Promissory Note deployed to: 0x01cDDFBCA7b208fF2A70d6752bAe419B68e9BbC8
-// NettyWorth Obligation Receipt deployed to: 0xcf829b3FACeD97ddd15503b2cfda8e346344c57D
-// whiteListCollection deployed to: 0x9F94b4Db5b4B87e3f21e05e701b8391c386B6D92
-// NettyWorthProxy deployed to: 0xf1aB9d2f2403f0Dd44C8fc8F0198B1E6440D6bdB
+//   Deploying contracts with the account: 0x7eEc0f63AE8d1bD9677A021BD254f654a72fd50B
+// Deploying to network: sepolia
+// CryptoVault deployed to: 0x482715C7aBF6d14d306E69709CD9F48F59BCe385
+// LoanManager deployed to: 0x2FFC0f6e817303c343ad6faF28c3af023F20c8A6
+// NettyWorth Promissory Note deployed to: 0xB557DA6EE7888F78C714134a67081B130dD35667
+// NettyWorth Obligation Receipt deployed to: 0xA82385d1eF1a01A1aE4FB48AC4F600E72E651335
+// whiteListCollection deployed to: 0x44E79a99B4b9cE8A8d9a9149E1cB39927FDDaf82
+// NettyWorthProxy deployed to: 0x2d84690a4D90d60BD04b90ad0cdB9929f6437DEc
 // NettyWorthProxy initialized
 // Proxy manager set for all contracts
-// TestNettyWorth NFT Contract deployed to: 0x2ebD68C601a5334dEcFeA1C2aB4d748467fDAC69
-// MyToken (ERC20) deployed to: 0x4EA8ad3595EEBA27a0A8c5aD6AFF2226A88FB55A
+// TestNettyWorth NFT Contract deployed to: 0x9bc303Ca3FadEEB5760eA5ed8cAED1Ffc7d8C3f5
+// MyToken (ERC20) deployed to: 0xA903eE0d8163e6054FE6aAca0D36b60565E4f4d1
+// Deployment completed successfully!

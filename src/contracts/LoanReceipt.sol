@@ -46,7 +46,6 @@ contract LoanReceipt is ERC721A, Ownable {
         require(open != newState, "State already set to the desired value.");
         _proposedState = newState;
     }
-
     function applyProposedState() external onlyOwner {
         require(open != _proposedState, "Proposed state matches current state.");
         open = _proposedState;
@@ -56,7 +55,6 @@ contract LoanReceipt is ERC721A, Ownable {
     function setBaseURI(string memory newBaseURI) external onlyOwner {
         baseURI = newBaseURI;
     }
-
     function tokenURI(
         uint256 tokenId
     ) public view virtual override returns (string memory) {
